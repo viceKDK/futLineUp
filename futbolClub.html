@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>futbolClub — armá tu equipo</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Archivo+Narrow:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --bg:        #0e1210;
+    --bg-elev:   #161b18;
+    --bg-elev-2: #1f2622;
+    --line:      #2a322d;
+    --line-soft: #222925;
+    --fg:        #f2f1ea;
+    --fg-mute:   #a9b0a6;
+    --fg-dim:    #6e756b;
+
+    --pitch:     #2f7d3a;
+    --pitch-2:   #2a7434;
+    --pitch-3:   #267030;
+    --pitch-line: rgba(255,255,255,.78);
+
+    --accent:    oklch(0.86 0.17 124);   /* lima */
+    --accent-2:  oklch(0.70 0.19 28);    /* rojo tierra */
+    --warn:      oklch(0.82 0.17 70);    /* ambar */
+
+    --radius-s: 6px;
+    --radius:   10px;
+    --radius-l: 18px;
+
+    --shadow: 0 12px 30px -12px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35);
+
+    --font-display: "Bebas Neue", "Archivo Narrow", sans-serif;
+    --font-cond:    "Archivo Narrow", "Inter", sans-serif;
+    --font-body:    "Inter", system-ui, sans-serif;
+    --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  input, select, textarea { font: inherit; color: inherit; }
+  img { display: block; max-width: 100%; }
+
+  .app-shell {
+    max-width: 1440px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: sticky; top: 0;
+    height: 100vh;
+    background: var(--bg-elev);
+    border-right: 1px solid var(--line-soft);
+    padding: 22px 18px;
+    display: flex; flex-direction: column; gap: 22px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 4px 14px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .brand-mark {
+    width: 34px; height: 34px;
+    background: var(--accent);
+    color: #0e1210;
+    display: grid; place-items: center;
+    border-radius: 8px;
+    font-family: var(--font-display);
+    font-size: 22px; letter-spacing: .5px;
+    line-height: 1;
+    transform: skewX(-8deg);
+  }
+  .brand-mark span { transform: skewX(8deg); display: block; }
+  .brand-name {
+    font-family: var(--font-display);
+    font-size: 22px; letter-spacing: 1.5px;
+    line-height: 1;
+  }
+  .brand-name em { color: var(--accent); font-style: normal; }
+
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav-label {
+    font-family: var(--font-cond);
+    text-transform: uppercase; letter-spacing: 1.4px;
+    font-size: 11px; color: var(--fg-dim);
+    padding: 10px 8px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 10px;
+    border-radius: var(--radius-s);
+    color: var(--fg-mute);
+    font-size: 14px; font-weight: 500;
+    text-align: left; width: 100%;
+    transition: background .15s, color .15s;
+  }
+  .nav-item:hover { background: var(--bg-elev-2); color: var(--fg); }
+  .nav-item.active { background: var(--accent); color: #0e1210; font-weight: 600; }
+  .nav-item.active .nav-dot { background: #0e1210; }
+  .nav-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--fg-dim);
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .avatar-me {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #4a5a4c, #2f3a31);
+    display: grid; place-items: center;
+    font-family: var(--font-cond); font-weight: 700;
+    color: var(--fg);
+  }
+  .me-name { font-size: 13px; font-weight: 600; }
+  .me-sub  { font-size: 11px; color: var(--fg-dim); }
+
+  /* MAIN */
+  .main { padding: 28px 40px 80px; min-width: 0; }
+  .page-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 20px; margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .page-head > div:first-child { min-width: 0; flex: 1 1 320px; }
+  .page-head > div:last-child, .page-head > button:last-child {
+    flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .page-title {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 4.2vw, 56px);
+    letter-spacing: 1px;
+    line-height: .95; margin: 0;
+    text-wrap: balance;
+  }
+  .page-kicker {
+    font-family: var(--font-cond);
+    text-transform: uppercase; letter-spacing: 2px;
+    font-size: 11px; color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .page-sub { color: var(--fg-mute); font-size: 14px; max-width: 560px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    border-radius: var(--radius-s);
+    background: var(--bg-elev-2);
+    border: 1px solid var(--line);
+    color: var(--fg);
+    font-weight: 500;
+    transition: background .15s, border-color .15s, transform .1s;
+  }
+  .btn:hover { background: var(--line); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary {
+    background: var(--accent); color: #0e1210;
+    border-color: var(--accent); font-weight: 600;
+  }
+  .btn.primary:hover { background: oklch(0.90 0.17 124); }
+  .btn.ghost { background: transparent; }
+  .btn.sm { padding: 6px 10px; font-size: 12px; }
+
+  /* Cards, chips */
+  .card {
+    background: var(--bg-elev);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--line);
+    font-size: 11px;
+    font-family: var(--font-cond);
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--fg-mute);
+  }
+  .chip.lime { background: var(--accent); color: #0e1210; border-color: var(--accent); }
+
+  /* page wrapper */
+  .page { display: none; }
+  .page.active { display: block; animation: fadein .25s ease; }
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Placeholder box for unfinished screens */
+  .placeholder {
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--fg-dim);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        transparent 0 10px,
+        rgba(255,255,255,.02) 10px 11px
+      );
+  }
+
+  /* Tweaks panel (toggleable) */
+  .tweaks-fab {
+    position: fixed; right: 20px; bottom: 20px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    color: var(--fg);
+    font-size: 18px;
+    display: grid; place-items: center;
+    z-index: 998;
+    transition: transform .15s, border-color .15s;
+  }
+  .tweaks-fab:hover { border-color: var(--accent); transform: rotate(30deg); }
+
+  .tweaks {
+    position: fixed; right: 20px; bottom: 74px;
+    width: 280px; z-index: 999;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px;
+    display: none;
+    font-size: 12px;
+  }
+  .tweaks.open { display: block; }
+  .tweaks h3 {
+    font-family: var(--font-cond);
+    text-transform: uppercase; letter-spacing: 1.6px;
+    font-size: 11px; color: var(--fg-dim);
+    margin: 0 0 10px;
+  }
+  .tweaks-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--line-soft);
+  }
+  .tweaks-row:first-of-type { border-top: 0; }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+  }
+  .seg button {
+    padding: 4px 8px; font-size: 11px; color: var(--fg-mute);
+    background: transparent;
+  }
+  .seg button.on { background: var(--accent); color: #0e1210; font-weight: 600; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--bg-elev);
+    color: var(--fg);
+    border: 1px solid var(--accent);
+    padding: 10px 18px;
+    border-radius: 99px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow);
+    z-index: 2000;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 900px) {
+    .app-shell { grid-template-columns: 1fr; }
+    .sidebar {
+      position: static; height: auto;
+      flex-direction: row; overflow-x: auto;
+      padding: 12px;
+    }
+    .sidebar .nav-label { display: none; }
+    .nav { flex-direction: row; flex-wrap: nowrap; }
+    .nav-item { white-space: nowrap; }
+    .sidebar-footer { display: none; }
+    .main { padding: 20px; }
+    .page-title { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><span>fC</span></div>
+      <div class="brand-name">futbol<em>Club</em></div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <div class="nav-label">Principal</div>
+      <button class="nav-item active" data-page="home"><span class="nav-dot"></span> Mis equipos</button>
+      <button class="nav-item" data-page="mode"><span class="nav-dot"></span> Nuevo equipo</button>
+
+      <div class="nav-label">Herramientas</div>
+      <button class="nav-item" data-page="editor"><span class="nav-dot"></span> Editor de alineación</button>
+      <button class="nav-item" data-page="draw"><span class="nav-dot"></span> Sorteo</button>
+      <button class="nav-item" data-page="kits"><span class="nav-dot"></span> Camisetas</button>
+      <button class="nav-item" data-page="rival"><span class="nav-dot"></span> Modo rival</button>
+      <button class="nav-item" data-page="share"><span class="nav-dot"></span> Compartir</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="avatar-me">MS</div>
+      <div>
+        <div class="me-name">Martín S.</div>
+        <div class="me-sub">Capitán · 12 partidos</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div id="page-home"   class="page active"></div>
+    <div id="page-mode"   class="page"></div>
+    <div id="page-editor" class="page"></div>
+    <div id="page-draw"   class="page"></div>
+    <div id="page-kits"   class="page"></div>
+    <div id="page-rival"  class="page"></div>
+    <div id="page-share"  class="page"></div>
+  </main>
+</div>
+
+<!-- Tweaks toggle + panel -->
+<button class="tweaks-fab" id="tweaks-fab" title="Ajustes visuales">⚙</button>
+<div class="tweaks" id="tweaks">
+  <h3>Ajustes visuales</h3>
+  <div class="tweaks-row">
+    <span>Estilo cancha</span>
+    <div class="seg" data-tweak="pitchStyle">
+      <button data-v="classic" class="on">Clásica</button>
+      <button data-v="flat">Flat</button>
+      <button data-v="dark">Noche</button>
+    </div>
+  </div>
+  <div class="tweaks-row">
+    <span>Jugador en cancha</span>
+    <div class="seg" data-tweak="playerStyle">
+      <button data-v="photo" class="on">Foto</button>
+      <button data-v="shirt">Camiseta</button>
+    </div>
+  </div>
+  <div class="tweaks-row">
+    <span>Acento</span>
+    <div class="seg" data-tweak="accent">
+      <button data-v="lime" class="on">Lima</button>
+      <button data-v="cyan">Cyan</button>
+      <button data-v="red">Rojo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tweaks config (persistido en localStorage) -->
+<script>
+  const TWEAKS_KEY = 'fc.v1.tweaks';
+  const TWEAKS_DEFAULT = { pitchStyle: "classic", playerStyle: "photo", accent: "lime" };
+  try {
+    const raw = localStorage.getItem(TWEAKS_KEY);
+    window.__TWEAKS = raw ? { ...TWEAKS_DEFAULT, ...JSON.parse(raw) } : { ...TWEAKS_DEFAULT };
+  } catch (_) { window.__TWEAKS = { ...TWEAKS_DEFAULT }; }
+
+  const accentMap = {
+    lime: "oklch(0.86 0.17 124)",
+    cyan: "oklch(0.82 0.13 210)",
+    red:  "oklch(0.70 0.19 28)"
+  };
+  function applyTweaks(t) {
+    document.documentElement.style.setProperty('--accent', accentMap[t.accent] || accentMap.lime);
+    document.body.dataset.pitch = t.pitchStyle;
+    document.body.dataset.playerStyle = t.playerStyle;
+  }
+  function saveTweaks() {
+    try { localStorage.setItem(TWEAKS_KEY, JSON.stringify(window.__TWEAKS)); } catch (_) {}
+  }
+  applyTweaks(window.__TWEAKS);
+
+  // Sync segmented buttons to stored values
+  document.querySelectorAll('.tweaks .seg').forEach(seg => {
+    const key = seg.dataset.tweak;
+    seg.querySelectorAll('button').forEach(btn => {
+      btn.classList.toggle('on', btn.dataset.v === window.__TWEAKS[key]);
+    });
+  });
+
+  document.getElementById('tweaks-fab').addEventListener('click', () => {
+    document.getElementById('tweaks').classList.toggle('open');
+  });
+
+  document.querySelectorAll('.tweaks .seg').forEach(seg => {
+    const key = seg.dataset.tweak;
+    seg.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        seg.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        window.__TWEAKS[key] = btn.dataset.v;
+        applyTweaks(window.__TWEAKS);
+        saveTweaks();
+      });
+    });
+  });
+</script>
+
+<!-- Router + page mounts -->
+<script>
+  const nav = document.getElementById('nav');
+  nav.addEventListener('click', (e) => {
+    const btn = e.target.closest('.nav-item');
+    if (!btn) return;
+    go(btn.dataset.page);
+  });
+  function go(page) {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
+    window.scrollTo({top:0});
+  }
+  window.go = go;
+</script>
+
+<!-- Toast helper -->
+<div id="toast" class="toast"></div>
+<script>
+  let __toastTimer = null;
+  window.__toast = function(msg) {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(__toastTimer);
+    __toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  };
+</script>
+
+<!-- Export libs -->
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
+
+<!-- React -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+<!-- Shared data + components -->
+<script type="text/babel" src="src/data.jsx"></script>
+<script type="text/babel" src="src/kits.jsx"></script>
+<script type="text/babel" src="src/pitch.jsx"></script>
+
+<!-- Pages -->
+<script type="text/babel" src="src/page-home.jsx"></script>
+<script type="text/babel" src="src/page-mode.jsx"></script>
+<script type="text/babel" src="src/page-editor.jsx"></script>
+<script type="text/babel" src="src/page-draw.jsx"></script>
+<script type="text/babel" src="src/page-kits.jsx"></script>
+<script type="text/babel" src="src/page-rival.jsx"></script>
+<script type="text/babel" src="src/page-share.jsx"></script>
+
+</body>
+</html>
