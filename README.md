@@ -2,7 +2,11 @@
 
 App web para armar alineaciones de fútbol (Fut 5 / 6 / 7 / 8 / 11), sortear equipos, diseñar camisetas, enfrentar rivales y compartir la formación. En español rioplatense, estética editorial-deportiva, 100% client-side.
 
+![futbolClub — Mis equipos](screenshots/01-home.png)
+
 ![license](https://img.shields.io/badge/license-MIT-green) ![stack](https://img.shields.io/badge/stack-React%20%2B%20Babel%20Standalone-blue)
+
+> Más capturas de cada pantalla en [`screenshots/`](screenshots/).
 
 ## Demo rápida
 
