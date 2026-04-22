@@ -65,6 +65,16 @@ window.FORMATIONS = {
 const STORAGE_PREFIX = 'fc.v1.';
 const listeners = {};
 
+// Poné en true para que la app arranque LIMPIA (borra todo lo guardado en localStorage).
+// Volvé a false para volver a persistir entre recargas.
+window.RESET_ON_BOOT = false;
+if (window.RESET_ON_BOOT) {
+  Object.keys(localStorage)
+    .filter(k => k.startsWith(STORAGE_PREFIX))
+    .forEach(k => localStorage.removeItem(k));
+  console.info('[futbolClub] RESET_ON_BOOT activo — datos locales borrados.');
+}
+
 window.db = {
   load(key, fallback) {
     try {
