@@ -67,7 +67,8 @@ const listeners = {};
 
 // Poné en true para que la app arranque LIMPIA (borra todo lo guardado en localStorage).
 // Volvé a false para volver a persistir entre recargas.
-window.RESET_ON_BOOT = false;
+// (Para override local sin tocar el repo, ver src/local-config.js — gitignored.)
+if (typeof window.RESET_ON_BOOT === 'undefined') window.RESET_ON_BOOT = false;
 if (window.RESET_ON_BOOT) {
   Object.keys(localStorage)
     .filter(k => k.startsWith(STORAGE_PREFIX))
