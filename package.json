@@ -1,0 +1,16 @@
+{
+  "name": "futbolclub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "App web para armar alineaciones de futbol — tests con Playwright.",
+  "scripts": {
+    "serve": "http-server -p 8765 -c-1 .",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "screenshots": "playwright test tests/screenshots.spec.js --reporter=list"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0",
+    "http-server": "^14.1.1"
+  }
+}
