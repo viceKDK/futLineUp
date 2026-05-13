@@ -8,6 +8,12 @@ App web para armar alineaciones de fútbol (Fut 5 / 6 / 7 / 8 / 11), sortear equ
 
 > Más capturas de cada pantalla en [`screenshots/`](screenshots/).
 
+## Promo
+
+![futbolClub — promo 1:1](screenshots/promo-1x1.gif)
+
+Animación promocional en tres formatos: **16:9** (YouTube · web), **9:16** (Stories · Reels · TikTok) y **1:1** (IG Feed). Abrí `promo.html` y elegí el formato desde la barra superior. Tecla `H` (o botón "Modo limpio") esconde el chrome para grabar.
+
 ## Demo rápida
 
 Abrí `futbolClub.html` en cualquier navegador moderno. No hay build step.
