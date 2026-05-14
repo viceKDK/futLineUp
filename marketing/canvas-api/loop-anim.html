@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>futbolClub · loop-anim 8s 1:1</title>
+<style>
+  :root {
+    --pitch: #0e7a3e; --lime: #c6ff3d; --ink: #0c1410; --paper: #f4f3ec; --red: #ff3d4e;
+  }
+  html, body { margin: 0; background: var(--ink); color: var(--paper); font-family: "Space Grotesk", system-ui, sans-serif; }
+  .wrap { display: grid; place-items: center; min-height: 100vh; gap: 14px; padding: 24px; }
+  canvas { background: var(--paper); border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,.4); }
+  .ctrls { display: flex; gap: 10px; }
+  button { font: inherit; padding: 10px 20px; border-radius: 999px; border: 0; background: var(--lime); color: var(--ink); font-weight: 700; cursor: pointer; }
+  button.stop { background: var(--red); color: var(--paper); }
+  small { opacity: .6; font-family: ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <canvas id="cv" width="1080" height="1080"></canvas>
+  <div class="ctrls">
+    <button id="rec">⏺ Grabar 8s</button>
+    <button id="stop" class="stop" disabled>⏹ Stop</button>
+  </div>
+  <small>Loop 1:1 · 8s · 30fps · MediaRecorder → .webm</small>
+</div>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const DUR = 8000; // 8s loop
+const FPS = 30;
+
+const C = { pitch:'#0e7a3e', lime:'#c6ff3d', ink:'#0c1410', paper:'#f4f3ec', red:'#ff3d4e', cyan:'#33d6e6' };
+
+// 8 player slots forming a 3-3-1 around a square pitch
+const slots = [
+  [540, 880], [220, 720], [860, 720],
+  [180, 480], [540, 480], [900, 480],
+  [320, 260], [760, 260],
+];
+
+function ease(t){ return t<.5? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
+
+function drawPitch(t) {
+  // background
+  ctx.fillStyle = C.paper;
+  ctx.fillRect(0,0,W,H);
+
+  // pitch card
+  const pad = 80;
+  ctx.fillStyle = C.pitch;
+  roundRect(ctx, pad, pad, W-pad*2, H-pad*2, 32);
+  ctx.fill();
+
+  // lines
+  ctx.strokeStyle = C.paper;
+  ctx.lineWidth = 6;
+  ctx.globalAlpha = .9;
+  ctx.strokeRect(pad+20, pad+20, W-pad*2-40, H-pad*2-40);
+  ctx.beginPath();
+  ctx.moveTo(pad+20, H/2); ctx.lineTo(W-pad-20, H/2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(W/2, H/2, 120, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function drawPlayer(x, y, num, pulse) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(pulse, pulse);
+  ctx.beginPath();
+  ctx.arc(0,0,52,0,Math.PI*2);
+  ctx.fillStyle = C.lime;
+  ctx.fill();
+  ctx.lineWidth = 5; ctx.strokeStyle = C.ink; ctx.stroke();
+  ctx.fillStyle = C.ink;
+  ctx.font = 'bold 44px "Space Grotesk", system-ui';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(num, 0, 4);
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function drawBadge(t) {
+  // top-left lime chip
+  ctx.fillStyle = C.ink;
+  roundRect(ctx, 110, 110, 360, 84, 42); ctx.fill();
+  ctx.fillStyle = C.lime;
+  ctx.font = 'bold 42px "Space Grotesk", system-ui';
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText('futbolClub', 140, 152);
+
+  // bottom CTA, slides in
+  const slide = ease(Math.min(1, t/0.3));
+  const yCta = H - 200 + (1-slide)*60;
+  ctx.globalAlpha = slide;
+  ctx.fillStyle = C.ink;
+  roundRect(ctx, 110, yCta, W-220, 110, 55); ctx.fill();
+  ctx.fillStyle = C.lime;
+  ctx.font = 'bold 56px "Space Grotesk", system-ui';
+  ctx.textAlign='center';
+  ctx.fillText('Armá la 11 ⚽', W/2, yCta+72);
+  ctx.globalAlpha = 1;
+}
+
+function frame(timeMs) {
+  const t = (timeMs % DUR) / DUR;        // 0..1 loop
+  drawPitch(t);
+
+  // each player pulses in sequence
+  slots.forEach((s, i) => {
+    const phase = (t * slots.length) - i;
+    const pulse = 1 + 0.15 * Math.max(0, Math.cos(phase * Math.PI) ** 8);
+    drawPlayer(s[0], s[1], i+1, pulse);
+  });
+
+  drawBadge(t);
+}
+
+let start = performance.now();
+function tick(now){
+  frame(now - start);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// MediaRecorder
+const rec = document.getElementById('rec');
+const stop = document.getElementById('stop');
+let mr, chunks;
+rec.addEventListener('click', () => {
+  const stream = cv.captureStream(FPS);
+  chunks = [];
+  mr = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 8_000_000 });
+  mr.ondataavailable = e => e.data.size && chunks.push(e.data);
+  mr.onstop = () => {
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'loop-anim.webm';
+    a.click();
+  };
+  mr.start();
+  start = performance.now();
+  rec.disabled = true; stop.disabled = false;
+  setTimeout(() => { if (mr.state === 'recording') { mr.stop(); rec.disabled=false; stop.disabled=true; } }, DUR);
+});
+stop.addEventListener('click', () => { mr?.stop(); rec.disabled=false; stop.disabled=true; });
+</script>
+</body>
+</html>

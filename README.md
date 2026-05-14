@@ -14,6 +14,20 @@ App web para armar alineaciones de fútbol (Fut 5 / 6 / 7 / 8 / 11), sortear equ
 
 Animación promocional en tres formatos: **16:9** (YouTube · web), **9:16** (Stories · Reels · TikTok) y **1:1** (IG Feed). Abrí `promo.html` y elegí el formato desde la barra superior. Tecla `H` (o botón "Modo limpio") esconde el chrome para grabar.
 
+### Marketing videos (`marketing/`)
+
+11 piezas de video marketing listas para renderizar, en 5 tecnologías distintas y duraciones de 6s a 60s:
+
+| Tech                       | Videos | Duraciones        | Formatos          |
+|----------------------------|--------|-------------------|-------------------|
+| Remotion (React → MP4)     | 3      | 15s · 30s · 60s   | 16:9 · 9:16 · 1:1 |
+| FFmpeg scripts             | 2      | 6s · 20s          | 9:16 · 16:9       |
+| Motion Canvas (TS/2D)      | 2      | 10s · 45s         | 16:9              |
+| Canvas API + MediaRecorder | 2      | 8s loop · 30s     | 1:1 · 16:9        |
+| Manim (Python)             | 2      | 15s · 25s         | 16:9              |
+
+Cada pieza tiene su comando de render documentado en [`marketing/README.md`](marketing/README.md).
+
 ## Demo rápida
 
 Abrí `futbolClub.html` en cualquier navegador moderno. No hay build step.
