@@ -1,5 +1,5 @@
-import { makeScene2D, Circle, Rect, Txt, Line } from '@motion-canvas/2d';
-import { all, createRef, waitFor, easeOutBack, easeInOutCubic } from '@motion-canvas/core';
+import { makeScene2D, Circle, Txt, Line } from '@motion-canvas/2d';
+import { all, createRef, easeOutBack, easeInOutCubic } from '@motion-canvas/core';
 import { C, FONT_DISPLAY } from '../theme';
 
 // 10s bumper / intro de marca

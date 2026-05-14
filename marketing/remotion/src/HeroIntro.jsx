@@ -1,18 +1,5 @@
-import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig, Sequence } from 'remotion';
+import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 import { COLORS, FONTS, TAGLINE } from './theme.js';
-
-const Pitch = ({ progress }) => (
-  <svg viewBox="0 0 1200 700" style={{ width: '90%', height: '90%' }}>
-    <rect x="0" y="0" width="1200" height="700" fill={COLORS.pitch} />
-    <g stroke={COLORS.paper} strokeWidth="4" fill="none" opacity={progress}>
-      <rect x="30" y="30" width="1140" height="640" />
-      <line x1="600" y1="30" x2="600" y2="670" />
-      <circle cx="600" cy="350" r="80" />
-      <rect x="30" y="200" width="160" height="300" />
-      <rect x="1010" y="200" width="160" height="300" />
-    </g>
-  </svg>
-);
 
 const Player = ({ x, y, n, delay, frame, fps }) => {
   const s = spring({ frame: frame - delay, fps, config: { damping: 12, stiffness: 120 } });

@@ -9,6 +9,27 @@ SCREENS="../../screenshots"
 W=1920; H=1080; FPS=30
 PER=2.5  # segundos por slide × 8 slides = 20s
 
+# Resolve fonts. Override via FONT_BOLD / FONT_REGULAR env vars.
+find_font() {
+  local name="$1"; shift
+  for p in "$@"; do [ -f "$p" ] && { echo "$p"; return; }; done
+  command -v fc-match >/dev/null 2>&1 && fc-match -f '%{file}' "$name" 2>/dev/null || true
+}
+FONT_BOLD="${FONT_BOLD:-$(find_font 'DejaVu Sans:bold' \
+  /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf \
+  /usr/share/fonts/TTF/DejaVuSans-Bold.ttf \
+  /Library/Fonts/Arial\ Bold.ttf \
+  /System/Library/Fonts/Supplemental/Arial\ Bold.ttf \
+  /c/Windows/Fonts/arialbd.ttf)}"
+[ -z "${FONT_BOLD}" ] && { echo "✗ No bold font found. Set FONT_BOLD=/path/to/font.ttf" >&2; exit 1; }
+FONT_REGULAR="${FONT_REGULAR:-$(find_font 'DejaVu Sans' \
+  /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf \
+  /usr/share/fonts/TTF/DejaVuSans.ttf \
+  /Library/Fonts/Arial.ttf \
+  /System/Library/Fonts/Supplemental/Arial.ttf \
+  /c/Windows/Fonts/arial.ttf)}"
+[ -z "${FONT_REGULAR}" ] && FONT_REGULAR="${FONT_BOLD}"
+
 slides=(
   "01-home.png|MIS EQUIPOS"
   "02-mode.png|ELEGÍ MODO"
@@ -31,10 +52,10 @@ for s in "${slides[@]}"; do
             pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=#0c1410,
             zoompan=z='min(zoom+0.0015,1.08)':d=${FPS}*${PER}:s=${W}x${H}:fps=${FPS},
             drawbox=y=ih*0.86:color=#0c1410@0.75:width=iw:height=ih*0.14:t=fill,
-            drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:
+            drawtext=fontfile=${FONT_BOLD}:
                      text='${label}':fontcolor=#c6ff3d:fontsize=54:
                      x=80:y=h*0.89,
-            drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:
+            drawtext=fontfile=${FONT_REGULAR}:
                      text='futbolClub · 0$((i+1))/08':fontcolor=#f4f3ec:fontsize=28:
                      x=w-text_w-80:y=h*0.91
             [v${i}];"

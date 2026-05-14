@@ -149,22 +149,36 @@ function tick(now){
 requestAnimationFrame(tick);
 
 const rec=document.getElementById('rec'), stop=document.getElementById('stop');
-let mr, chunks;
+let mr, chunks, stopTimer;
+
+function pickMime(){
+  const opts = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
+  for(const m of opts){ if(window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; }
+  return '';
+}
+
 rec.addEventListener('click', () => {
   start = performance.now();
   const stream = cv.captureStream(FPS);
   chunks=[];
-  mr = new MediaRecorder(stream, {mimeType:'video/webm;codecs=vp9', videoBitsPerSecond: 12_000_000});
+  const mimeType = pickMime();
+  const recOpts = { videoBitsPerSecond: 12_000_000 };
+  if(mimeType) recOpts.mimeType = mimeType;
+  mr = new MediaRecorder(stream, recOpts);
+  const ext = (mimeType.startsWith('video/mp4')) ? 'mp4' : 'webm';
   mr.ondataavailable = e => e.data.size && chunks.push(e.data);
   mr.onstop = () => {
-    const blob=new Blob(chunks,{type:'video/webm'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='formation-draw.webm'; a.click();
+    const blob=new Blob(chunks,{type: mimeType || 'video/webm'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='formation-draw.'+ext; a.click();
   };
   mr.start();
   rec.disabled=true; stop.disabled=false;
-  setTimeout(()=>{ if(mr.state==='recording'){ mr.stop(); rec.disabled=false; stop.disabled=true; } }, DUR+100);
+  stopTimer = setTimeout(()=>{ if(mr.state==='recording'){ mr.stop(); rec.disabled=false; stop.disabled=true; } }, DUR+100);
 });
-stop.addEventListener('click', ()=>{ mr?.stop(); rec.disabled=false; stop.disabled=true; });
+stop.addEventListener('click', ()=>{
+  if(stopTimer){ clearTimeout(stopTimer); stopTimer=null; }
+  mr?.stop(); rec.disabled=false; stop.disabled=true;
+});
 </script>
 </body>
 </html>
