@@ -1,145 +1,158 @@
 # futbolClub
 
-App web para armar alineaciones de fútbol (Fut 5 / 6 / 7 / 8 / 11), sortear equipos, diseñar camisetas, enfrentar rivales y compartir la formación. En español rioplatense, estética editorial-deportiva, modo invitado local y sincronización Supabase opcional.
+Aplicación web para crear alineaciones de fútbol, organizar planteles y sorteos, registrar el seguimiento de jugadores y administrar competencias amateur.
 
-![futbolClub — Mis equipos](screenshots/01-home.png)
+[![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f.svg)](LICENSE)
+[![Branch](https://img.shields.io/badge/branch-develop-2563eb.svg)](https://github.com/viceKDK/futLineUp/tree/develop)
+[![Tests](https://img.shields.io/badge/Playwright-18%2F18%20passing-45ba4b.svg)](tests/)
 
-![license](https://img.shields.io/badge/license-MIT-green) ![stack](https://img.shields.io/badge/stack-React%20%2B%20Babel%20Standalone-blue)
+![Dashboard de futbolClub](screenshots/01-home.png)
 
-> Más capturas de cada pantalla en [`screenshots/`](screenshots/).
+## Descripción
 
-## Promo
+futbolClub reúne tres experiencias dentro de una misma aplicación:
 
-![futbolClub — promo 1:1](screenshots/promo-1x1.gif)
+- **Amigos:** creación de equipos, formaciones, sorteos, camisetas y contenido para compartir.
+- **Entrenador:** fichas de jugadores, entrenamientos, asistencia, evaluaciones y objetivos.
+- **Liga amateur:** calendario, resultados y tabla de posiciones.
 
-Animación promocional en tres formatos: **16:9** (YouTube · web), **9:16** (Stories · Reels · TikTok) y **1:1** (IG Feed). Abrí `promo.html` y elegí el formato desde la barra superior. Tecla `H` (o botón "Modo limpio") esconde el chrome para grabar.
+La aplicación funciona en modo invitado con persistencia local. La autenticación con Google y la sincronización entre dispositivos pueden habilitarse opcionalmente mediante Supabase.
 
-### Marketing videos (`marketing/`)
+## Funcionalidades principales
 
-11 piezas de video marketing listas para renderizar, en 5 tecnologías distintas y duraciones de 6s a 60s:
+### Equipos y alineaciones
 
-| Tech                       | Videos | Duraciones        | Formatos          |
-|----------------------------|--------|-------------------|-------------------|
-| Remotion (React → MP4)     | 3      | 15s · 30s · 60s   | 16:9 · 9:16 · 1:1 |
-| FFmpeg scripts             | 2      | 6s · 20s          | 9:16 · 16:9       |
-| Motion Canvas (TS/2D)      | 2      | 10s · 45s         | 16:9              |
-| Canvas API + MediaRecorder | 2      | 8s loop · 30s     | 1:1 · 16:9        |
-| Manim (Python)             | 2      | 15s · 25s         | 16:9              |
+- Modalidades Fut 5, 6, 7, 8 y 11.
+- Formaciones predefinidas y posicionamiento libre.
+- Drag and drop y asignación mediante click o toque.
+- Titulares, suplentes y capitán.
+- Fotos, dorsales, posiciones y pierna hábil.
+- Guardado y reapertura completa de cada alineación.
 
-Cada pieza tiene su comando de render documentado en [`marketing/README.md`](marketing/README.md).
+### Organización
 
-## Demo rápida
+- Sorteo balanceado de dos, tres o cuatro equipos.
+- Registro de partidos y resultados.
+- Diseño de camisetas y presets de colores.
+- Vista de formación propia contra rival.
+- Backup e importación JSON.
+- Carga rápida de planteles desde texto.
 
-Abrí `futbolClub.html` en cualquier navegador moderno. No hay build step.
+### Entrenador
 
-```bash
-# opcional: servidor estático local
-python -m http.server 8000
-# luego abrí http://localhost:8000/futbolClub.html
-```
+- Fichas individuales de jugadores.
+- Sesiones de entrenamiento y asistencia.
+- Evaluaciones por entrenamiento o partido.
+- Fortalezas, aspectos por mejorar y próximos objetivos.
+- Historial básico de evolución.
 
-## Pantallas
+### Liga amateur
 
-- **Mis equipos** — dashboard con equipos guardados, stats derivadas de partidos reales, filtros por modo y accesos rápidos.
-- **Nuevo equipo** — selector de modo (5/6/7/8/11) + nombre.
-- **Editor de alineación** — cancha SVG con drag & drop, formaciones predefinidas por modo, **modo libre** (arrastrás los círculos a cualquier punto), camiseta aplicada a los jugadores, auto-completar, subida de fotos por jugador, alta/baja de plantel.
-- **Sorteo** — 2/3/4 equipos, fijar jugadores por equipo (🔒), ruleta animada "sortear uno", "sortear todos" balanceado.
-- **Camisetas** — 4 diseños (lisa, rayada, banda, mitades), 10 swatches + color picker, dorsal y nombre, 8 presets (Blaugrana, Xeneize, Millonario, etc.).
-- **Modo rival** — cancha completa con dos alineaciones encaradas, estilo previa de TV.
-- **Compartir** — 3 formatos (Card / Lista / Stories 9:16), export **PNG / PDF / .ics** reales, deep-links a WhatsApp / Twitter / Telegram / Instagram, Web Share API nativa, toggles de "Incluir" que afectan el output.
-- **Entrenador** — fichas, entrenamientos, asistencia, evaluaciones, fortalezas, mejoras y objetivos por jugador.
-- **Liga amateur** — calendario, resultados y tabla automática con diferencia de gol.
-- **Cuenta y datos** — perfil Amigos/Entrenador/Liga, backup JSON, importación, carga rápida y Google/Supabase opcional.
+- Calendario de partidos.
+- Registro de resultados.
+- Tabla automática con puntos y diferencia de gol.
+- Gestión local de temporada y fixture.
 
-## Capturas nuevas
+### Compartir y exportar
+
+- Diseños Card, Lista y Stories 9:16.
+- Exportación PNG, PDF e ICS.
+- Enlaces autocontenidos con la alineación.
+- WhatsApp, Telegram, Instagram, X y Web Share API.
+
+## Capturas
 
 | Entrenador | Liga amateur | Cuenta y datos |
 |---|---|---|
-| [![Entrenador](screenshots/09-coach.png)](screenshots/09-coach.png) | [![Liga](screenshots/10-league.png)](screenshots/10-league.png) | [![Cuenta y datos](screenshots/11-settings.png)](screenshots/11-settings.png) |
+| [![Entrenador](screenshots/09-coach.png)](screenshots/09-coach.png) | [![Liga amateur](screenshots/10-league.png)](screenshots/10-league.png) | [![Cuenta y datos](screenshots/11-settings.png)](screenshots/11-settings.png) |
 
-La galería completa y regenerable está en [`screenshots/README.md`](screenshots/README.md).
+La galería completa está disponible en [screenshots/README.md](screenshots/README.md).
 
-## Features
+## Ejecución local
 
-- ✅ Drag & drop entre roster y cancha, swap entre posiciones, drop desde el plantel.
-- ✅ Modo libre de formaciones (posiciones arbitrarias guardadas por combinación modo+formación).
-- ✅ Subida real de fotos desde la galería (redimensionadas a 256px, guardadas como dataURL).
-- ✅ Persistencia completa en `localStorage` (plantel, equipos, draft del editor, sorteo, rival, kit, partidos, tweaks visuales).
-- ✅ Registro de partidos con resultados reales alimentando las stats del home.
-- ✅ Export PNG (html2canvas) y PDF (jsPDF) a resolución 2×.
-- ✅ Export .ics con la fecha/hora/cancha/rival del partido.
-- ✅ Web Share API nativa (con archivo adjunto cuando el navegador lo permite).
-- ✅ Tweaks visuales (estilo cancha: clásica/flat/noche · jugador en cancha: foto/camiseta · acento: lima/cyan/rojo) persistidos.
-- ✅ Backup/importación JSON, snapshots compartibles y carga rápida de jugadores.
-- ✅ Capitán, suplentes, edición ampliada y asignación táctil con click/toque.
-- ✅ Modos Entrenador y Liga con persistencia local.
-- ✅ Google Login y sincronización de cuenta preparados mediante Supabase.
+Requisitos:
 
-## Stack
+- Node.js 18 o superior.
+- npm.
+- Chrome para ejecutar las pruebas Playwright configuradas en el proyecto.
 
-- React 18 vía UMD
-- Babel Standalone para compilar JSX en el navegador
-- html2canvas 1.4.1 (export PNG/PDF)
-- jsPDF 2.5.1 (export PDF)
-- SVG puro para canchas y camisetas
-- localStorage como backend local
-- Supabase Auth, PostgreSQL y Storage como backend opcional
-
-Sin bundler ni build para la app principal. Todo corre abriendo el HTML;
-pm` se usa para Playwright y herramientas de desarrollo.
-
-## Estructura
-
+```powershell
+npm install
+npm run serve
 ```
+
+Abrir `http://localhost:8765/futbolClub.html`.
+
+La aplicación principal no requiere compilación: React y Babel se cargan en el navegador. npm se utiliza para el servidor local, las pruebas y la generación de capturas.
+
+## Scripts
+
+```powershell
+npm run serve        # servidor local en el puerto 8765
+npm test             # suite completa de Playwright
+npm run test:headed  # pruebas con navegador visible
+npm run screenshots  # regenera la galería de capturas
+```
+
+Estado verificado en `develop`: **18 pruebas aprobadas**.
+
+## Supabase y Google Login
+
+La nube es opcional. Sin configuración externa, futbolClub continúa funcionando con `localStorage`.
+
+Para habilitar autenticación y sincronización:
+
+1. Crear un proyecto en Supabase.
+2. Ejecutar [supabase/schema.sql](supabase/schema.sql) en el SQL Editor.
+3. Habilitar Google como proveedor de autenticación.
+4. Copiar `src/local-config.example.js` como `src/local-config.js`.
+5. Completar la URL y la clave pública `anon` del proyecto.
+
+`src/local-config.js` está ignorado por Git. No deben guardarse secretos ni claves privadas en el repositorio.
+
+## Tecnologías
+
+- React 18 mediante UMD.
+- Babel Standalone para JSX en navegador.
+- SVG para cancha y camisetas.
+- html2canvas y jsPDF para exportaciones.
+- localStorage para el modo local.
+- Supabase Auth, PostgreSQL y Storage como backend opcional.
+- Playwright para pruebas E2E y capturas.
+
+## Estructura del proyecto
+
+```text
 futLineUp/
-├── futbolClub.html          # shell: sidebar, router, tokens, fuentes, panel de tweaks
-└── src/
-    ├── data.jsx             # formaciones, roster default, persistencia (db + useStore)
-    ├── kits.jsx             # <Kit> SVG (4 diseños) + KIT_DESIGNS
-    ├── pitch.jsx            # <Pitch> SVG (drag&drop, modo libre, jugadores)
-    ├── page-home.jsx        # Mis equipos + registro de partidos
-    ├── page-mode.jsx        # Selector de modo + nombre
-    ├── page-editor.jsx      # Editor de alineación + alta/foto de jugadores
-    ├── page-draw.jsx        # Sorteo con ruleta
-    ├── page-kits.jsx        # Diseñador de camisetas
-    ├── page-rival.jsx       # Modo rival (cancha combinada)
-    ├── page-share.jsx       # Compartir + export PNG/PDF/ICS + redes
-    ├── page-platform.jsx    # Entrenador, liga, cuenta, backup e importación
-    └── supabase.jsx         # Auth y sincronización opcional
-└── supabase/schema.sql      # Esquema PostgreSQL + políticas RLS
+├── futbolClub.html
+├── src/
+│   ├── data.jsx
+│   ├── pitch.jsx
+│   ├── kits.jsx
+│   ├── page-home.jsx
+│   ├── page-mode.jsx
+│   ├── page-editor.jsx
+│   ├── page-draw.jsx
+│   ├── page-kits.jsx
+│   ├── page-rival.jsx
+│   ├── page-share.jsx
+│   ├── page-platform.jsx
+│   └── supabase.jsx
+├── supabase/
+│   └── schema.sql
+├── tests/
+├── screenshots/
+├── marketing/
+└── docs/
 ```
 
-## Datos en localStorage
+## Documentación
 
-Todas las claves usan prefijo `fc.v1.`:
+- [Plan de implementación](docs/PLAN_IMPLEMENTACION.md)
+- [Estado actual](docs/ESTADO_IMPLEMENTACION.md)
+- [Galería de capturas](screenshots/README.md)
+- [Piezas de marketing](marketing/README.md)
 
-| Clave                | Contenido                                                |
-|----------------------|----------------------------------------------------------|
-| `fc.v1.roster`       | Plantel (nombre, dorsal, posición, foto base64)          |
-| `fc.v1.teams`        | Equipos guardados                                        |
-| `fc.v1.editor`       | Draft del editor (nombre, modo, formación, kit, asign.)  |
-| `fc.v1.draw`         | Nº de equipos, asignaciones, lockeos del sorteo          |
-| `fc.v1.rival`        | Modo/formaciones/kits del modo rival                     |
-| `fc.v1.currentKit`   | Camiseta activa                                          |
-| `fc.v1.matches`      | Historial de partidos (equipo, resultado, rival, fecha)  |
-| `fc.v1.matchInfo`    | Fecha/hora/cancha/rival del próximo partido              |
-| `fc.v1.shareInclude` | Toggles del share (nombres, kit, venue, stats, wm)       |
-| `fc.v1.tweaks`       | Ajustes visuales (pitchStyle, playerStyle, accent)       |
-| `fc.v1.profile`      | Perfil y experiencia Amigos/Entrenador/Liga              |
-| `fc.v1.trainingSessions` | Entrenamientos registrados                           |
-| `fc.v1.attendance`   | Asistencia por entrenamiento                              |
-| `fc.v1.evaluations`  | Evaluaciones y objetivos por jugador                      |
-| `fc.v1.league`       | Liga, temporada, fixture y resultados                     |
+## Licencia
 
-## Origen
-
-Diseñado en [claude.ai/design](https://claude.ai/design) y exportado como handoff bundle. Implementación pixel-perfect del prototipo original + toda la lógica de backend client-side para dejarlo full funcional.
-
-## Modos de producto
-
-- **Amigos**: formaciones, sorteo, kits, rival y compartir.
-- **Entrenador**: sesiones, asistencia, fichas y evaluaciones por jugador.
-- **Liga amateur**: calendario, resultados y tabla de posiciones.
-- **Cuenta y datos**: perfil de uso, backup/importación y Google Login/Supabase opcional.
-
-La aplicación mantiene el modo invitado local. Para activar la nube, copiá `src/local-config.example.js` como `src/local-config.js`, completá la URL y anon key, y ejecutá [`supabase/schema.sql`](supabase/schema.sql) en el proyecto Supabase. Más detalles en [`docs/ESTADO_IMPLEMENTACION.md`](docs/ESTADO_IMPLEMENTACION.md).
+Este proyecto se distribuye bajo la [Licencia MIT](LICENSE).
