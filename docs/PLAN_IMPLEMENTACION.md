@@ -10,6 +10,8 @@ Este documento define la evolución de futbolClub desde una aplicación local pa
 
 También documenta los cambios técnicos necesarios, la incorporación futura de Supabase y Google Login, la estrategia de migración desde `localStorage`, los hallazgos de React Doctor y un roadmap ejecutable por fases.
 
+> Estado del plan: implementación funcional integrada en `develop` en el commit `40a694a`. La activación real de Supabase depende de configurar el proyecto externo.
+
 ## 2. Decisiones acordadas
 
 - Mantener futbolClub como una sola aplicación y una sola marca.
@@ -578,29 +580,25 @@ No conviene migrar el stack únicamente para obtener un score de la herramienta.
 - Movimiento reducido.
 - Conexión lenta y modo offline.
 
-Nota de entorno: la suite Playwright existente no pudo ejecutarse en la revisión inicial porque faltaba el ejecutable de Chromium de Playwright. Esto debe resolverse con la instalación controlada del navegador antes de usar la suite como gate.
+Nota de entorno resuelta: Playwright usa el canal de Chrome instalado en el sistema. La suite ampliada finaliza con 18/18 pruebas y la regeneración documental de capturas también está automatizada.
 
 ## 15. Estrategia de ramas
 
-Este documento se creó en:
+La implementación se integró en:
 
 ```text
-docs/roadmap-product-modes-supabase
+develop · 40a694a
 ```
 
-También se creó la rama local de integración:
+La rama temporal `docs/roadmap-product-modes-supabase` fue eliminada localmente y del remoto después del merge. La rama activa y publicada es `develop`.
+
+Flujo vigente:
 
 ```text
-develop
+rama funcional → develop → main
 ```
 
-Flujo acordado:
-
-```text
-rama de trabajo → develop → main
-```
-
-La rama activa de trabajo se integrará primero en `develop`. `main` queda reservada para versiones estables o publicables.
+`main` queda reservada para versiones estables o publicables.
 
 Reglas sugeridas:
 

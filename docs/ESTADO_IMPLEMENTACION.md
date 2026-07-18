@@ -2,6 +2,8 @@
 
 Fecha: 2026-07-17
 
+Rama de integración actual: `develop` · Commit base de la implementación: `40a694a`. La rama temporal de trabajo fue integrada y eliminada local y remotamente.
+
 ## Implementado
 
 - Persistencia completa de alineaciones: titulares, posiciones libres, suplentes, capitán y kit.
@@ -39,3 +41,12 @@ El alcance funcional del roadmap está representado, pero estas mejoras requiere
 - Planes comerciales y métricas, únicamente después de validar uso recurrente.
 
 Estas tareas no pueden cerrarse responsablemente sin proyecto Supabase, usuarios reales y decisiones de privacidad/operación.
+## Evidencia visual
+
+Las capturas actualizadas están documentadas en [`screenshots/README.md`](../screenshots/README.md). Incluyen las diez pantallas navegables y tres estados especiales: editor autocompletado, sorteo terminado y panel de ajustes.
+
+Nuevas capturas principales:
+
+- `screenshots/09-coach.png`
+- `screenshots/10-league.png`
+- `screenshots/11-settings.png`

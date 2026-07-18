@@ -1,6 +1,6 @@
 # futbolClub
 
-App web para armar alineaciones de fútbol (Fut 5 / 6 / 7 / 8 / 11), sortear equipos, diseñar camisetas, enfrentar rivales y compartir la formación. En español rioplatense, estética editorial-deportiva, 100% client-side.
+App web para armar alineaciones de fútbol (Fut 5 / 6 / 7 / 8 / 11), sortear equipos, diseñar camisetas, enfrentar rivales y compartir la formación. En español rioplatense, estética editorial-deportiva, modo invitado local y sincronización Supabase opcional.
 
 ![futbolClub — Mis equipos](screenshots/01-home.png)
 
@@ -47,6 +47,17 @@ python -m http.server 8000
 - **Camisetas** — 4 diseños (lisa, rayada, banda, mitades), 10 swatches + color picker, dorsal y nombre, 8 presets (Blaugrana, Xeneize, Millonario, etc.).
 - **Modo rival** — cancha completa con dos alineaciones encaradas, estilo previa de TV.
 - **Compartir** — 3 formatos (Card / Lista / Stories 9:16), export **PNG / PDF / .ics** reales, deep-links a WhatsApp / Twitter / Telegram / Instagram, Web Share API nativa, toggles de "Incluir" que afectan el output.
+- **Entrenador** — fichas, entrenamientos, asistencia, evaluaciones, fortalezas, mejoras y objetivos por jugador.
+- **Liga amateur** — calendario, resultados y tabla automática con diferencia de gol.
+- **Cuenta y datos** — perfil Amigos/Entrenador/Liga, backup JSON, importación, carga rápida y Google/Supabase opcional.
+
+## Capturas nuevas
+
+| Entrenador | Liga amateur | Cuenta y datos |
+|---|---|---|
+| [![Entrenador](screenshots/09-coach.png)](screenshots/09-coach.png) | [![Liga](screenshots/10-league.png)](screenshots/10-league.png) | [![Cuenta y datos](screenshots/11-settings.png)](screenshots/11-settings.png) |
+
+La galería completa y regenerable está en [`screenshots/README.md`](screenshots/README.md).
 
 ## Features
 
@@ -59,6 +70,10 @@ python -m http.server 8000
 - ✅ Export .ics con la fecha/hora/cancha/rival del partido.
 - ✅ Web Share API nativa (con archivo adjunto cuando el navegador lo permite).
 - ✅ Tweaks visuales (estilo cancha: clásica/flat/noche · jugador en cancha: foto/camiseta · acento: lima/cyan/rojo) persistidos.
+- ✅ Backup/importación JSON, snapshots compartibles y carga rápida de jugadores.
+- ✅ Capitán, suplentes, edición ampliada y asignación táctil con click/toque.
+- ✅ Modos Entrenador y Liga con persistencia local.
+- ✅ Google Login y sincronización de cuenta preparados mediante Supabase.
 
 ## Stack
 
@@ -67,9 +82,11 @@ python -m http.server 8000
 - html2canvas 1.4.1 (export PNG/PDF)
 - jsPDF 2.5.1 (export PDF)
 - SVG puro para canchas y camisetas
-- localStorage como backend
+- localStorage como backend local
+- Supabase Auth, PostgreSQL y Storage como backend opcional
 
-Sin bundler, sin build, sin dependencias `npm`. Todo corre abriendo el HTML.
+Sin bundler ni build para la app principal. Todo corre abriendo el HTML;
+pm` se usa para Playwright y herramientas de desarrollo.
 
 ## Estructura
 
@@ -86,7 +103,10 @@ futLineUp/
     ├── page-draw.jsx        # Sorteo con ruleta
     ├── page-kits.jsx        # Diseñador de camisetas
     ├── page-rival.jsx       # Modo rival (cancha combinada)
-    └── page-share.jsx       # Compartir + export PNG/PDF/ICS + redes
+    ├── page-share.jsx       # Compartir + export PNG/PDF/ICS + redes
+    ├── page-platform.jsx    # Entrenador, liga, cuenta, backup e importación
+    └── supabase.jsx         # Auth y sincronización opcional
+└── supabase/schema.sql      # Esquema PostgreSQL + políticas RLS
 ```
 
 ## Datos en localStorage
@@ -105,6 +125,11 @@ Todas las claves usan prefijo `fc.v1.`:
 | `fc.v1.matchInfo`    | Fecha/hora/cancha/rival del próximo partido              |
 | `fc.v1.shareInclude` | Toggles del share (nombres, kit, venue, stats, wm)       |
 | `fc.v1.tweaks`       | Ajustes visuales (pitchStyle, playerStyle, accent)       |
+| `fc.v1.profile`      | Perfil y experiencia Amigos/Entrenador/Liga              |
+| `fc.v1.trainingSessions` | Entrenamientos registrados                           |
+| `fc.v1.attendance`   | Asistencia por entrenamiento                              |
+| `fc.v1.evaluations`  | Evaluaciones y objetivos por jugador                      |
+| `fc.v1.league`       | Liga, temporada, fixture y resultados                     |
 
 ## Origen
 
