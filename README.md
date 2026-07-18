@@ -109,3 +109,12 @@ Todas las claves usan prefijo `fc.v1.`:
 ## Origen
 
 Diseñado en [claude.ai/design](https://claude.ai/design) y exportado como handoff bundle. Implementación pixel-perfect del prototipo original + toda la lógica de backend client-side para dejarlo full funcional.
+
+## Modos de producto
+
+- **Amigos**: formaciones, sorteo, kits, rival y compartir.
+- **Entrenador**: sesiones, asistencia, fichas y evaluaciones por jugador.
+- **Liga amateur**: calendario, resultados y tabla de posiciones.
+- **Cuenta y datos**: perfil de uso, backup/importación y Google Login/Supabase opcional.
+
+La aplicación mantiene el modo invitado local. Para activar la nube, copiá `src/local-config.example.js` como `src/local-config.js`, completá la URL y anon key, y ejecutá [`supabase/schema.sql`](supabase/schema.sql) en el proyecto Supabase. Más detalles en [`docs/ESTADO_IMPLEMENTACION.md`](docs/ESTADO_IMPLEMENTACION.md).

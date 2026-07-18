@@ -54,6 +54,8 @@
     overflow-x: hidden;
   }
   button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   input, select, textarea { font: inherit; color: inherit; }
   img { display: block; max-width: 100%; }
 
@@ -295,6 +297,10 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+
   @media (max-width: 900px) {
     .app-shell { grid-template-columns: 1fr; }
     .sidebar {
@@ -332,6 +338,11 @@
       <button class="nav-item" data-page="kits"><span class="nav-dot"></span> Camisetas</button>
       <button class="nav-item" data-page="rival"><span class="nav-dot"></span> Modo rival</button>
       <button class="nav-item" data-page="share"><span class="nav-dot"></span> Compartir</button>
+
+      <div class="nav-label">Gestión</div>
+      <button class="nav-item" data-page="coach"><span class="nav-dot"></span> Entrenador</button>
+      <button class="nav-item" data-page="league"><span class="nav-dot"></span> Liga amateur</button>
+      <button class="nav-item" data-page="settings"><span class="nav-dot"></span> Cuenta y datos</button>
     </nav>
 
     <div class="sidebar-footer">
@@ -351,7 +362,10 @@
     <div id="page-draw"   class="page"></div>
     <div id="page-kits"   class="page"></div>
     <div id="page-rival"  class="page"></div>
-    <div id="page-share"  class="page"></div>
+    <div id="page-share"    class="page"></div>
+    <div id="page-coach"    class="page"></div>
+    <div id="page-league"   class="page"></div>
+    <div id="page-settings" class="page"></div>
   </main>
 </div>
 
@@ -442,12 +456,19 @@
     if (!btn) return;
     go(btn.dataset.page);
   });
-  function go(page) {
+  function go(page, updateHistory = true) {
+    if (!document.getElementById('page-' + page)) page = 'home';
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
+    if (updateHistory && !location.hash.startsWith('#share=')) history.pushState({page}, '', `#${page}`);
     window.scrollTo({top:0});
   }
   window.go = go;
+  window.addEventListener('popstate', event => go(event.state?.page || location.hash.slice(1) || 'home', false));
+  window.addEventListener('DOMContentLoaded', () => {
+    const initial = location.hash.startsWith('#share=') ? 'share' : (location.hash.slice(1) || 'home');
+    go(initial, false);
+  });
 </script>
 
 <!-- Toast helper -->
@@ -464,9 +485,16 @@
   };
 </script>
 
+<script>
+  window.addEventListener('fc:storage-error', () => window.__toast?.('No se pudieron guardar los datos. Exportá un backup.'));
+</script>
+
 <!-- Export libs -->
 <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
+
+<!-- Optional cloud backend -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- React -->
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -478,6 +506,7 @@
 
 <!-- Shared data + components -->
 <script type="text/babel" src="src/data.jsx"></script>
+<script type="text/babel" src="src/supabase.jsx"></script>
 <script type="text/babel" src="src/kits.jsx"></script>
 <script type="text/babel" src="src/pitch.jsx"></script>
 
@@ -489,6 +518,7 @@
 <script type="text/babel" src="src/page-kits.jsx"></script>
 <script type="text/babel" src="src/page-rival.jsx"></script>
 <script type="text/babel" src="src/page-share.jsx"></script>
+<script type="text/babel" src="src/page-platform.jsx"></script>
 
 </body>
 </html>

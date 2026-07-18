@@ -82,6 +82,20 @@ function EditorPage() {
   };
 
   const onFieldPlayer = (id) => (draft.assignedIds || []).includes(id);
+  const toggleSubstitute = (id) => setDraft(d => {
+    const substitutes = new Set(d.substituteIds || []);
+    substitutes.has(id) ? substitutes.delete(id) : substitutes.add(id);
+    return { ...d, substituteIds: [...substitutes] };
+  });
+  const setCaptain = (id) => setDraft(d => ({ ...d, captainId: d.captainId === id ? null : id }));
+  const quickAssign = (id) => {
+    const ids = draft.assignedIds || [];
+    const current = ids.findIndex(value => value === id);
+    if (current >= 0) return setIds(next => next.map(value => value === id ? null : value));
+    const empty = Array.from({length:size}, (_,index)=>index).find(index => ids[index] == null);
+    if (empty == null) return window.__toast?.('La cancha está completa');
+    handleAssign(id, empty);
+  };
 
   const autoFill = () => {
     setIds(ids => {
@@ -115,6 +129,12 @@ function EditorPage() {
       secondary: draft.kit.secondary,
       lastPlayed: "ahora",
       players: (draft.assignedIds || []).filter(Boolean).length,
+      assignedIds: (draft.assignedIds || []).slice(),
+      freePositions: { ...(draft.freePositions || {}) },
+      freeMode: !!draft.freeMode,
+      captainId: draft.captainId || null,
+      substituteIds: (draft.substituteIds || []).slice(),
+      updatedAt: new Date().toISOString(),
     };
     setTeams(prev => {
       const idx = prev.findIndex(t => t.id === id);
@@ -146,7 +166,10 @@ function EditorPage() {
   };
 
   const addPlayer = (newP) => {
-    setRoster(prev => [...prev, { ...newP, id: window.nextPlayerId(prev) }]);
+    setRoster(prev => [...prev, { ...newP, id: window.nextPlayerId(prev), active: true }]);
+  };
+  const updatePlayer = (id, changes) => {
+    setRoster(prev => prev.map(p => p.id === id ? { ...p, ...changes } : p));
   };
   const removePlayer = (id) => {
     setRoster(prev => prev.filter(p => p.id !== id));
@@ -158,6 +181,8 @@ function EditorPage() {
   const visibleRoster = roster.filter(p =>
     !search.trim() || p.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const substituteSet = React.useMemo(() => new Set(draft.substituteIds || []), [draft.substituteIds]);
 
   // keep assignedIds length in sync when mode/formation changes
   React.useEffect(() => {
@@ -271,7 +296,7 @@ function EditorPage() {
                 const onField = onFieldPlayer(p.id);
                 return (
                   <div key={p.id}
-                       className={`roster-item ${onField?'on-field':''}`}
+                       className={`roster-item ${onField ? 'on-field' : ''}`}
                        draggable={!onField}
                        onDragStart={(e)=>onRosterDragStart(e, p.id)}>
                     <button type="button" className="roster-avatar-btn"
@@ -294,8 +319,11 @@ function EditorPage() {
                       </div>
                     </div>
                     <div className="roster-state">
-                      {onField ? <span className="dot on"></span> : <span className="drag-hint">⋮⋮</span>}
-                      <button className="roster-del" onClick={()=>removePlayer(p.id)} title="Eliminar del plantel">×</button>
+                      <button className={`bench-btn ${substituteSet.has(p.id) ? 'on' : ''}`} onClick={()=>toggleSubstitute(p.id)} title="Suplente" aria-label={`Alternar suplencia de ${p.name}`}>S</button>
+                      {onField && <button className={`captain-btn ${draft.captainId === p.id ? 'on' : ''}`} onClick={()=>setCaptain(p.id)} title="Capitán" aria-label={`Alternar capitanía de ${p.name}`}>C</button>}
+                      <button className="quick-assign" onClick={()=>quickAssign(p.id)} title={onField ? "Sacar de la cancha" : "Agregar a la primera posición libre"} aria-label={onField ? `Sacar a ${p.name} de la cancha` : `Agregar a ${p.name} a la cancha`}>{onField ? "−" : "+"}</button>
+                      <button className="roster-edit" onClick={()=>setModal({type:"edit", player:p})} title="Editar jugador" aria-label={`Editar a ${p.name}`}>✎</button>
+                      <button className="roster-del" onClick={()=>removePlayer(p.id)} title="Eliminar del plantel" aria-label={`Eliminar a ${p.name}`}>×</button>
                     </div>
                   </div>
                 );
@@ -314,21 +342,29 @@ function EditorPage() {
       <input ref={photoInputRef} type="file" accept="image/*"
              style={{display:'none'}} onChange={onPhotoChange}/>
 
-      {modal?.type === 'add' && (
+      {(modal?.type === 'add' || modal?.type === 'edit') && (
         <AddPlayerModal
+          initial={modal.type === 'edit' ? modal.player : null}
           onClose={()=>setModal(null)}
-          onAdd={(p) => { addPlayer(p); setModal(null); }}
+          onAdd={(p) => {
+            if (modal.type === 'edit') updatePlayer(modal.player.id, p);
+            else addPlayer(p);
+            setModal(null);
+            window.__toast?.(modal.type === 'edit' ? 'Jugador actualizado' : 'Jugador agregado');
+          }}
         />
       )}
     </div>
   );
 }
 
-function AddPlayerModal({ onClose, onAdd }) {
-  const [name, setName] = React.useState('');
-  const [num, setNum]   = React.useState('');
-  const [pos, setPos]   = React.useState('MED');
-  const [photo, setPhoto] = React.useState(null);
+function AddPlayerModal({ onClose, onAdd, initial = null }) {
+  const [name, setName] = React.useState(initial?.name || '');
+  const [num, setNum]   = React.useState(initial?.num ?? '');
+  const [pos, setPos]   = React.useState(initial?.pos || 'MED');
+  const [secondaryPos, setSecondaryPos] = React.useState(initial?.secondaryPos || '');
+  const [preferredFoot, setPreferredFoot] = React.useState(initial?.preferredFoot || '');
+  const [photo, setPhoto] = React.useState(initial?.photo || null);
 
   const onFile = async (e) => {
     const f = e.target.files?.[0];
@@ -345,7 +381,10 @@ function AddPlayerModal({ onClose, onAdd }) {
       name: name.trim(),
       num: parseInt(num, 10) || 0,
       pos,
-      photo
+      photo,
+      secondaryPos,
+      preferredFoot,
+      active: initial?.active !== false,
     });
   };
 
@@ -354,8 +393,8 @@ function AddPlayerModal({ onClose, onAdd }) {
       <div className="modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-head">
           <div>
-            <div className="page-kicker">Nuevo jugador</div>
-            <div className="modal-title">Sumalo al plantel</div>
+            <div className="page-kicker">{initial ? "Editar jugador" : "Nuevo jugador"}</div>
+            <div className="modal-title">{initial ? "Actualizá su ficha" : "Sumalo al plantel"}</div>
           </div>
           <button className="btn sm ghost" onClick={onClose}>✕</button>
         </div>
@@ -382,11 +421,23 @@ function AddPlayerModal({ onClose, onAdd }) {
                 <option value="DEL">Delantero</option>
               </select>
             </label>
+            <label>
+              <span>Posición secundaria</span>
+              <select value={secondaryPos} onChange={e=>setSecondaryPos(e.target.value)}>
+                <option value="">Sin definir</option><option value="ARQ">Arquero</option><option value="DEF">Defensor</option><option value="MED">Mediocampista</option><option value="DEL">Delantero</option>
+              </select>
+            </label>
+            <label>
+              <span>Pierna hábil</span>
+              <select value={preferredFoot} onChange={e=>setPreferredFoot(e.target.value)}>
+                <option value="">Sin definir</option><option value="right">Derecha</option><option value="left">Izquierda</option><option value="both">Ambas</option>
+              </select>
+            </label>
           </div>
         </div>
         <div className="modal-foot">
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn primary" onClick={submit} disabled={!name.trim()}>Agregar</button>
+          <button className="btn primary" onClick={submit} disabled={!name.trim()}>{initial ? "Guardar cambios" : "Agregar"}</button>
         </div>
       </div>
     </div>
@@ -552,10 +603,13 @@ editorCSS.textContent = `
   .roster-num { font-family: var(--font-mono); }
   .roster-state { display: flex; align-items: center; gap: 6px; }
   .drag-hint { color: var(--fg-dim); font-family: var(--font-mono); font-size: 14px; }
-  .roster-del {
+  .bench-btn, .captain-btn, .quick-assign, .roster-edit, .roster-del {
     width: 20px; height: 20px; border-radius: 4px;
     background: transparent; color: var(--fg-dim); font-size: 14px; line-height: 1;
   }
+  .bench-btn.on, .captain-btn.on { background: var(--accent); color: #0e1210; }
+  .quick-assign:hover { background: var(--accent); color: #0e1210; }
+  .roster-edit:hover { background: var(--line); color: var(--fg); }
   .roster-del:hover { background: var(--accent-2); color: #fff; }
   .dot.on { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
   .roster-add { width: 100%; margin-top: 8px; border: 1px dashed var(--line); color: var(--fg-mute); }

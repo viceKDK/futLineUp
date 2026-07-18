@@ -1,14 +1,22 @@
 // Compartir / exportar — PNG/PDF/ICS reales, deep-links a redes, include toggles funcionales
 function SharePage() {
   const [styleTab, setStyleTab] = React.useState("card");
-  const [roster] = window.useStore('roster', window.DEFAULT_ROSTER);
-  const [draft]  = window.useStore('editor', {
+  const sharedSnapshot = React.useMemo(() => {
+    const raw = location.hash.startsWith('#share=') ? location.hash.slice(7) : null;
+    if (!raw) return null;
+    try { return window.decodeLineupSnapshot(raw); }
+    catch (_) { window.__toast?.('El enlace compartido no es válido'); return null; }
+  }, []);
+  const [storedRoster] = window.useStore('roster', window.DEFAULT_ROSTER);
+  const [storedDraft]  = window.useStore('editor', {
     name: "Los Pibes del Viernes",
     mode: 7, formIdx: 0,
     kit: { design: "stripes", primary: "#3b82f6", secondary: "#ffffff" },
     assignedIds: [],
     freePositions: {},
   });
+  const roster = sharedSnapshot?.roster || storedRoster;
+  const draft = sharedSnapshot?.draft || storedDraft;
   const [currentKit] = window.useStore('currentKit', null);
 
   // Match info (persistido, editable acá)
@@ -17,13 +25,14 @@ function SharePage() {
     d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7 || 7)); // próximo viernes
     return d.toISOString().slice(0,10);
   })();
-  const [match, setMatch] = window.useStore('matchInfo', {
+  const [storedMatch, setMatch] = window.useStore('matchInfo', {
     date: defaultDate,
     time: "21:30",
     venue: "Canchita Palermo",
     opponent: "Rival",
     myScore: null, theirScore: null,
   });
+  const match = sharedSnapshot?.match || storedMatch;
 
   // Include toggles
   const [include, setInclude] = window.useStore('shareInclude', {
@@ -49,7 +58,13 @@ function SharePage() {
   const captain = players.find(Boolean)?.name || "—";
 
   const slug = (draft.name || 'equipo').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-  const shareURL = `${location.origin}${location.pathname}#${slug}`;
+  const sharedPlayerIds = new Set([...(draft.assignedIds || []), ...(draft.substituteIds || [])]);
+  const sharePayload = {
+    draft: { ...draft, assignedIds: (draft.assignedIds || []).slice(), freePositions: draft.freePositions || {} },
+    roster: roster.filter(player => sharedPlayerIds.has(player.id)),
+    match,
+  };
+  const shareURL = `${location.origin}${location.pathname}#share=${window.encodeLineupSnapshot(sharePayload)}`;
   const shareText = `Alineación ${draft.name} (${formation.name}) · ${match.date} ${match.time} · ${match.venue}`;
 
   // --- Refs for capture ---

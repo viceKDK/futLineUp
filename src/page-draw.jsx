@@ -67,7 +67,7 @@ function DrawPage() {
 
   const drawAll = () => {
     const unassigned = pool.filter(p => p.team === null);
-    const shuffled = [...unassigned].sort(() => Math.random() - 0.5);
+    const shuffled = window.fisherYates(unassigned);
     const teamSizes = Array(numTeams).fill(0);
     pool.forEach(p => { if (p.team !== null) teamSizes[p.team]++; });
     const updates = {};

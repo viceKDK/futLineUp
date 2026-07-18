@@ -122,8 +122,8 @@ function KitsPage() {
           <div className="panel">
             <div className="panel-head">Presets</div>
             <div className="presets-grid">
-              {presets.map((p,i) => (
-                <button key={i} className="preset"
+              {presets.map((p) => (
+                <button key={p.name} className="preset"
                   onClick={()=>setKit(prev => ({ ...prev, design: p.design, primary: p.primary, secondary: p.secondary }))}>
                   <Kit design={p.design} primary={p.primary} secondary={p.secondary} size={52} showNumber={false}/>
                   <span>{p.name}</span>

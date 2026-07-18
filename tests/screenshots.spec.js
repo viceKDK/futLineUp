@@ -8,6 +8,9 @@ const SHOTS = [
   { id: 'kits',   file: '05-kits.png' },
   { id: 'rival',  file: '06-rival.png' },
   { id: 'share',  file: '07-share.png' },
+  { id: 'coach', file: '09-coach.png' },
+  { id: 'league', file: '10-league.png' },
+  { id: 'settings', file: '11-settings.png' },
 ];
 
 test('captura screenshots de cada seccion', async ({ page }) => {

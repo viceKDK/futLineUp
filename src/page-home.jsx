@@ -1,6 +1,7 @@
 // Home / Mis equipos — stats derivadas de partidos reales
 function HomePage() {
-  const [teams]   = window.useStore('teams',   window.DEFAULT_SAVED_TEAMS);
+  const [teams, setTeams] = window.useStore('teams', window.DEFAULT_SAVED_TEAMS);
+  const [profile] = window.useStore('profile', window.DEFAULT_PROFILE);
   const [roster]  = window.useStore('roster',  window.DEFAULT_ROSTER);
   const [matches, setMatches] = window.useStore('matches', []);
   const [, setDraft] = window.useStore('editor', null);
@@ -14,19 +15,34 @@ function HomePage() {
       name: t.name,
       mode: t.mode,
       formIdx: Math.max(0, fIdx),
-      freeMode: false,
+      freeMode: !!t.freeMode,
       kit: { design: t.kit, primary: t.color, secondary: t.secondary || "#0f172a" },
-      assignedIds: [],
-      freePositions: {},
+      assignedIds: (t.assignedIds || []).slice(),
+      freePositions: { ...(t.freePositions || {}) },
+      captainId: t.captainId || null,
+      substituteIds: (t.substituteIds || []).slice(),
     });
     window.go('editor');
   };
 
   const deleteTeam = (t) => {
     if (!confirm(`¿Borrar "${t.name}"?`)) return;
-    window.db.save('teams', teams.filter(x => x.id !== t.id));
+    setTeams(prev => prev.filter(x => x.id !== t.id));
   };
 
+  const duplicateTeam = (team) => {
+    const copy = {
+      ...team,
+      id: `t${Date.now()}`,
+      name: `${team.name} (copia)`,
+      assignedIds: (team.assignedIds || []).slice(),
+      freePositions: structuredClone(team.freePositions || {}),
+      substituteIds: (team.substituteIds || []).slice(),
+      updatedAt: new Date().toISOString(),
+    };
+    setTeams(prev => [...prev, copy]);
+    window.__toast?.('Equipo duplicado');
+  };
   const filtered = teams.filter(t =>
     filter === 'all' ? true : t.mode === parseInt(filter, 10)
   );
@@ -39,7 +55,7 @@ function HomePage() {
     <div>
       <div className="page-head">
         <div>
-          <div className="page-kicker">Temporada 26 · Otoño</div>
+          <div className="page-kicker">{profile.season || (profile.experience === "coach" ? "Modo entrenador" : profile.experience === "league" ? "Modo liga" : "Tu fútbol, a tu manera")}</div>
           <h1 className="page-title">Mis equipos</h1>
           <div className="page-sub">Armá la alineación, sorteá pibes, elegí la camiseta. Todo en un solo lado.</div>
         </div>
@@ -111,7 +127,7 @@ function HomePage() {
       </div>
 
       <div className="teams-grid">
-        {filtered.map(t => <TeamCard key={t.id} team={t} onOpen={()=>loadTeam(t)} onDelete={()=>deleteTeam(t)}/>)}
+        {filtered.map(t => <TeamCard key={t.id} team={t} onOpen={()=>loadTeam(t)} onDuplicate={()=>duplicateTeam(t)} onDelete={()=>deleteTeam(t)}/>)}
         <button className="team-card new" onClick={()=>window.go('mode')}>
           <div className="new-plus">+</div>
           <div className="new-label">Nuevo equipo</div>
@@ -207,7 +223,7 @@ function MatchModal({ teams, onClose, onSave }) {
   );
 }
 
-function TeamCard({ team, onOpen, onDelete }) {
+function TeamCard({ team, onOpen, onDelete, onDuplicate }) {
   return (
     <div className="team-card-wrap">
       <button className="team-card" onClick={onOpen}>
@@ -227,7 +243,8 @@ function TeamCard({ team, onOpen, onDelete }) {
           <span>{team.lastPlayed}</span>
         </div>
       </button>
-      <button className="team-del" onClick={onDelete} title="Borrar equipo">×</button>
+      <button className="team-duplicate" onClick={onDuplicate} title="Duplicar equipo" aria-label={`Duplicar ${team.name}`}>⧉</button>
+      <button className="team-del" onClick={onDelete} title="Borrar equipo" aria-label={`Borrar ${team.name}`}>×</button>
     </div>
   );
 }
@@ -329,7 +346,7 @@ homeCSS.textContent = `
     width: 100%;
   }
   .team-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .team-del {
+  .team-duplicate, .team-del {
     position: absolute; top: 8px; right: 8px;
     width: 22px; height: 22px; border-radius: 50%;
     background: var(--bg-elev-2); color: var(--fg-dim);
@@ -338,6 +355,8 @@ homeCSS.textContent = `
     z-index: 2;
   }
   .team-card-wrap:hover .team-del { opacity: 1; }
+  .team-duplicate { right: 38px; }
+  .team-duplicate:hover { background: var(--line); color: var(--fg); }
   .team-del:hover { background: var(--accent-2); color: #fff; }
 
   .team-card-top {
