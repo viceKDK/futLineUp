@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1210">
+<meta name="description" content="Crea, guarda y comparte alineaciones de futbol sin crear una cuenta.">
 <title>futbolClub — armá tu equipo</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon.svg">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -487,6 +492,29 @@
 
 <script>
   window.addEventListener('fc:storage-error', () => window.__toast?.('No se pudieron guardar los datos. Exportá un backup.'));
+</script>
+
+<!-- Instalación PWA: la app sigue funcionando normalmente si el navegador no la ofrece. -->
+<script>
+  window.__pwaInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    window.__pwaInstallPrompt = event;
+    window.dispatchEvent(new CustomEvent('fc:pwa-installable'));
+  });
+  window.addEventListener('appinstalled', () => {
+    window.__pwaInstallPrompt = null;
+    window.dispatchEvent(new CustomEvent('fc:pwa-installed'));
+    window.__toast?.('futbolClub quedó instalado');
+  });
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(() => navigator.serviceWorker.ready)
+        .then(() => window.dispatchEvent(new CustomEvent('fc:pwa-ready')))
+        .catch(error => console.warn('[futbolClub] No se pudo activar el modo offline', error));
+    });
+  }
 </script>
 
 <!-- Export libs -->

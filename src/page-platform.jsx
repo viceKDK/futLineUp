@@ -53,11 +53,43 @@ function SettingsPage() {
         </button>)}
       </div></section>
       <section className="card"><div className="panel-head">Perfil</div><label className="field"><span>Tu nombre</span><input value={profile.displayName||''} onChange={e=>setProfile(p=>({...p,displayName:e.target.value}))} placeholder="Nombre o apodo"/></label><label className="field"><span>Temporada</span><input value={profile.season||''} onChange={e=>setProfile(p=>({...p,season:e.target.value}))} placeholder="Ej. 2026 · Apertura"/></label></section>
-      <section className="card"><div className="panel-head">Cuenta y sincronización</div>{session ? <><div className="account-row"><div className="avatar-me">{window.initials(session.user?.user_metadata?.full_name || session.user?.email)}</div><div><strong>{session.user?.user_metadata?.full_name || 'Cuenta conectada'}</strong><small>{session.user?.email}</small></div></div><div className="action-row"><button className="btn primary" onClick={()=>window.fcCloud.uploadLocal().then(()=>window.__toast?.('Datos sincronizados')).catch(e=>window.__toast?.(e.message))}>Subir datos</button><button className="btn" onClick={()=>window.fcCloud.downloadToLocal().then(()=>{window.__toast?.('Datos recuperados');setTimeout(()=>location.reload(),500)}).catch(e=>window.__toast?.(e.message))}>Recuperar cuenta</button><button className="btn ghost" onClick={()=>window.fcAuth.signOut()}>Cerrar sesión</button></div></> : <><p className="muted">El modo invitado guarda en este dispositivo. Google Login permite usar varios dispositivos cuando Supabase esté configurado.</p><button className="btn primary" disabled={!window.fcAuth?.configured} onClick={()=>window.fcAuth.signInGoogle().catch(e=>window.__toast?.(e.message))}>Continuar con Google</button>{!window.fcAuth?.configured && <small className="warning-text">Falta configurar `SUPABASE_CONFIG`.</small>}</>}</section>
+      <section className="card"><div className="panel-head">Cuenta y sincronización</div>{session ? <><div className="account-row"><div className="avatar-me">{window.initials(session.user?.user_metadata?.full_name || session.user?.email)}</div><div><strong>{session.user?.user_metadata?.full_name || 'Cuenta conectada'}</strong><small>{session.user?.email}</small></div></div><div className="action-row"><button className="btn primary" onClick={()=>window.fcCloud.uploadLocal().then(()=>window.__toast?.('Datos sincronizados')).catch(e=>window.__toast?.(e.message))}>Subir datos</button><button className="btn" onClick={()=>window.fcCloud.downloadToLocal().then(()=>{window.__toast?.('Datos recuperados');setTimeout(()=>location.reload(),500)}).catch(e=>window.__toast?.(e.message))}>Recuperar cuenta</button><button className="btn ghost" onClick={()=>window.fcAuth.signOut()}>Cerrar sesión</button></div></> : <><div className="guest-account-state"><span className="status-dot"></span><div><strong>Estás usando futbolClub sin cuenta</strong><small>Editor, sorteo, camisetas y enlaces compartidos están disponibles. Los datos se guardan solamente en este dispositivo.</small></div></div><div className="action-row"><button className="btn primary" onClick={()=>window.go('home')}>Seguir sin cuenta</button><button className="btn" disabled={!window.fcAuth?.configured} onClick={()=>window.fcAuth.signInGoogle().catch(e=>window.__toast?.(e.message))}>Conectar Google para sincronizar</button></div>{!window.fcAuth?.configured && <small className="account-note">La cuenta es opcional. Podrás conectarla cuando el servicio de sincronización esté configurado.</small>}</>}</section>
+      <InstallAppCard />
       <section className="card"><div className="panel-head">Backup local</div><p className="muted">Exportá todo antes de cambiar de dispositivo o importar otros datos.</p><div className="action-row"><button className="btn" onClick={exportBackup}>Exportar JSON</button><button className="btn" onClick={()=>importRef.current?.click()}>Importar</button></div><input ref={importRef} hidden type="file" accept="application/json" onChange={importBackup}/></section>
       <section className="card"><div className="panel-head">Carga rápida de jugadores</div><textarea className="paste-roster" value={paste} onChange={e=>setPaste(e.target.value)} placeholder={'Martín, 10, MED\nNahuel, 1, ARQ\nFacu, 4, DEF'}/><button className="btn primary" onClick={importRosterText}>Agregar al plantel</button></section>
     </div>
   </div>;
+}
+
+function InstallAppCard() {
+  const [installable, setInstallable] = React.useState(!!window.__pwaInstallPrompt);
+  const [offlineReady, setOfflineReady] = React.useState(false);
+
+  React.useEffect(() => {
+    const canInstall = () => setInstallable(!!window.__pwaInstallPrompt);
+    const installed = () => setInstallable(false);
+    const ready = () => setOfflineReady(true);
+    window.addEventListener('fc:pwa-installable', canInstall);
+    window.addEventListener('fc:pwa-installed', installed);
+    window.addEventListener('fc:pwa-ready', ready);
+    navigator.serviceWorker?.ready.then(ready).catch(()=>{});
+    return () => {
+      window.removeEventListener('fc:pwa-installable', canInstall);
+      window.removeEventListener('fc:pwa-installed', installed);
+      window.removeEventListener('fc:pwa-ready', ready);
+    };
+  }, []);
+
+  const install = async () => {
+    const prompt = window.__pwaInstallPrompt;
+    if (!prompt) return;
+    await prompt.prompt();
+    await prompt.userChoice;
+    window.__pwaInstallPrompt = null;
+    setInstallable(false);
+  };
+
+  return <section className="card"><div className="panel-head">Aplicación</div><p className="muted">{offlineReady ? 'Lista para abrirse con conexión limitada después de la primera carga.' : 'Preparando los archivos para uso con conexión limitada…'}</p>{installable ? <button className="btn primary" onClick={install}>Instalar futbolClub</button> : <small className="account-note">También podés instalarla desde el menú de tu navegador cuando esté disponible.</small>}</section>;
 }
 
 function CoachPage() {
@@ -113,6 +145,9 @@ const platformCSS=document.createElement('style');platformCSS.textContent=`
 .platform-grid,.league-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.span-2{grid-column:span 2}.span-3{grid-column:1/-1}.experience-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.experience-card{display:flex;flex-direction:column;text-align:left;gap:6px;padding:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-elev-2)}.experience-card.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}.experience-icon{font-size:24px}.experience-card small,.account-row small{display:block;color:var(--fg-dim)}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}.field>span{font:11px var(--font-cond);text-transform:uppercase;letter-spacing:1px;color:var(--fg-dim)}.field input,.field select,.field textarea,.paste-roster,.season-input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px;color:var(--fg)}.field textarea{min-height:72px;resize:vertical}.paste-roster{min-height:120px;margin-bottom:10px}.muted{color:var(--fg-mute)}.warning-text{display:block;color:var(--warn);margin-top:8px}.action-row,.account-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.coach-layout{display:grid;grid-template-columns:220px minmax(0,1fr) 280px;gap:16px;align-items:start}.coach-main{display:flex;flex-direction:column;gap:16px}.player-selector{display:flex;flex-direction:column;gap:4px;max-height:70vh;overflow:auto}.player-selector button{display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;text-align:left}.player-selector button.on{background:var(--accent);color:#0e1210}.player-selector small{display:block;opacity:.65}.mini-avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700}.player-summary{display:flex;align-items:center;gap:24px}.player-summary>div:first-child{flex:1}.player-summary h2{font:36px var(--font-display);margin:0}.player-summary p{color:var(--fg-mute)}.metric{text-align:center}.metric strong{display:block;font:36px var(--font-display)}.metric span{font-size:11px;color:var(--fg-dim);text-transform:uppercase}.form-grid-wide{display:grid;grid-template-columns:1fr 1fr;gap:10px}.form-grid-wide .span-2{grid-column:span 2}.timeline{display:flex;flex-direction:column;gap:10px}.timeline article{padding:12px;background:var(--bg-elev-2);border-radius:8px}.timeline article>div{display:flex;justify-content:space-between}.timeline p{margin:7px 0;color:var(--fg-mute)}.session-list{margin-top:14px}.session-list details{border-top:1px solid var(--line);padding:9px 0}.session-list summary{cursor:pointer}.session-list summary small{display:block;color:var(--fg-dim)}.check-row{display:flex;gap:8px;padding:5px}.season-input{width:140px}.table-wrap{overflow:auto}.standings{width:100%;border-collapse:collapse}.standings th,.standings td{padding:9px;border-bottom:1px solid var(--line);text-align:center}.standings th:nth-child(2),.standings td:nth-child(2){text-align:left}.fixture-list{display:flex;flex-direction:column}.fixture-list article{display:grid;grid-template-columns:110px 1fr 90px 1fr 30px;gap:10px;align-items:center;padding:12px;border-top:1px solid var(--line);text-align:center}.fixture-list time{color:var(--fg-dim);text-align:left}.empty-state{padding:28px;text-align:center;color:var(--fg-dim)}
 @media(max-width:1100px){.coach-layout{grid-template-columns:1fr}.player-selector{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));max-height:none}.platform-grid,.league-layout{grid-template-columns:1fr}.span-2,.span-3{grid-column:auto}}@media(max-width:650px){.experience-grid,.form-grid-wide{grid-template-columns:1fr}.form-grid-wide .span-2{grid-column:auto}.player-summary{align-items:flex-start;flex-wrap:wrap}.fixture-list article{grid-template-columns:1fr 40px 1fr}.fixture-list time{grid-column:1/-1}.fixture-list button{grid-column:1/-1}}
 `;document.head.appendChild(platformCSS);
+const accountCSS = document.createElement('style');
+accountCSS.textContent = '.guest-account-state{display:flex;gap:10px;align-items:flex-start;padding:12px;margin-bottom:12px;background:var(--bg-elev-2);border-radius:8px}.guest-account-state small,.account-note{display:block;color:var(--fg-dim);margin-top:4px}.status-dot{width:9px;height:9px;flex:0 0 auto;margin-top:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in oklch,var(--accent) 18%,transparent)}';
+document.head.appendChild(accountCSS);
 ReactDOM.createRoot(document.getElementById('page-coach')).render(<CoachPage/>);
 ReactDOM.createRoot(document.getElementById('page-league')).render(<LeaguePage/>);
 ReactDOM.createRoot(document.getElementById('page-settings')).render(<SettingsPage/>);

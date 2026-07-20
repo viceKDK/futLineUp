@@ -237,7 +237,7 @@ function SharePage() {
                 <div className="share-card-pitch">
                   <Pitch mode={mode} formationIndex={formIdx} players={players} kit={kit}
                          interactive={false} style="classic" showNames={include.names}
-                         positionOverrides={overrides} label={formation.name}/>
+                         freeMode={!!draft.freeMode} positionOverrides={overrides} label={formation.name}/>
                 </div>
                 <div className="share-card-foot">
                   <div className="share-meta-item"><span>Formación</span><strong>{formation.name}</strong></div>
@@ -296,7 +296,7 @@ function SharePage() {
                   <div style={{marginTop:20, flex:1, display:'flex'}}>
                     <Pitch mode={mode} formationIndex={formIdx} players={players} kit={kit}
                            interactive={false} style="classic" showNames={include.names}
-                           positionOverrides={overrides}/>
+                           freeMode={!!draft.freeMode} positionOverrides={overrides}/>
                   </div>
                   {include.watermark && <div className="share-watermark" style={{position:'static', marginTop:10}}>futbolClub.app</div>}
                 </div>

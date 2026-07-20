@@ -1,6 +1,6 @@
 # Estado de implementación
 
-Fecha: 2026-07-17
+Fecha: 2026-07-20
 
 Rama de integración actual: `develop` · Commit base de la implementación: `40a694a`. La rama temporal de trabajo fue integrada y eliminada local y remotamente.
 
@@ -17,9 +17,12 @@ Rama de integración actual: `develop` · Commit base de la implementación: `40
 - Modo Entrenador: ficha, sesiones, asistencia, evaluaciones, fortalezas, mejoras y objetivos.
 - Modo Liga: calendario, resultados y tabla calculada con desempate por diferencia de gol.
 - Cuenta y datos: Google Login opcional, modo invitado y sincronización de backup entre dispositivos.
+- Modo invitado explícito en Inicio y Cuenta: las funciones principales no requieren autenticación.
+- PWA instalable con manifest, icono y shell offline después de la primera carga.
 - Esquema Supabase con tablas normalizadas, backup de cuenta y políticas RLS.
 - Navegación con historial/hash, foco visible y reducción de movimiento.
-- Suite Playwright ampliada: 18 pruebas aprobadas.
+- Suite Playwright ampliada: 21 pruebas aprobadas.
+- Regresión E2E de modo Libre: guardar, reabrir y compartir en un navegador limpio sin cuenta.
 - React Doctor sobre los archivos cambiados: sin hallazgos (`--scope changed`); conserva la limitación conocida de detección por React UMD/Babel Standalone.
 
 ## Configuración externa pendiente

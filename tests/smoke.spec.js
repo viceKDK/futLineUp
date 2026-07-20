@@ -26,13 +26,14 @@ for (const p of PAGES) test(`navega a ${p.id} y monta contenido`, async ({ page 
 
 test('editor guarda y recupera alineación completa', async ({ page }) => {
   await page.click('[data-page="editor"]');
+  await page.locator('#page-editor .editor-title-input').fill('Prueba persistencia');
   await page.getByRole('button', { name:'Auto-completar' }).click();
   await page.getByRole('button', { name:/Guardar/ }).click();
   const stored = await page.evaluate(() => window.db.load('teams', []).at(-1));
   expect(stored.assignedIds.filter(Boolean).length).toBeGreaterThan(0);
   await page.reload();
   await page.click('[data-page="home"]');
-  await page.locator('.team-card:not(.new)').last().click();
+  await page.getByText('Prueba persistencia', { exact:true }).click();
   await expect.poll(() => page.evaluate(() => window.db.load('editor', null)?.assignedIds?.filter(Boolean).length || 0)).toBeGreaterThan(0);
 });
 

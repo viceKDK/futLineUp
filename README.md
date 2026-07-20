@@ -4,7 +4,7 @@ Aplicación web para crear alineaciones de fútbol, organizar planteles y sorteo
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f.svg)](LICENSE)
 [![Branch](https://img.shields.io/badge/branch-develop-2563eb.svg)](https://github.com/viceKDK/futLineUp/tree/develop)
-[![Tests](https://img.shields.io/badge/Playwright-18%2F18%20passing-45ba4b.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Playwright-21%2F21%20passing-45ba4b.svg)](tests/)
 
 ![Dashboard de futbolClub](screenshots/01-home.png)
 
@@ -16,7 +16,7 @@ futbolClub reúne tres experiencias dentro de una misma aplicación:
 - **Entrenador:** fichas de jugadores, entrenamientos, asistencia, evaluaciones y objetivos.
 - **Liga amateur:** calendario, resultados y tabla de posiciones.
 
-La aplicación funciona en modo invitado con persistencia local. La autenticación con Google y la sincronización entre dispositivos pueden habilitarse opcionalmente mediante Supabase.
+La aplicación funciona en modo invitado con persistencia local: crear una cuenta nunca bloquea el editor, el sorteo ni los enlaces compartidos. La autenticación con Google y la sincronización entre dispositivos pueden habilitarse opcionalmente mediante Supabase.
 
 ## Funcionalidades principales
 
@@ -60,6 +60,13 @@ La aplicación funciona en modo invitado con persistencia local. La autenticaci�
 - Enlaces autocontenidos con la alineación.
 - WhatsApp, Telegram, Instagram, X y Web Share API.
 
+### Instalación y modo offline
+
+- Manifest e icono para instalar futbolClub como aplicación.
+- Shell local disponible con conexión limitada después de la primera carga.
+- Cuenta opcional: los datos del invitado permanecen en su dispositivo.
+- Cobertura E2E del modo Libre guardado y compartido en un navegador limpio.
+
 ## Capturas
 
 | Entrenador | Liga amateur | Cuenta y datos |
@@ -94,7 +101,7 @@ npm run test:headed  # pruebas con navegador visible
 npm run screenshots  # regenera la galería de capturas
 ```
 
-Estado verificado en `develop`: **18 pruebas aprobadas**.
+Estado verificado en `develop`: **21 pruebas aprobadas**.
 
 ## Supabase y Google Login
 
@@ -117,6 +124,7 @@ Para habilitar autenticación y sincronización:
 - SVG para cancha y camisetas.
 - html2canvas y jsPDF para exportaciones.
 - localStorage para el modo local.
+- Service Worker y Web App Manifest para instalación y uso con conexión limitada.
 - Supabase Auth, PostgreSQL y Storage como backend opcional.
 - Playwright para pruebas E2E y capturas.
 

@@ -53,6 +53,7 @@ function HomePage() {
 
   return (
     <div>
+      <GuestModeBanner />
       <div className="page-head">
         <div>
           <div className="page-kicker">{profile.season || (profile.experience === "coach" ? "Modo entrenador" : profile.experience === "league" ? "Modo liga" : "Tu fútbol, a tu manera")}</div>
@@ -160,6 +161,28 @@ function HomePage() {
   );
 }
 
+function GuestModeBanner() {
+  const [session, setSession] = React.useState(undefined);
+
+  React.useEffect(() => {
+    window.fcAuth?.session().then(value => setSession(value || null)).catch(() => setSession(null));
+    const subscription = window.fcSupabase?.auth.onAuthStateChange((_event, next) => setSession(next));
+    return () => subscription?.data?.subscription?.unsubscribe?.();
+  }, []);
+
+  if (session === undefined || session) return null;
+  return (
+    <aside className="guest-banner" aria-label="Modo sin cuenta">
+      <div className="guest-banner-icon" aria-hidden="true">✓</div>
+      <div>
+        <strong>Estás usando futbolClub sin cuenta</strong>
+        <span>Podés crear, guardar y compartir alineaciones. Tus datos quedan en este dispositivo.</span>
+      </div>
+      <button className="btn sm ghost" onClick={()=>window.go('settings')}>Backup y sincronización</button>
+    </aside>
+  );
+}
+
 function MatchModal({ teams, onClose, onSave }) {
   const [teamId, setTeamId] = React.useState(teams[0]?.id || '');
   const [us, setUs] = React.useState(0);
@@ -264,6 +287,23 @@ function QuickCard({ title, sub, icon, action }) {
 
 const homeCSS = document.createElement("style");
 homeCSS.textContent = `
+  .guest-banner {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px;
+    margin-bottom: 18px; padding: 12px 14px;
+    border: 1px solid color-mix(in oklch, var(--accent) 45%, var(--line));
+    border-radius: var(--radius);
+    background: color-mix(in oklch, var(--accent) 7%, var(--bg-elev));
+  }
+  .guest-banner-icon {
+    width: 28px; height: 28px; display: grid; place-items: center;
+    border-radius: 50%; background: var(--accent); color: #0e1210; font-weight: 800;
+  }
+  .guest-banner strong, .guest-banner span { display: block; }
+  .guest-banner span { margin-top: 2px; color: var(--fg-mute); font-size: 12px; }
+  @media (max-width: 650px) {
+    .guest-banner { grid-template-columns: auto 1fr; }
+    .guest-banner .btn { grid-column: 1/-1; justify-content: center; }
+  }
   .hero-strip {
     display: grid;
     grid-template-columns: repeat(4, 1fr);

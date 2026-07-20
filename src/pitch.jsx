@@ -30,7 +30,7 @@ function Pitch(props) {
 
   const formation = window.FORMATIONS[mode][formationIndex];
   const rawPositions = formation.positions;
-  const positions = rawPositions.map((p, i) => (positionOverrides && positionOverrides[i]) || p);
+  const positions = rawPositions.map((p, i) => (freeMode && positionOverrides && positionOverrides[i]) || p);
 
   const [hoverIndex, setHoverIndex] = React.useState(null);
   const svgRef = React.useRef(null);
