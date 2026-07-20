@@ -4,7 +4,7 @@ const PAGES = [
   { id:'home', title:/MIS EQUIPOS/i }, { id:'mode', title:/CUÁNTOS POR LADO/i },
   { id:'editor', title:/.+/ }, { id:'draw', title:/REPARTIR LOS PIBES/i },
   { id:'kits', title:/DISEÑÁ TU KIT/i }, { id:'rival', title:/NOSOTROS VS\. ELLOS/i },
-  { id:'share', title:/MANDÁ LA ALINEACIÓN/i }, { id:'coach', title:/PLANTEL Y EVOLUCIÓN/i },
+  { id:'share', title:/MANDÁ LA ALINEACIÓN/i }, { id:'coach', title:/TU PLANTEL/i },
   { id:'league', title:/.+/ }, { id:'settings', title:/TU FUTBOLCLUB/i },
 ];
 
@@ -63,6 +63,8 @@ test('snapshot compartible se decodifica', async ({ page }) => {
 
 test('entrenador registra evaluación', async ({ page }) => {
   await page.click('[data-page="coach"]');
+  await page.locator('.roster-overview-card').first().click();
+  await page.getByRole('button', { name:/Nueva evaluación/ }).click();
   await page.getByLabel('Qué hizo bien').fill('Buen pase');
   await page.getByRole('button', { name:'Guardar evaluación' }).click();
   const evaluations = await page.evaluate(() => window.db.load('evaluations', []));

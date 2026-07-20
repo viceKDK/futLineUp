@@ -1,4 +1,5 @@
 import { test } from '@playwright/test';
+import { shootFull, openSeededApp } from './helpers/screenshot-utils.js';
 
 const SHOTS = [
   { id:'home', file:'01-home.png' },
@@ -13,26 +14,39 @@ const SHOTS = [
   { id:'settings', file:'11-settings.png' },
 ];
 
-test('captura screenshots de cada seccion', async ({ page }) => {
-  await page.route('**/src/local-config.js', route => route.fulfill({ body:'window.RESET_ON_BOOT=false;', contentType:'text/javascript' }));
-  await page.goto('/futbolClub.html');
-  await page.waitForSelector('.nav-item');
+test('captura screenshots de cada seccion', async ({ page }, testInfo) => {
+  // El proyecto "chromium" (Chrome) escribe en screenshots/ (galería canónica del README).
+  // Otros navegadores (ej. msedge) escriben en screenshots/<navegador>/ para comparar
+  // el render sin pisar las capturas de referencia.
+  const dir = testInfo.project.name === 'chromium' ? 'screenshots' : `screenshots/${testInfo.project.name}`;
+
+  await openSeededApp(page);
 
   for (const shot of SHOTS) {
     await page.click(`[data-page="${shot.id}"]`);
     await page.waitForTimeout(250);
-    await page.screenshot({ path:`screenshots/${shot.file}`, fullPage:true });
+    await shootFull(page, `${dir}/${shot.file}`);
   }
 
   await page.click('[data-page="editor"]');
   await page.getByRole('button', { name:'Auto-completar' }).click();
-  await page.screenshot({ path:'screenshots/03b-editor-autocompletado.png', fullPage:true });
+  await shootFull(page, `${dir}/03b-editor-autocompletado.png`);
 
   await page.click('[data-page="draw"]');
   await page.getByRole('button', { name:'Sortear todos' }).click();
-  await page.screenshot({ path:'screenshots/04b-draw-sorteado.png', fullPage:true });
+  await shootFull(page, `${dir}/04b-draw-sorteado.png`);
+
+  await page.click('[data-page="coach"]');
+  await page.locator('.roster-overview-card').first().click();
+  await page.waitForTimeout(250);
+  await shootFull(page, `${dir}/09b-coach-ficha.png`);
+
+  await page.click('[data-page="league"]');
+  await page.getByRole('button', { name:'Fixture' }).click();
+  await page.waitForTimeout(250);
+  await shootFull(page, `${dir}/10b-league-fixture.png`);
 
   await page.click('[data-page="home"]');
   await page.locator('#tweaks-fab').click();
-  await page.screenshot({ path:'screenshots/08-tweaks.png', fullPage:true });
+  await shootFull(page, `${dir}/08-tweaks.png`);
 });

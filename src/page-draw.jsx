@@ -106,10 +106,10 @@ function DrawPage() {
               <button key={n} className={numTeams===n?"on":""} onClick={()=>setNumTeams(n)}>{n} equipos</button>
             ))}
           </div>
-          <button className="btn" onClick={reset}>↺ Reset</button>
+          <button className="btn" onClick={reset}><Icon name="refresh" size={13}/> Reset</button>
           <button className="btn" onClick={drawAll}>Sortear todos</button>
           <button className="btn primary" onClick={spin} disabled={spinning || unassigned.length===0}>
-            {spinning ? "Sorteando..." : "🎰 Sortear uno"}
+            {spinning ? "Sorteando..." : <><Icon name="shuffle" size={14}/> Sortear uno</>}
           </button>
         </div>
       </div>
@@ -153,7 +153,7 @@ function DrawPage() {
                   </div>
                   <button className="lock-btn" onClick={()=>toggleLock(p.id, p.locked ? null : ti)}
                           title={p.locked?"Desfijar":"Fijar"}>
-                    {p.locked ? "🔒" : "⟳"}
+                    <Icon name={p.locked ? "lock" : "refresh"} size={13}/>
                   </button>
                   <button className="lock-btn" onClick={()=>setTeamFor(p.id, null)} title="Sacar del equipo">×</button>
                 </div>

@@ -208,9 +208,9 @@ function SharePage() {
           <div className="page-sub">Descargá como imagen, PDF o evento de calendario · link directo o deep-link a redes.</div>
         </div>
         <div style={{display:'flex', gap:8}}>
-          <button className="btn" onClick={copyLink}>📋 Copiar link</button>
-          <button className="btn" onClick={downloadPNG}>💾 Descargar PNG</button>
-          <button className="btn primary" onClick={nativeShare}>📲 Compartir</button>
+          <button className="btn" onClick={copyLink}><Icon name="link" size={13}/> Copiar link</button>
+          <button className="btn" onClick={downloadPNG}><Icon name="download" size={13}/> Descargar PNG</button>
+          <button className="btn primary" onClick={nativeShare}><Icon name="send" size={13}/> Compartir</button>
         </div>
       </div>
 

@@ -309,7 +309,7 @@ function EditorPage() {
                           {window.initials(p.name)}
                         </div>
                       )}
-                      <span className="roster-avatar-cam">📷</span>
+                      <span className="roster-avatar-cam"><Icon name="camera" size={12}/></span>
                     </button>
                     <div className="roster-info">
                       <div className="roster-name">{p.name}</div>

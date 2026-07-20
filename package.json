@@ -8,7 +8,9 @@
     "serve": "http-server -p 8765 -c-1 .",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
-    "screenshots": "playwright test tests/screenshots.spec.js --reporter=list"
+    "test:edge": "playwright test --project=msedge",
+    "screenshots": "playwright test tests/screenshots.spec.js --reporter=list",
+    "screenshots:mobile": "playwright test tests/screenshots-mobile.spec.js --reporter=list"
   },
   "devDependencies": {
     "@playwright/test": "^1.47.0",

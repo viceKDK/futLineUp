@@ -4,7 +4,7 @@ Aplicación web para crear alineaciones de fútbol, organizar planteles y sorteo
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f.svg)](LICENSE)
 [![Branch](https://img.shields.io/badge/branch-develop-2563eb.svg)](https://github.com/viceKDK/futLineUp/tree/develop)
-[![Tests](https://img.shields.io/badge/Playwright-21%2F21%20passing-45ba4b.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Playwright-22%2F22%20passing-45ba4b.svg)](tests/)
 
 ![Dashboard de futbolClub](screenshots/01-home.png)
 
@@ -69,11 +69,11 @@ La aplicación funciona en modo invitado con persistencia local: crear una cuent
 
 ## Capturas
 
-| Entrenador | Liga amateur | Cuenta y datos |
-|---|---|---|
-| [![Entrenador](screenshots/09-coach.png)](screenshots/09-coach.png) | [![Liga amateur](screenshots/10-league.png)](screenshots/10-league.png) | [![Cuenta y datos](screenshots/11-settings.png)](screenshots/11-settings.png) |
+| Entrenador | Ficha del jugador | Liga amateur | Fixture por fecha | Cuenta y datos |
+|---|---|---|---|---|
+| [![Entrenador](screenshots/09-coach.png)](screenshots/09-coach.png) | [![Ficha del jugador](screenshots/09b-coach-ficha.png)](screenshots/09b-coach-ficha.png) | [![Liga amateur](screenshots/10-league.png)](screenshots/10-league.png) | [![Fixture por fecha](screenshots/10b-league-fixture.png)](screenshots/10b-league-fixture.png) | [![Cuenta y datos](screenshots/11-settings.png)](screenshots/11-settings.png) |
 
-La galería completa está disponible en [screenshots/README.md](screenshots/README.md).
+La galería completa (las 15 pantallas y estados de la app) está disponible en [screenshots/README.md](screenshots/README.md).
 
 ## Ejecución local
 
@@ -81,7 +81,7 @@ Requisitos:
 
 - Node.js 18 o superior.
 - npm.
-- Chrome para ejecutar las pruebas Playwright configuradas en el proyecto.
+- Chrome y Edge para ejecutar las pruebas Playwright configuradas en el proyecto (`chromium` y `msedge`).
 
 ```powershell
 npm install
@@ -95,10 +95,12 @@ La aplicación principal no requiere compilación: React y Babel se cargan en el
 ## Scripts
 
 ```powershell
-npm run serve        # servidor local en el puerto 8765
-npm test             # suite completa de Playwright
-npm run test:headed  # pruebas con navegador visible
-npm run screenshots  # regenera la galería de capturas
+npm run serve             # servidor local en el puerto 8765
+npm test                  # suite completa de Playwright (Chrome)
+npm run test:edge         # suite completa en Edge (chequeo cross-browser)
+npm run test:headed       # pruebas con navegador visible
+npm run screenshots       # regenera la galería de capturas desktop
+npm run screenshots:mobile  # capturas a ancho de teléfono (390×844)
 ```
 
 Estado verificado en `develop`: **21 pruebas aprobadas**.

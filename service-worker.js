@@ -1,8 +1,9 @@
-const CACHE_VERSION = 'futbolclub-v2';
+const CACHE_VERSION = 'futbolclub-v3';
 const APP_SHELL = [
   './futbolClub.html',
   './manifest.webmanifest',
   './icons/icon.svg',
+  './src/icons.jsx',
   './src/data.jsx',
   './src/supabase.jsx',
   './src/kits.jsx',

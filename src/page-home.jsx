@@ -140,10 +140,10 @@ function HomePage() {
         <h2>Accesos rápidos</h2>
       </div>
       <div className="quick-grid">
-        <QuickCard title="Editor de alineación" sub="Arrastrá jugadores a la cancha" icon="◈" action={()=>window.go('editor')}/>
-        <QuickCard title="Sorteo de equipos" sub="Con ruleta + jugadores fijos" icon="⟳" action={()=>window.go('draw')}/>
-        <QuickCard title="Modo rival" sub="Enfrentá dos alineaciones" icon="⚔" action={()=>window.go('rival')}/>
-        <QuickCard title="Camisetas" sub="4 diseños + personalización" icon="▦" action={()=>window.go('kits')}/>
+        <QuickCard title="Editor de alineación" sub="Arrastrá jugadores a la cancha" icon="editorNav" action={()=>window.go('editor')}/>
+        <QuickCard title="Sorteo de equipos" sub="Con ruleta + jugadores fijos" icon="shuffle" action={()=>window.go('draw')}/>
+        <QuickCard title="Modo rival" sub="Enfrentá dos alineaciones" icon="target" action={()=>window.go('rival')}/>
+        <QuickCard title="Camisetas" sub="4 diseños + personalización" icon="jersey" action={()=>window.go('kits')}/>
       </div>
 
       {modal?.type === 'match' && (
@@ -275,7 +275,7 @@ function TeamCard({ team, onOpen, onDelete, onDuplicate }) {
 function QuickCard({ title, sub, icon, action }) {
   return (
     <button className="quick-card" onClick={action}>
-      <div className="quick-icon">{icon}</div>
+      <div className="quick-icon"><Icon name={icon} size={18}/></div>
       <div className="quick-body">
         <div className="quick-title">{title}</div>
         <div className="quick-sub">{sub}</div>
