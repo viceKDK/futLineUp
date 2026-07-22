@@ -449,31 +449,87 @@ function calculateStandings(fixtures) {
     .map(t=>({...t, form:t.form.slice(-5)}));
 }
 
+const normalizeTeamName = (s) => (s || '').trim().toLowerCase();
+
 function LeaguePage() {
-  const [league, setLeague] = window.useStore('league', {name:'Liga amateur',season:'2026',fixtures:[]});
+  const [competitions, setCompetitions] = window.useStore('competitions', () => {
+    const legacy = window.db.load('league', null);
+    return [legacy ? { id: 'c1', ...legacy } : { id: 'c1', name: 'Liga amateur', season: '2026', fixtures: [] }];
+  });
+  const [activeId, setActiveId] = window.useStore('activeCompetitionId', () => competitions[0]?.id || 'c1');
+  const [teamCrests, setTeamCrests] = window.useStore('teamCrests', {});
   const [savedTeams] = window.useStore('teams', window.DEFAULT_SAVED_TEAMS);
   const [tab, setTab] = React.useState('table');
   const [form,setForm]=React.useState({date:new Date().toISOString().slice(0,10),home:'',away:'',homeScore:'',awayScore:''});
   const [scoreDrafts, setScoreDrafts] = React.useState({});
-  const fixtures=league.fixtures||[], standings=calculateStandings(fixtures);
+  const [newComp, setNewComp] = React.useState({name:'', season:''});
+  const [showNewComp, setShowNewComp] = React.useState(false);
+  const crestInputRef = React.useRef(null);
+  const crestTargetRef = React.useRef(null);
+
+  const competition = competitions.find(c => c.id === activeId) || competitions[0];
+  const setCompetition = (updater) => setCompetitions(list =>
+    list.map(c => c.id === competition.id ? (typeof updater === 'function' ? updater(c) : updater) : c));
+
+  const fixtures=competition.fixtures||[], standings=calculateStandings(fixtures);
   const teamNameOptions = [...new Set([
     ...savedTeams.map(t=>t.name),
     ...fixtures.flatMap(f=>[f.home,f.away]),
   ])].sort();
+  const crestTeamNames = [...new Set([
+    ...fixtures.flatMap(f=>[f.home,f.away]),
+    ...((competition.cup?.teams)||[]),
+  ])].filter(Boolean).sort();
+
+  const teamColorFor = (name) => savedTeams.find(t=>t.name===name) || null;
+  const crestFor = (name) => {
+    const key = normalizeTeamName(name);
+    const t = teamColorFor(name);
+    return { name, design: t?.kit || 'solid', primary: t?.color || window.colorFor(name||'?'), secondary: t?.secondary || '#0f172a', photo: teamCrests[key] };
+  };
+
+  const addCompetition = () => {
+    if (!newComp.name.trim()) return window.__toast?.('Ponele un nombre a la competencia');
+    const id = 'c' + Date.now();
+    setCompetitions(list => [...list, { id, name: newComp.name.trim(), season: newComp.season.trim() || '2026', fixtures: [] }]);
+    setActiveId(id);
+    setNewComp({name:'', season:''});
+    setShowNewComp(false);
+  };
+  const deleteCompetition = (id) => {
+    if (competitions.length <= 1) return window.__toast?.('Tiene que quedar al menos una competencia');
+    if (!confirm('¿Eliminar esta competencia? Se pierde su tabla, fixture y cuadro de copa.')) return;
+    setCompetitions(list => list.filter(c => c.id !== id));
+    if (activeId === id) setActiveId(competitions.find(c => c.id !== id)?.id);
+  };
+
+  const openCrestPicker = (name) => { crestTargetRef.current = name; crestInputRef.current?.click(); };
+  const onCrestFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    const name = crestTargetRef.current;
+    if (!file || !name) return;
+    try {
+      const dataURL = await window.fileToDataURL(file, 160);
+      setTeamCrests(prev => ({ ...prev, [normalizeTeamName(name)]: dataURL }));
+    } catch (_) { window.__toast?.('No se pudo cargar el escudo'); }
+  };
+  const clearCrest = (name) => setTeamCrests(prev => { const n = {...prev}; delete n[normalizeTeamName(name)]; return n; });
+  const hideCrest = (name) => setTeamCrests(prev => ({ ...prev, [normalizeTeamName(name)]: 'none' }));
 
   const saveFixture=()=>{
     if(!form.home.trim()||!form.away.trim())return window.__toast?.('Completá ambos equipos');
     const played=form.homeScore!==''&&form.awayScore!=='';
-    setLeague(l=>({...l,fixtures:[...(l.fixtures||[]),{id:`fx${Date.now()}`,...form,home:form.home.trim(),away:form.away.trim(),played,homeScore:Number(form.homeScore)||0,awayScore:Number(form.awayScore)||0}]}));
+    setCompetition(l=>({...l,fixtures:[...(l.fixtures||[]),{id:`fx${Date.now()}`,...form,home:form.home.trim(),away:form.away.trim(),played,homeScore:Number(form.homeScore)||0,awayScore:Number(form.awayScore)||0}]}));
     setForm(v=>({...v,home:'',away:'',homeScore:'',awayScore:''}));
     window.__toast?.('Partido agregado');
   };
-  const deleteFixture = (id) => setLeague(l=>({...l,fixtures:l.fixtures.filter(x=>x.id!==id)}));
+  const deleteFixture = (id) => setCompetition(l=>({...l,fixtures:l.fixtures.filter(x=>x.id!==id)}));
   const saveScore = (fx) => {
     const draft = scoreDrafts[fx.id] || {};
     const hs = draft.home ?? fx.homeScore, as = draft.away ?? fx.awayScore;
     if (hs==='' || as==='' || hs==null || as==null) return window.__toast?.('Completá ambos marcadores');
-    setLeague(l=>({...l,fixtures:l.fixtures.map(x=>x.id===fx.id?{...x,played:true,homeScore:Number(hs),awayScore:Number(as)}:x)}));
+    setCompetition(l=>({...l,fixtures:l.fixtures.map(x=>x.id===fx.id?{...x,played:true,homeScore:Number(hs),awayScore:Number(as)}:x)}));
     window.__toast?.('Resultado guardado');
   };
 
@@ -487,16 +543,38 @@ function LeaguePage() {
 
   return <div>
     <div className="page-head">
-      <div><div className="page-kicker">Modo liga</div><input className="editor-title-input" value={league.name} onChange={e=>setLeague(l=>({...l,name:e.target.value}))}/><div className="page-sub">{standings.length} equipos · {played.length} de {fixtures.length} fechas jugadas</div></div>
+      <div><div className="page-kicker">Modo liga</div><input className="editor-title-input" value={competition.name} onChange={e=>setCompetition(l=>({...l,name:e.target.value}))}/><div className="page-sub">{standings.length} equipos · {played.length} de {fixtures.length} fechas jugadas</div></div>
       <div style={{display:'flex',gap:8,alignItems:'center'}}>
-        <input className="season-input" value={league.season} onChange={e=>setLeague(l=>({...l,season:e.target.value}))} aria-label="Temporada"/>
+        <input className="season-input" value={competition.season} onChange={e=>setCompetition(l=>({...l,season:e.target.value}))} aria-label="Temporada"/>
       </div>
+    </div>
+
+    <div className="comp-selector">
+      {competitions.map(c => (
+        <div key={c.id} className={`comp-pill ${c.id===activeId?'on':''}`}>
+          <button className="comp-pill-main" onClick={()=>setActiveId(c.id)}>
+            <strong>{c.name}</strong><span>{c.season}</span>
+          </button>
+          {competitions.length>1 && <button className="comp-pill-del" onClick={()=>deleteCompetition(c.id)} title="Eliminar competencia" aria-label={`Eliminar ${c.name}`}>×</button>}
+        </div>
+      ))}
+      {showNewComp ? (
+        <div className="comp-pill comp-pill-new-form">
+          <input placeholder="Nombre (ej. Apertura)" value={newComp.name} onChange={e=>setNewComp(v=>({...v,name:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&addCompetition()}/>
+          <input placeholder="Temporada" value={newComp.season} onChange={e=>setNewComp(v=>({...v,season:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&addCompetition()}/>
+          <button className="btn sm primary" onClick={addCompetition}>Crear</button>
+          <button className="btn sm ghost" onClick={()=>setShowNewComp(false)}>✕</button>
+        </div>
+      ) : (
+        <button className="comp-pill comp-pill-add" onClick={()=>setShowNewComp(true)}><Icon name="plus" size={13}/> Nueva competencia</button>
+      )}
     </div>
 
     <div className="seg tab-seg">
       <button className={tab==='table'?'on':''} onClick={()=>setTab('table')}>Tabla</button>
       <button className={tab==='fixture'?'on':''} onClick={()=>setTab('fixture')}>Fixture</button>
       <button className={tab==='cup'?'on':''} onClick={()=>setTab('cup')}>Copa</button>
+      <button className={tab==='crests'?'on':''} onClick={()=>setTab('crests')}>Escudos</button>
     </div>
 
     {tab==='table' && <>
@@ -504,9 +582,9 @@ function LeaguePage() {
         <div className="card">
           <div className="panel-head-row"><span>Próxima fecha</span>{nextFixture && <span className="muted-note">{nextFixture.date}</span>}</div>
           {nextFixture ? <div className="matchup-row">
-            <div className="matchup-team right"><strong>{nextFixture.home}</strong><small>{teamStanding(nextFixture.home) ? `${standings.indexOf(teamStanding(nextFixture.home))+1}º · ${teamStanding(nextFixture.home).pts} pts` : 'sin datos'}</small></div>
+            <div className="matchup-team right"><Crest {...crestFor(nextFixture.home)} size={32}/><div><strong>{nextFixture.home}</strong><small>{teamStanding(nextFixture.home) ? `${standings.indexOf(teamStanding(nextFixture.home))+1}º · ${teamStanding(nextFixture.home).pts} pts` : 'sin datos'}</small></div></div>
             <div className="matchup-vs"></div>
-            <div className="matchup-team"><strong>{nextFixture.away}</strong><small>{teamStanding(nextFixture.away) ? `${standings.indexOf(teamStanding(nextFixture.away))+1}º · ${teamStanding(nextFixture.away).pts} pts` : 'sin datos'}</small></div>
+            <div className="matchup-team"><div><strong>{nextFixture.away}</strong><small>{teamStanding(nextFixture.away) ? `${standings.indexOf(teamStanding(nextFixture.away))+1}º · ${teamStanding(nextFixture.away).pts} pts` : 'sin datos'}</small></div><Crest {...crestFor(nextFixture.away)} size={32}/></div>
           </div> : <div className="empty-state sm">No hay partidos pendientes.</div>}
         </div>
         <div className="card">
@@ -523,7 +601,7 @@ function LeaguePage() {
           <thead><tr><th>#</th><th className="left">Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th><th>Forma</th><th>PTS</th></tr></thead>
           <tbody>{standings.map((t,i)=><tr key={t.name} className={i<1?'top-row':''}>
             <td><span className={`pos-badge ${i===0?'first':''}`}>{i+1}</span></td>
-            <td className="left"><strong>{t.name}</strong></td>
+            <td className="left"><div className="standings-team"><Crest {...crestFor(t.name)} size={22}/><strong>{t.name}</strong></div></td>
             <td>{t.pj}</td><td>{t.pg}</td><td>{t.pe}</td><td>{t.pp}</td><td>{t.gf}</td><td>{t.gc}</td>
             <td className={t.gf-t.gc>0?'pos-diff':t.gf-t.gc<0?'neg-diff':''}>{t.gf-t.gc>0?'+':''}{t.gf-t.gc}</td>
             <td><span className="form-row">{t.form.map((r,j)=><i key={j} className={`form-dot ${r.toLowerCase()}`}>{r}</i>)}</span></td>
@@ -551,13 +629,13 @@ function LeaguePage() {
             return <article key={f.id} className={`fixture-card ${!f.played?'pending':''}`}>
               <div className="fixture-card-top"><span className="muted-note">{f.date}</span><span className={`badge ${f.played?'final':'pending'}`}>{f.played?'Final':'Pendiente'}</span></div>
               <div className="fixture-teams">
-                <strong className="right">{f.home}</strong>
+                <div className="fixture-team right"><strong>{f.home}</strong><Crest {...crestFor(f.home)} size={24}/></div>
                 {f.played ? <span className="score-chip">{f.homeScore} – {f.awayScore}</span> : <span className="score-inputs">
                   <input type="number" min="0" value={draft.home ?? ''} onChange={e=>setScoreDrafts(s=>({...s,[f.id]:{...s[f.id],home:e.target.value}}))} placeholder="–"/>
                   <span>–</span>
                   <input type="number" min="0" value={draft.away ?? ''} onChange={e=>setScoreDrafts(s=>({...s,[f.id]:{...s[f.id],away:e.target.value}}))} placeholder="–"/>
                 </span>}
-                <strong>{f.away}</strong>
+                <div className="fixture-team"><Crest {...crestFor(f.away)} size={24}/><strong>{f.away}</strong></div>
               </div>
               <div className="fixture-card-foot">
                 <button className="del-icon" onClick={()=>deleteFixture(f.id)} aria-label="Eliminar partido"><Icon name="trash" size={13}/></button>
@@ -577,7 +655,27 @@ function LeaguePage() {
       </div>
     </div>}
 
-    {tab==='cup' && <LeagueCup league={league} setLeague={setLeague} teamNameOptions={teamNameOptions}/>}
+    {tab==='cup' && <LeagueCup league={competition} setLeague={setCompetition} teamNameOptions={teamNameOptions} crestFor={crestFor}/>}
+
+    {tab==='crests' && (
+      <section className="card">
+        <div className="panel-head-row"><span>Escudos</span><span className="muted-note">Opcional · por defecto se genera uno simple</span></div>
+        {crestTeamNames.length ? <div className="crest-manager-grid">
+          {crestTeamNames.map(name => (
+            <div key={name} className="crest-manager-row">
+              <Crest {...crestFor(name)} size={40}/>
+              <span className="crest-manager-name">{name}</span>
+              <div className="crest-manager-actions">
+                <button className="btn sm" onClick={()=>openCrestPicker(name)}>Subir</button>
+                {teamCrests[normalizeTeamName(name)] && <button className="btn sm ghost" onClick={()=>clearCrest(name)}>Generado</button>}
+                {teamCrests[normalizeTeamName(name)] !== 'none' && <button className="btn sm ghost" onClick={()=>hideCrest(name)}>Ocultar</button>}
+              </div>
+            </div>
+          ))}
+        </div> : <div className="empty-state">Todavía no hay equipos cargados en esta competencia.</div>}
+        <input ref={crestInputRef} type="file" accept="image/*" hidden onChange={onCrestFile}/>
+      </section>
+    )}
   </div>;
 }
 
@@ -625,7 +723,7 @@ function cupRoundLabel(r, total) {
   return `Ronda ${r+1}`;
 }
 
-function LeagueCup({ league, setLeague, teamNameOptions }) {
+function LeagueCup({ league, setLeague, teamNameOptions, crestFor }) {
   const cup = league.cup || null;
   const [setupSize, setSetupSize] = React.useState(8);
   const [setupNames, setSetupNames] = React.useState(Array(32).fill(''));
@@ -701,10 +799,12 @@ function LeagueCup({ league, setLeague, teamNameOptions }) {
     return (
       <div key={m.key} className="cup-match">
         <div className={`cup-team ${winner==='a'?'winner':''}`}>
+          {m.teamA && <Crest {...crestFor(m.teamA)} size={18}/>}
           <span className="cup-team-name">{m.teamA || 'Por definir'}</span>
           {canScore && stepper('scoreA', m.match.scoreA)}
         </div>
         <div className={`cup-team ${winner==='b'?'winner':''}`}>
+          {m.teamB && <Crest {...crestFor(m.teamB)} size={18}/>}
           <span className="cup-team-name">{m.teamB || 'Por definir'}</span>
           {canScore && stepper('scoreB', m.match.scoreB)}
         </div>
@@ -796,7 +896,7 @@ const platformCSS=document.createElement('style');platformCSS.textContent=`
 .mini-avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
 .form-grid-wide{display:grid;grid-template-columns:1fr 1fr;gap:10px}.form-grid-wide .span-2{grid-column:span 2}
 .session-modal-body{max-height:60vh;overflow:auto}.session-list details{border-top:1px solid var(--line);padding:9px 0}.session-modal-body details{border-top:1px solid var(--line-soft);padding:9px 0}.session-modal-body summary{cursor:pointer}.session-modal-body summary small{display:block;color:var(--fg-dim)}.check-row{display:flex;gap:8px;padding:5px}
-.matchup-row{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center}.matchup-team{min-width:0}.matchup-team.right{text-align:right}.matchup-team strong{display:block;font:26px var(--font-display)}.matchup-team small{color:var(--fg-dim);font-size:11px}.matchup-vs{text-align:center}.matchup-vs::before{content:'VS';display:block;font:20px var(--font-display);color:var(--accent)}
+.matchup-row{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center}.matchup-team{min-width:0;display:flex;align-items:center;gap:10px}.matchup-team.right{text-align:right;flex-direction:row-reverse}.matchup-team strong{display:block;font:26px var(--font-display)}.matchup-team small{color:var(--fg-dim);font-size:11px}.matchup-vs{text-align:center}.matchup-vs::before{content:'VS';display:block;font:20px var(--font-display);color:var(--accent)}
 .table-wrap{overflow:auto}.standings{width:100%;border-collapse:collapse;font-size:13px}.standings th,.standings td{padding:9px 6px;border-bottom:1px solid var(--line-soft);text-align:center}.standings th{font:10.5px var(--font-cond);text-transform:uppercase;letter-spacing:1px;color:var(--fg-dim)}.standings td.left,.standings th.left{text-align:left}.standings tr.top-row{background:color-mix(in oklch,var(--accent) 6%,transparent)}
 .pos-badge{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:5px;background:var(--bg-elev-2);color:var(--fg-mute);font-weight:700;font-size:11px}.pos-badge.first{background:var(--accent);color:#0e1210}.pos-badge.sm{width:18px;height:18px;font-size:10px}
 .pos-diff{color:var(--accent)}.neg-diff{color:var(--accent-2)}
@@ -805,7 +905,7 @@ const platformCSS=document.createElement('style');platformCSS.textContent=`
 .fixture-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}.fixture-days{display:flex;flex-direction:column;gap:16px}.fixture-day-label{font:11px var(--font-cond);text-transform:uppercase;letter-spacing:1.4px;color:var(--fg-dim);margin-bottom:8px}
 .fixture-card{background:var(--bg-elev);border:1px solid var(--line-soft);border-radius:10px;padding:14px 16px;margin-bottom:10px}.fixture-card.pending{border-color:var(--accent)}.fixture-card-top{display:flex;justify-content:space-between;margin-bottom:10px}
 .badge{padding:2px 9px;border-radius:99px;font:700 10px var(--font-cond);text-transform:uppercase;letter-spacing:1px}.badge.final{background:var(--accent);color:#0e1210}.badge.pending{background:var(--bg-elev-2);border:1px solid var(--line);color:var(--warn)}
-.fixture-teams{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}.fixture-teams strong.right{text-align:right}.score-inputs{display:inline-flex;gap:6px;align-items:center}.score-inputs input{width:38px;height:34px;background:var(--bg);border:1px solid var(--line);border-radius:6px;text-align:center;color:var(--fg);font-family:var(--font-mono)}
+.fixture-teams{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}.fixture-team{display:flex;align-items:center;gap:8px;min-width:0}.fixture-team.right{justify-content:flex-end;text-align:right}.score-inputs{display:inline-flex;gap:6px;align-items:center}.score-inputs input{width:38px;height:34px;background:var(--bg);border:1px solid var(--line);border-radius:6px;text-align:center;color:var(--fg);font-family:var(--font-mono)}
 .fixture-card-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;align-items:center}
 .fixture-side{display:flex;flex-direction:column;gap:14px}.mini-standing-row{display:grid;grid-template-columns:22px 1fr 34px 34px;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px}.mini-standing-row:last-child{border-bottom:0}.link-btn{color:var(--accent);font-size:11px}
 .empty-state{padding:28px;text-align:center;color:var(--fg-dim)}.empty-state.sm{padding:14px;font-size:12.5px}
@@ -839,6 +939,25 @@ const platformCSS=document.createElement('style');platformCSS.textContent=`
 .cup-champion-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 14px;background:var(--bg-elev);border:1px dashed var(--line);border-radius:10px;color:var(--fg-dim);text-align:center;font-size:13px;width:100%}
 .cup-champion-card.has-winner{border-style:solid;border-color:var(--accent);color:var(--accent);background:color-mix(in oklch,var(--accent) 10%,var(--bg-elev));font-family:var(--font-display);font-size:20px;letter-spacing:.5px}
 @media(max-width:900px){.cup-bracket{flex-direction:column;align-items:stretch}.cup-side{flex-direction:column}}
+.comp-selector{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.comp-pill{display:flex;align-items:stretch;background:var(--bg-elev);border:1px solid var(--line-soft);border-radius:8px;overflow:hidden}
+.comp-pill.on{border-color:var(--accent)}
+.comp-pill-main{display:flex;flex-direction:column;align-items:flex-start;padding:7px 12px;gap:1px;color:var(--fg-mute)}
+.comp-pill.on .comp-pill-main{color:var(--fg)}
+.comp-pill-main strong{font-size:12.5px}
+.comp-pill-main span{font-family:var(--font-mono);font-size:10px;color:var(--fg-dim)}
+.comp-pill-del{padding:0 8px;color:var(--fg-dim);border-left:1px solid var(--line-soft)}
+.comp-pill-del:hover{color:var(--accent-2)}
+.comp-pill-add{padding:7px 14px;display:flex;align-items:center;gap:6px;color:var(--fg-mute);border-style:dashed;background:transparent}
+.comp-pill-add:hover{color:var(--accent);border-color:var(--accent)}
+.comp-pill-new-form{display:flex;align-items:center;gap:6px;padding:6px}
+.comp-pill-new-form input{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--fg);outline:none;width:120px}
+.standings-team{display:flex;align-items:center;gap:8px}
+.crest-manager-grid{display:flex;flex-direction:column;gap:2px}
+.crest-manager-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line-soft)}
+.crest-manager-row:first-child{border-top:0}
+.crest-manager-name{flex:1;font-size:13px}
+.crest-manager-actions{display:flex;gap:6px}
 @media(max-width:1100px){.hub-row,.hub-row.uneven,.roster-grid,.dossier-grid,.dossier-pair,.fixture-layout{grid-template-columns:1fr}}
 @media(max-width:650px){.experience-grid,.form-grid-wide{grid-template-columns:1fr}.form-grid-wide .span-2{grid-column:auto}.stat-strip{grid-template-columns:1fr 1fr}.fixture-teams{grid-template-columns:1fr}.results-row{grid-template-columns:1fr 1fr}.results-row time{grid-column:1/-1}.results-row .del-icon{grid-column:1/-1}}
 `;document.head.appendChild(platformCSS);

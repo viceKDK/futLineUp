@@ -356,7 +356,9 @@ function MiniKit({ kit, num }) {
           <rect x="50" y="0" width="55" height="105" fill={kit.secondary}/>
         )}
       </g>
-      <text x="50" y="70" textAnchor="middle" fontFamily="'Bebas Neue'" fontSize="40" fill="#fff">{num}</text>
+      <text x="50" y="70" textAnchor="middle" fontFamily="'Bebas Neue'" fontSize="40"
+            fill={window.contrastText(kit.primary)}
+            style={{ paintOrder: "stroke", stroke: window.contrastText(kit.primary)==='#ffffff' ? 'rgba(0,0,0,.4)' : 'rgba(255,255,255,.5)', strokeWidth: 1.5 }}>{num}</text>
     </svg>
   );
 }

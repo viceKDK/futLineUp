@@ -176,6 +176,19 @@ window.colorFor = function(seed) {
   return `oklch(0.55 0.12 ${hue})`;
 };
 
+// Color de texto legible (blanco o negro) según qué tan clara sea una camiseta.
+// hex-only (los kits guardan colores en hex); si no puede parsear, asume blanco.
+window.contrastText = function(hex) {
+  if (typeof hex !== 'string' || hex[0] !== '#') return '#ffffff';
+  let h = hex.slice(1);
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  if (h.length !== 6) return '#ffffff';
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  if ([r,g,b].some(Number.isNaN)) return '#ffffff';
+  const luminance = (0.299*r + 0.587*g + 0.114*b) / 255;
+  return luminance > 0.6 ? '#12181a' : '#ffffff';
+};
+
 window.initials = function(name) {
   if (!name) return "??";
   const parts = name.split(/\s+/);
