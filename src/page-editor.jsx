@@ -74,13 +74,6 @@ function EditorPage() {
       return n;
     });
   };
-  const onRosterDrop = (e) => {
-    e.preventDefault();
-    const fromPitch = e.dataTransfer.getData("text/plain");
-    if (fromPitch === "") return;
-    const idx = parseInt(fromPitch, 10);
-    if (!isNaN(idx)) unassignFromField(idx);
-  };
 
   const handleMovePos = (idx, x, y) => {
     setDraft(d => {
@@ -324,6 +317,7 @@ function EditorPage() {
             players={assigned}
             onSwap={handleSwap}
             onAssign={handleAssign}
+            onRemove={unassignFromField}
             kit={activeKit}
             style={document.body.dataset.pitch || "classic"}
             label={draft.freeMode ? '' : formation.name}
@@ -339,7 +333,7 @@ function EditorPage() {
         </div>
 
         <aside className="editor-right">
-          <div className="panel" onDragOver={e=>e.preventDefault()} onDrop={onRosterDrop}>
+          <div className="panel" data-pitch-dropzone="remove">
             <div className="panel-head">
               Plantel
               <span className="chip">{(draft.assignedIds || []).filter(Boolean).length}/{size}</span>
@@ -638,6 +632,7 @@ editorCSS.textContent = `
   .roster-search input:focus { border-color: var(--accent); }
 
   .roster-list { display: flex; flex-direction: column; gap: 2px; max-height: 56vh; overflow-y: auto; }
+  [data-pitch-dropzone].hover { outline: 2px dashed var(--accent); outline-offset: -4px; background: color-mix(in oklch, var(--accent) 8%, var(--bg-elev)); }
   .roster-item {
     display: flex; align-items: center; gap: 10px;
     padding: 8px 6px;
