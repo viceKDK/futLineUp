@@ -139,7 +139,7 @@ function SettingsPage() {
 
     <div className="hub-row">
       <section className="card"><div className="panel-head">Perfil</div><label className="field"><span>Tu nombre</span><input value={profile.displayName||''} onChange={e=>setProfile(p=>({...p,displayName:e.target.value}))} placeholder="Nombre o apodo"/></label><label className="field"><span>Temporada</span><input value={profile.season||''} onChange={e=>setProfile(p=>({...p,season:e.target.value}))} placeholder="Ej. 2026 · Apertura"/></label></section>
-      <section className="card"><div className="panel-head">Cuenta y sincronización</div>{session ? <><div className="account-row"><div className="avatar-me">{window.initials(session.user?.user_metadata?.full_name || session.user?.email)}</div><div><strong>{session.user?.user_metadata?.full_name || 'Cuenta conectada'}</strong><small>{session.user?.email}</small></div></div><div className="action-row"><button className="btn primary" onClick={()=>window.fcCloud.uploadLocal().then(()=>window.__toast?.('Datos sincronizados')).catch(e=>window.__toast?.(e.message))}>Subir datos</button><button className="btn" onClick={()=>window.fcCloud.downloadToLocal().then(()=>{window.__toast?.('Datos recuperados');setTimeout(()=>location.reload(),500)}).catch(e=>window.__toast?.(e.message))}>Recuperar cuenta</button><button className="btn ghost" onClick={()=>window.fcAuth.signOut()}>Cerrar sesión</button></div></> : <><div className="guest-account-state"><span className="status-dot"></span><div><strong>Estás usando futbolClub sin cuenta</strong><small>Editor, sorteo, camisetas y enlaces compartidos están disponibles. Los datos se guardan solamente en este dispositivo.</small></div></div><div className="action-row"><button className="btn primary" onClick={()=>window.go('home')}>Seguir sin cuenta</button><button className="btn" disabled={!window.fcAuth?.configured} onClick={()=>window.fcAuth.signInGoogle().catch(e=>window.__toast?.(e.message))}><Icon name="google" size={14}/> Conectar Google para sincronizar</button></div>{!window.fcAuth?.configured && <small className="account-note">La cuenta es opcional. Podrás conectarla cuando el servicio de sincronización esté configurado.</small>}</>}</section>
+      <section className="card"><div className="panel-head">Cuenta y sincronización</div>{session ? <><div className="account-row"><div className="avatar-me">{window.initials(session.user?.user_metadata?.full_name || session.user?.email)}</div><div><strong>{session.user?.user_metadata?.full_name || 'Cuenta conectada'}</strong><small>{session.user?.email}</small></div></div><div className="action-row"><button className="btn primary" onClick={()=>window.fcCloud.uploadLocal().then(()=>window.__toast?.('Datos sincronizados')).catch(e=>window.__toast?.(e.message))}>Subir datos</button><button className="btn" onClick={()=>window.fcCloud.downloadToLocal().then(()=>{window.__toast?.('Datos recuperados');setTimeout(()=>location.reload(),500)}).catch(e=>window.__toast?.(e.message))}>Recuperar cuenta</button><button className="btn ghost" onClick={()=>window.fcAuth.signOut()}>Cerrar sesión</button></div></> : <><div className="guest-account-state"><span className="status-dot"></span><div><strong>Estás usando futbolClub sin cuenta</strong><small>Editor, sorteo, camisetas y enlaces compartidos están disponibles. Los datos se guardan solamente en este dispositivo.</small></div></div><div className="action-row"><button className="btn primary" onClick={()=>window.go('auth')}>Iniciar sesión / Crear cuenta</button><button className="btn" disabled={!window.fcAuth?.configured} onClick={()=>window.fcAuth.signInGoogle().catch(e=>window.__toast?.(e.message))}><Icon name="google" size={14}/> Conectar Google para sincronizar</button></div>{!window.fcAuth?.configured && <small className="account-note">La cuenta es opcional. Podrás conectarla cuando el servicio de sincronización esté configurado.</small>}</>}</section>
     </div>
 
     <div className="hub-row">
@@ -213,6 +213,23 @@ function CoachPage() {
   const [newObjective, setNewObjective] = React.useState('');
   const [showEvalForm, setShowEvalForm] = React.useState(false);
   const [form, setForm] = React.useState({rating:7,good:'',improve:'',goal:'',context:'training'});
+  const dossierRef = React.useRef(null);
+
+  const exportDossier = async (playerName) => {
+    if (!window.html2canvas || !dossierRef.current) return window.__toast?.('Export no disponible todavía, esperá un segundo');
+    window.__toast?.('Generando imagen...');
+    try {
+      const canvas = await window.html2canvas(dossierRef.current, { backgroundColor: '#0e1210', scale: 2, useCORS: true, logging: false });
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${playerName.toLowerCase().replace(/[^a-z0-9]+/g,'-')}-ficha.png`;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        window.__toast?.('Ficha descargada');
+      }, 'image/png');
+    } catch (_) { window.__toast?.('Error al exportar la ficha'); }
+  };
 
   const attendancePct = (playerId) => sessions.length ? Math.round(sessions.filter(s=>(attendance[s.id]||[]).includes(playerId)).length / sessions.length * 100) : 0;
   const lastEval = (playerId) => evaluations.filter(e=>e.playerId===playerId).sort((a,b)=>b.date.localeCompare(a.date))[0];
@@ -263,9 +280,10 @@ function CoachPage() {
       </div>
       <div className="dossier-head">
         <div/>
+        <button className="btn" onClick={()=>exportDossier(player.name)}><Icon name="download" size={13}/> Exportar ficha</button>
         <button className="btn primary" onClick={()=>setShowEvalForm(v=>!v)}><Icon name="plus" size={14}/> Nueva evaluación</button>
       </div>
-      <div className="dossier-grid">
+      <div className="dossier-grid" ref={dossierRef}>
         <div className="dossier-col">
           <section className="card dossier-hero">
             <div className="dossier-avatar" style={{background:window.colorFor(player.name)}}>{window.initials(player.name)}</div>
@@ -433,10 +451,15 @@ function calculateStandings(fixtures) {
 
 function LeaguePage() {
   const [league, setLeague] = window.useStore('league', {name:'Liga amateur',season:'2026',fixtures:[]});
+  const [savedTeams] = window.useStore('teams', window.DEFAULT_SAVED_TEAMS);
   const [tab, setTab] = React.useState('table');
   const [form,setForm]=React.useState({date:new Date().toISOString().slice(0,10),home:'',away:'',homeScore:'',awayScore:''});
   const [scoreDrafts, setScoreDrafts] = React.useState({});
   const fixtures=league.fixtures||[], standings=calculateStandings(fixtures);
+  const teamNameOptions = [...new Set([
+    ...savedTeams.map(t=>t.name),
+    ...fixtures.flatMap(f=>[f.home,f.away]),
+  ])].sort();
 
   const saveFixture=()=>{
     if(!form.home.trim()||!form.away.trim())return window.__toast?.('Completá ambos equipos');
@@ -487,7 +510,8 @@ function LeaguePage() {
         </div>
         <div className="card">
           <div className="panel-head-row"><span>Carga rápida</span></div>
-          <div className="form-grid-wide"><label className="field span-2"><span>Fecha</span><input type="date" value={form.date} onChange={e=>setForm(v=>({...v,date:e.target.value}))}/></label><label className="field"><span>Local</span><input value={form.home} onChange={e=>setForm(v=>({...v,home:e.target.value}))}/></label><label className="field"><span>Visitante</span><input value={form.away} onChange={e=>setForm(v=>({...v,away:e.target.value}))}/></label><label className="field"><span>Goles local</span><input type="number" min="0" value={form.homeScore} onChange={e=>setForm(v=>({...v,homeScore:e.target.value}))}/></label><label className="field"><span>Goles visitante</span><input type="number" min="0" value={form.awayScore} onChange={e=>setForm(v=>({...v,awayScore:e.target.value}))}/></label></div>
+          <datalist id="league-team-names">{teamNameOptions.map(name => <option key={name} value={name}/>)}</datalist>
+          <div className="form-grid-wide"><label className="field span-2"><span>Fecha</span><input type="date" value={form.date} onChange={e=>setForm(v=>({...v,date:e.target.value}))}/></label><label className="field"><span>Local</span><input list="league-team-names" value={form.home} onChange={e=>setForm(v=>({...v,home:e.target.value}))} placeholder="Elegí o escribí un nombre"/></label><label className="field"><span>Visitante</span><input list="league-team-names" value={form.away} onChange={e=>setForm(v=>({...v,away:e.target.value}))} placeholder="Elegí o escribí un nombre"/></label><label className="field"><span>Goles local</span><input type="number" min="0" value={form.homeScore} onChange={e=>setForm(v=>({...v,homeScore:e.target.value}))}/></label><label className="field"><span>Goles visitante</span><input type="number" min="0" value={form.awayScore} onChange={e=>setForm(v=>({...v,awayScore:e.target.value}))}/></label></div>
           <button className="btn primary" onClick={saveFixture}><Icon name="plus" size={14}/> Guardar partido</button>
         </div>
       </div>
@@ -561,7 +585,7 @@ const platformCSS=document.createElement('style');platformCSS.textContent=`
 .danger-zone{display:flex;align-items:center;gap:14px;background:color-mix(in oklch,var(--accent-2) 6%,var(--bg-elev));border-color:color-mix(in oklch,var(--accent-2) 45%,var(--line-soft));margin-top:16px}.danger-copy{flex:1}.danger-copy strong{color:var(--accent-2);font-size:13.5px}.danger-copy div{color:var(--fg-mute);font-size:12px;margin-top:2px}.btn.danger-outline{background:transparent;border-color:var(--accent-2);color:var(--accent-2)}.btn.danger{background:var(--accent-2);border-color:var(--accent-2);color:#fff;font-weight:600}
 .panel-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font:600 11px var(--font-cond);text-transform:uppercase;letter-spacing:1.4px;color:var(--fg-dim)}.lime-note{color:var(--accent);font-family:var(--font-body);text-transform:none;letter-spacing:0}.muted-note{font-family:var(--font-body);text-transform:none;letter-spacing:0;color:var(--fg-mute);font-size:12px}
 .crumbs{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--fg-dim);margin-bottom:10px}.crumb-btn{color:var(--fg-dim)}.crumb-btn:hover{color:var(--accent)}.crumb-current{color:var(--fg);font-weight:600}
-.dossier-head{display:flex;justify-content:flex-end;margin-bottom:14px}
+.dossier-head{display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px}
 .dossier-grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:14px;align-items:start}.dossier-col{display:flex;flex-direction:column;gap:14px;min-width:0}
 .dossier-hero{text-align:center}.dossier-avatar{width:76px;height:76px;border-radius:16px;margin:0 auto 10px;display:grid;place-items:center;font-family:var(--font-display);font-size:30px;color:#fff}.dossier-hero h2{font:36px var(--font-display);margin:0 0 8px}.tag-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}.mini-tag{padding:3px 9px;border-radius:99px;background:var(--bg-elev-2);border:1px solid var(--line);font-size:11px;color:var(--fg-mute)}
 .dossier-quickstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.dossier-quickstats div{background:var(--bg-elev-2);border-radius:8px;padding:11px;text-align:center}.dossier-quickstats strong{display:block;font:26px var(--font-display)}.dossier-quickstats span{font:9.5px var(--font-cond);text-transform:uppercase;letter-spacing:1px;color:var(--fg-dim)}

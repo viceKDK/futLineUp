@@ -79,6 +79,19 @@ function EditorPage() {
   const onRosterDragStart = (e, id) => {
     e.dataTransfer.setData("application/x-roster", String(id));
     e.dataTransfer.effectAllowed = "copy";
+
+    const player = roster.find(p => p.id === id);
+    if (player) {
+      const ghost = document.createElement("div");
+      ghost.className = "roster-drag-ghost";
+      const avatar = player.photo
+        ? `<img src="${player.photo}" alt=""/>`
+        : `<div class="roster-drag-ghost-avatar" style="background:${window.colorFor(player.name)}">${window.initials(player.name)}</div>`;
+      ghost.innerHTML = `${avatar}<span>${player.name}</span>`;
+      document.body.appendChild(ghost);
+      e.dataTransfer.setDragImage(ghost, 18, 18);
+      setTimeout(() => ghost.remove(), 0);
+    }
   };
 
   const onFieldPlayer = (id) => (draft.assignedIds || []).includes(id);
@@ -603,6 +616,21 @@ editorCSS.textContent = `
   .roster-num { font-family: var(--font-mono); }
   .roster-state { display: flex; align-items: center; gap: 6px; }
   .drag-hint { color: var(--fg-dim); font-family: var(--font-mono); font-size: 14px; }
+  .roster-drag-ghost {
+    position: fixed; top: -200px; left: -200px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px 6px 6px;
+    background: var(--bg-elev); border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500; color: var(--fg);
+    white-space: nowrap; pointer-events: none;
+  }
+  .roster-drag-ghost img, .roster-drag-ghost-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    object-fit: cover; flex: none;
+    display: grid; place-items: center;
+    color: #fff; font-weight: 700; font-size: 13px;
+  }
   .bench-btn, .captain-btn, .quick-assign, .roster-edit, .roster-del {
     width: 20px; height: 20px; border-radius: 4px;
     background: transparent; color: var(--fg-dim); font-size: 14px; line-height: 1;

@@ -7,6 +7,9 @@
     window.fcAuth = {
       configured: false,
       async signInGoogle() { throw new Error('Supabase no está configurado'); },
+      async signInEmail() { throw new Error('Supabase no está configurado'); },
+      async signUpEmail() { throw new Error('Supabase no está configurado'); },
+      async resetPassword() { throw new Error('Supabase no está configurado'); },
       async signOut() {},
       async session() { return null; },
     };
@@ -43,6 +46,22 @@
         provider: 'google',
         options: { redirectTo: `${location.origin}${location.pathname}#settings` },
       });
+    },
+    async signInEmail(email, password) {
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      return data;
+    },
+    async signUpEmail(email, password) {
+      const { data, error } = await client.auth.signUp({ email, password });
+      if (error) throw error;
+      return data;
+    },
+    async resetPassword(email) {
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo: `${location.origin}${location.pathname}#auth`,
+      });
+      if (error) throw error;
     },
     async signOut() { return client.auth.signOut(); },
     async session() { return (await client.auth.getSession()).data.session; },

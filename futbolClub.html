@@ -71,6 +71,9 @@
     display: grid;
     grid-template-columns: 240px 1fr;
   }
+  .app-shell.auth-mode { grid-template-columns: 1fr; }
+  .app-shell.auth-mode .sidebar { display: none; }
+  .app-shell.auth-mode .main { padding: 0; }
 
   /* SIDEBAR */
   .sidebar {
@@ -298,6 +301,20 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  .update-banner {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    padding: 10px 16px;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--accent);
+    color: var(--fg);
+    font-size: 13px;
+    z-index: 2001;
+    transform: translateY(-100%);
+    transition: transform .25s ease;
+  }
+  .update-banner.show { transform: translateY(0); }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
   }
@@ -346,17 +363,12 @@
       <button class="nav-item" data-page="settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3.2 3.2 0 100 6.4A3.2 3.2 0 0012 5"></path><path d="M5.5 20a6.5 6.5 0 0113 0"></path></svg> Cuenta y datos</button>
     </nav>
 
-    <div class="sidebar-footer">
-      <div class="avatar-me">MS</div>
-      <div>
-        <div class="me-name">Martín S.</div>
-        <div class="me-sub">Capitán · 12 partidos</div>
-      </div>
-    </div>
+    <div class="sidebar-footer" id="sidebar-footer"></div>
   </aside>
 
   <!-- MAIN -->
   <main class="main">
+    <div id="page-auth"   class="page"></div>
     <div id="page-home"   class="page active"></div>
     <div id="page-mode"   class="page"></div>
     <div id="page-editor" class="page"></div>
@@ -461,19 +473,35 @@
     if (!document.getElementById('page-' + page)) page = 'home';
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
+    document.querySelector('.app-shell').classList.toggle('auth-mode', page === 'auth');
     if (updateHistory && !location.hash.startsWith('#share=')) history.pushState({page}, '', `#${page}`);
     window.scrollTo({top:0});
   }
   window.go = go;
   window.addEventListener('popstate', event => go(event.state?.page || location.hash.slice(1) || 'home', false));
   window.addEventListener('DOMContentLoaded', () => {
-    const initial = location.hash.startsWith('#share=') ? 'share' : (location.hash.slice(1) || 'home');
+    let initial;
+    if (location.hash.startsWith('#share=')) {
+      initial = 'share';
+    } else if (location.hash) {
+      initial = location.hash.slice(1);
+    } else {
+      let seenAuthIntro = false;
+      try { seenAuthIntro = localStorage.getItem('fc.v1.authIntroSeen') === '1'; } catch (_) {}
+      initial = seenAuthIntro ? 'home' : 'auth';
+    }
     go(initial, false);
   });
 </script>
 
 <!-- Toast helper -->
 <div id="toast" class="toast"></div>
+
+<!-- PWA update banner -->
+<div id="update-banner" class="update-banner">
+  <span>Hay una versión nueva de futbolClub.</span>
+  <button id="update-banner-btn" class="btn primary sm">Actualizar ahora</button>
+</div>
 <script>
   let __toastTimer = null;
   window.__toast = function(msg) {
@@ -504,11 +532,21 @@
     window.__toast?.('futbolClub quedó instalado');
   });
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    const hadController = !!navigator.serviceWorker.controller;
+    let updateReloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || updateReloading) return;
+      document.getElementById('update-banner')?.classList.add('show');
+    });
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./service-worker.js')
         .then(() => navigator.serviceWorker.ready)
         .then(() => window.dispatchEvent(new CustomEvent('fc:pwa-ready')))
         .catch(error => console.warn('[futbolClub] No se pudo activar el modo offline', error));
+    });
+    document.getElementById('update-banner-btn')?.addEventListener('click', () => {
+      updateReloading = true;
+      location.reload();
     });
   }
 </script>
@@ -534,8 +572,10 @@
 <script type="text/babel" src="src/supabase.jsx"></script>
 <script type="text/babel" src="src/kits.jsx"></script>
 <script type="text/babel" src="src/pitch.jsx"></script>
+<script type="text/babel" src="src/sidebar.jsx"></script>
 
 <!-- Pages -->
+<script type="text/babel" src="src/page-auth.jsx"></script>
 <script type="text/babel" src="src/page-home.jsx"></script>
 <script type="text/babel" src="src/page-mode.jsx"></script>
 <script type="text/babel" src="src/page-editor.jsx"></script>

@@ -4,6 +4,7 @@ function HomePage() {
   const [profile] = window.useStore('profile', window.DEFAULT_PROFILE);
   const [roster]  = window.useStore('roster',  window.DEFAULT_ROSTER);
   const [matches, setMatches] = window.useStore('matches', []);
+  const [matchInfo] = window.useStore('matchInfo', null);
   const [, setDraft] = window.useStore('editor', null);
   const [filter, setFilter] = React.useState('all');
   const [modal, setModal] = React.useState(null);
@@ -51,9 +52,23 @@ function HomePage() {
   const lastMatch = matches.length ? matches[matches.length - 1] : null;
   const lastResult = lastMatch ? `${lastMatch.us}–${lastMatch.them}` : '—';
 
+  const topScorers = React.useMemo(() => {
+    const totals = {};
+    matches.forEach(m => (m.scorers || []).forEach(s => {
+      if (!s.playerId || !s.goals) return;
+      totals[s.playerId] = (totals[s.playerId] || 0) + Number(s.goals);
+    }));
+    return Object.entries(totals)
+      .map(([playerId, goals]) => ({ player: roster.find(p => p.id === Number(playerId) || p.id === playerId), goals }))
+      .filter(x => x.player)
+      .sort((a, b) => b.goals - a.goals)
+      .slice(0, 5);
+  }, [matches, roster]);
+
   return (
     <div>
       <GuestModeBanner />
+      <NextMatchBanner matchInfo={matchInfo} />
       <div className="page-head">
         <div>
           <div className="page-kicker">{profile.season || (profile.experience === "coach" ? "Modo entrenador" : profile.experience === "league" ? "Modo liga" : "Tu fútbol, a tu manera")}</div>
@@ -107,12 +122,29 @@ function HomePage() {
                     <div className="match-team">{team?.name || 'Mi equipo'}</div>
                     <div className="match-opp">vs {m.opponent}</div>
                   </div>
+                  <button className="match-edit" onClick={()=>setModal({type:'match', match:m})} title="Editar">✎</button>
                   <button className="match-del" onClick={()=>{
                     setMatches(prev => prev.filter(x => x.id !== m.id));
                   }} title="Borrar">×</button>
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {topScorers.length > 0 && (
+        <div className="scorers-card">
+          <div className="panel-head-row"><span>Goleadores</span><span className="chip">Basado en tus partidos cargados</span></div>
+          <div className="scorers-list">
+            {topScorers.map((s, i) => (
+              <div key={s.player.id} className="scorer-row">
+                <span className="scorer-pos">{i+1}</span>
+                <div className="mini-avatar" style={{background: window.colorFor(s.player.name)}}>{window.initials(s.player.name)}</div>
+                <span className="scorer-name">{s.player.name}</span>
+                <span className="scorer-goals">{s.goals} gol{s.goals===1?'':'es'}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -149,10 +181,17 @@ function HomePage() {
       {modal?.type === 'match' && (
         <MatchModal
           teams={teams}
+          roster={roster}
+          initial={modal.match || null}
           onClose={()=>setModal(null)}
           onSave={(m) => {
-            setMatches(prev => [...prev, { ...m, id: 'm' + Date.now() }]);
-            window.__toast?.('Resultado guardado');
+            if (modal.match) {
+              setMatches(prev => prev.map(x => x.id === modal.match.id ? { ...x, ...m } : x));
+              window.__toast?.('Resultado actualizado');
+            } else {
+              setMatches(prev => [...prev, { ...m, id: 'm' + Date.now() }]);
+              window.__toast?.('Resultado guardado');
+            }
             setModal(null);
           }}
         />
@@ -183,12 +222,46 @@ function GuestModeBanner() {
   );
 }
 
-function MatchModal({ teams, onClose, onSave }) {
-  const [teamId, setTeamId] = React.useState(teams[0]?.id || '');
-  const [us, setUs] = React.useState(0);
-  const [them, setThem] = React.useState(0);
-  const [opponent, setOpponent] = React.useState('');
-  const [date, setDate] = React.useState(new Date().toISOString().slice(0,10));
+function NextMatchBanner({ matchInfo }) {
+  if (!matchInfo?.date) return null;
+  const today = new Date().toISOString().slice(0,10);
+  if (matchInfo.date < today) return null;
+  const isToday = matchInfo.date === today;
+  const days = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+  let label = matchInfo.date;
+  try { label = days[new Date(matchInfo.date + 'T00:00').getDay()]; } catch (_) {}
+  return (
+    <aside className="next-match-banner" aria-label="Próximo partido">
+      <div className="next-match-icon" aria-hidden="true"><Icon name="session" size={18}/></div>
+      <div>
+        <strong>{isToday ? '¡Partido hoy!' : `Próximo partido · ${label}`} {matchInfo.time && `· ${matchInfo.time}`}</strong>
+        <span>{matchInfo.venue ? `${matchInfo.venue} · ` : ''}vs {matchInfo.opponent || 'rival'}</span>
+      </div>
+      <button className="btn sm" onClick={()=>window.go('share')}>Ver detalles</button>
+    </aside>
+  );
+}
+
+function MatchModal({ teams, roster, initial, onClose, onSave }) {
+  const [teamId, setTeamId] = React.useState(initial?.teamId || teams[0]?.id || '');
+  const [us, setUs] = React.useState(initial?.us ?? 0);
+  const [them, setThem] = React.useState(initial?.them ?? 0);
+  const [opponent, setOpponent] = React.useState(initial?.opponent || '');
+  const [date, setDate] = React.useState(initial?.date || new Date().toISOString().slice(0,10));
+  const [scorers, setScorers] = React.useState(initial?.scorers || []);
+  const [scorerPick, setScorerPick] = React.useState(roster[0]?.id ?? '');
+  const [scorerGoals, setScorerGoals] = React.useState(1);
+
+  const addScorer = () => {
+    if (scorerPick === '') return;
+    setScorers(prev => {
+      const existing = prev.find(s => s.playerId === scorerPick);
+      const goals = Number(scorerGoals) || 1;
+      if (existing) return prev.map(s => s.playerId === scorerPick ? { ...s, goals: s.goals + goals } : s);
+      return [...prev, { playerId: scorerPick, goals }];
+    });
+  };
+  const removeScorer = (playerId) => setScorers(prev => prev.filter(s => s.playerId !== playerId));
 
   const submit = () => {
     if (!teamId) return;
@@ -198,6 +271,7 @@ function MatchModal({ teams, onClose, onSave }) {
       them: parseInt(them, 10) || 0,
       opponent: opponent.trim() || 'Rival',
       date,
+      scorers,
     });
   };
 
@@ -206,8 +280,8 @@ function MatchModal({ teams, onClose, onSave }) {
       <div className="modal" onClick={e=>e.stopPropagation()}>
         <div className="modal-head">
           <div>
-            <div className="page-kicker">Registrar partido</div>
-            <div className="modal-title">Cargá el resultado</div>
+            <div className="page-kicker">{initial ? 'Editar partido' : 'Registrar partido'}</div>
+            <div className="modal-title">{initial ? 'Corregí el resultado' : 'Cargá el resultado'}</div>
           </div>
           <button className="btn sm ghost" onClick={onClose}>✕</button>
         </div>
@@ -235,6 +309,31 @@ function MatchModal({ teams, onClose, onSave }) {
               <span>Fecha</span>
               <input type="date" value={date} onChange={e=>setDate(e.target.value)}/>
             </label>
+          </div>
+
+          <div className="scorers-field">
+            <span className="scorers-field-label">Goleadores (opcional)</span>
+            <div className="scorers-add-row">
+              <select value={scorerPick} onChange={e=>setScorerPick(Number(e.target.value)||e.target.value)}>
+                {roster.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <input type="number" min="1" value={scorerGoals} onChange={e=>setScorerGoals(e.target.value)}/>
+              <button className="btn sm" type="button" onClick={addScorer}>+ Agregar</button>
+            </div>
+            {scorers.length > 0 && (
+              <div className="scorers-chip-row">
+                {scorers.map(s => {
+                  const p = roster.find(r => r.id === s.playerId);
+                  if (!p) return null;
+                  return (
+                    <span key={s.playerId} className="chip">
+                      {p.name} · {s.goals}
+                      <button className="scorer-chip-del" onClick={()=>removeScorer(s.playerId)}>×</button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
         <div className="modal-foot">
@@ -287,6 +386,18 @@ function QuickCard({ title, sub, icon, action }) {
 
 const homeCSS = document.createElement("style");
 homeCSS.textContent = `
+  .scorers-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+  .scorers-list { display: flex; flex-direction: column; gap: 4px; }
+  .scorer-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+  .scorer-pos { width: 18px; color: var(--fg-dim); font-family: var(--font-mono); font-size: 11px; text-align: center; }
+  .scorer-name { flex: 1; font-size: 13px; font-weight: 500; }
+  .scorer-goals { font-family: var(--font-cond); font-size: 12px; color: var(--accent); font-weight: 700; }
   .guest-banner {
     display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px;
     margin-bottom: 18px; padding: 12px 14px;
@@ -303,6 +414,24 @@ homeCSS.textContent = `
   @media (max-width: 650px) {
     .guest-banner { grid-template-columns: auto 1fr; }
     .guest-banner .btn { grid-column: 1/-1; justify-content: center; }
+  }
+  .next-match-banner {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px;
+    margin-bottom: 18px; padding: 12px 14px;
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    background: var(--bg-elev);
+  }
+  .next-match-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--bg-elev-2); color: var(--accent);
+    display: grid; place-items: center; flex: none;
+  }
+  .next-match-banner strong, .next-match-banner span { display: block; }
+  .next-match-banner span { margin-top: 2px; color: var(--fg-mute); font-size: 12px; }
+  @media (max-width: 650px) {
+    .next-match-banner { grid-template-columns: auto 1fr; }
+    .next-match-banner .btn { grid-column: 1/-1; justify-content: center; }
   }
   .hero-strip {
     display: grid;
@@ -362,11 +491,12 @@ homeCSS.textContent = `
   .match-info { flex: 1; min-width: 0; }
   .match-team { font-size: 13px; font-weight: 600; }
   .match-opp  { font-size: 11px; color: var(--fg-dim); font-family: var(--font-mono); }
-  .match-del {
+  .match-edit, .match-del {
     width: 22px; height: 22px; border-radius: 4px;
-    background: transparent; color: var(--fg-dim); font-size: 14px; line-height: 1;
+    background: transparent; color: var(--fg-dim); font-size: 13px; line-height: 1;
     flex-shrink: 0;
   }
+  .match-edit:hover { background: var(--bg-elev-2); color: var(--accent); }
   .match-del:hover { background: var(--accent-2); color: #fff; }
 
   .teams-grid {
@@ -465,6 +595,28 @@ homeCSS.textContent = `
   .quick-arrow { color: var(--fg-dim); font-size: 18px; }
   .quick-card:hover .quick-arrow { color: var(--accent); transform: translateX(2px); }
 
+  .match-form.form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .scorers-field { margin-top: 14px; }
+  .scorers-field-label {
+    display: block; font-family: var(--font-cond); font-size: 10px;
+    letter-spacing: 1.4px; text-transform: uppercase; color: var(--fg-dim);
+    margin-bottom: 6px;
+  }
+  .scorers-add-row { display: flex; gap: 6px; }
+  .scorers-add-row select {
+    flex: 1; min-width: 0; background: var(--bg-elev-2); border: 1px solid var(--line);
+    border-radius: 6px; padding: 8px 10px; font-size: 13px; color: var(--fg); outline: none;
+  }
+  .scorers-add-row input {
+    width: 56px; background: var(--bg-elev-2); border: 1px solid var(--line);
+    border-radius: 6px; padding: 8px 10px; font-size: 13px; color: var(--fg); outline: none;
+  }
+  .scorers-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .scorer-chip-del { margin-left: 6px; color: var(--fg-dim); }
+  .scorer-chip-del:hover { color: var(--accent-2); }
+  @media (max-width: 500px) { .match-form.form-grid { grid-template-columns: 1fr; } }
   .match-form select {
     background: var(--bg-elev-2);
     border: 1px solid var(--line);
