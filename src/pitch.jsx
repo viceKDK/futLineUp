@@ -301,7 +301,10 @@ pitchCSS.textContent = `
     overflow: hidden;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 20px 40px -20px rgba(0,0,0,.6);
     touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
+  .pitch-svg, .pitch-svg * { -webkit-user-select: none; user-select: none; }
   .pitch-svg { width: 100%; height: 100%; display: block; }
   .pitch-label {
     position: absolute; top: 12px; left: 14px;

@@ -623,6 +623,8 @@ editorCSS.textContent = `
     border-radius: 6px;
     cursor: grab;
     transition: background .15s, opacity .15s;
+    -webkit-user-select: none;
+    user-select: none;
   }
   .roster-item:hover { background: var(--bg-elev-2); }
   .roster-item:active { cursor: grabbing; }
