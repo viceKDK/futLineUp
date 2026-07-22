@@ -621,13 +621,14 @@ function cupRoundLabel(r, total) {
   if (fromEnd === 2) return 'Semifinal';
   if (fromEnd === 3) return 'Cuartos de final';
   if (fromEnd === 4) return 'Octavos de final';
+  if (fromEnd === 5) return 'Dieciseisavos de final';
   return `Ronda ${r+1}`;
 }
 
 function LeagueCup({ league, setLeague, teamNameOptions }) {
   const cup = league.cup || null;
   const [setupSize, setSetupSize] = React.useState(8);
-  const [setupNames, setSetupNames] = React.useState(Array(16).fill(''));
+  const [setupNames, setSetupNames] = React.useState(Array(32).fill(''));
   const [shuffle, setShuffle] = React.useState(true);
 
   const generateCup = () => {
@@ -653,13 +654,17 @@ function LeagueCup({ league, setLeague, teamNameOptions }) {
   const setCupWinnerPick = (key, side) => {
     setLeague(l => ({ ...l, cup: { ...l.cup, matches: { ...l.cup.matches, [key]: { ...(l.cup.matches?.[key]||{}), winnerPick: side } } } }));
   };
+  const stepCupScore = (key, field, current, delta) => {
+    const next = Math.max(0, (Number(current) || 0) + delta);
+    setCupScore(key, field, String(next));
+  };
 
   if (!cup) {
     return (
       <div className="card cup-setup">
         <div className="panel-head-row"><span>Nuevo cuadro eliminatorio</span></div>
         <div className="seg" style={{marginBottom:14}}>
-          {[4,8,16].map(n => <button key={n} className={setupSize===n?'on':''} onClick={()=>setSetupSize(n)}>{n} equipos</button>)}
+          {[4,8,16,32].map(n => <button key={n} className={setupSize===n?'on':''} onClick={()=>setSetupSize(n)}>{n} equipos</button>)}
         </div>
         <datalist id="league-team-names">{teamNameOptions.map(name => <option key={name} value={name}/>)}</datalist>
         <div className="cup-setup-grid">
@@ -676,8 +681,43 @@ function LeagueCup({ league, setLeague, teamNameOptions }) {
   }
 
   const rounds = buildCupRounds(cup);
-  const champion = rounds.length ? getCupWinner(rounds[rounds.length-1][0]?.match) : null;
-  const championName = champion === 'a' ? rounds[rounds.length-1][0].teamA : champion === 'b' ? rounds[rounds.length-1][0].teamB : null;
+  const finalRoundIdx = rounds.length - 1;
+  const finalMatch = rounds[finalRoundIdx][0];
+  const champion = finalMatch ? getCupWinner(finalMatch.match) : null;
+  const championName = champion === 'a' ? finalMatch.teamA : champion === 'b' ? finalMatch.teamB : null;
+  const sideRounds = rounds.slice(0, finalRoundIdx);
+
+  const renderMatch = (m) => {
+    const winner = getCupWinner(m.match);
+    const canScore = m.teamA && m.teamB;
+    const tied = canScore && m.match.scoreA !== '' && m.match.scoreB !== '' && m.match.scoreA !== undefined && m.match.scoreB !== undefined && Number(m.match.scoreA) === Number(m.match.scoreB) && !m.match.winnerPick;
+    const stepper = (field, value) => (
+      <div className="cup-score-stepper">
+        <button type="button" onClick={()=>stepCupScore(m.key, field, value, -1)} aria-label="Restar gol">−</button>
+        <input type="number" min="0" value={value ?? ''} onChange={e=>setCupScore(m.key, field, e.target.value)}/>
+        <button type="button" onClick={()=>stepCupScore(m.key, field, value, 1)} aria-label="Sumar gol">+</button>
+      </div>
+    );
+    return (
+      <div key={m.key} className="cup-match">
+        <div className={`cup-team ${winner==='a'?'winner':''}`}>
+          <span className="cup-team-name">{m.teamA || 'Por definir'}</span>
+          {canScore && stepper('scoreA', m.match.scoreA)}
+        </div>
+        <div className={`cup-team ${winner==='b'?'winner':''}`}>
+          <span className="cup-team-name">{m.teamB || 'Por definir'}</span>
+          {canScore && stepper('scoreB', m.match.scoreB)}
+        </div>
+        {tied && (
+          <div className="cup-tiebreak">
+            <span>Empate:</span>
+            <button onClick={()=>setCupWinnerPick(m.key,'a')}>{m.teamA}</button>
+            <button onClick={()=>setCupWinnerPick(m.key,'b')}>{m.teamB}</button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -686,45 +726,41 @@ function LeagueCup({ league, setLeague, teamNameOptions }) {
         <button className="btn sm ghost" onClick={resetCup}><Icon name="refresh" size={12}/> Reiniciar cuadro</button>
       </div>
       <div className="cup-bracket">
-        {rounds.map((roundMatches, r) => (
-          <div key={r} className="cup-round">
-            <div className="cup-round-label">{cupRoundLabel(r, rounds.length)}</div>
-            <div className="cup-round-matches">
-              {roundMatches.map(m => {
-                const winner = getCupWinner(m.match);
-                const canScore = m.teamA && m.teamB;
-                const tied = canScore && m.match.scoreA !== '' && m.match.scoreB !== '' && m.match.scoreA !== undefined && m.match.scoreB !== undefined && Number(m.match.scoreA) === Number(m.match.scoreB) && !m.match.winnerPick;
-                return (
-                  <div key={m.key} className="cup-match">
-                    <div className={`cup-team ${winner==='a'?'winner':''}`}>
-                      <span className="cup-team-name">{m.teamA || 'Por definir'}</span>
-                      {canScore && <input type="number" min="0" value={m.match.scoreA ?? ''} onChange={e=>setCupScore(m.key,'scoreA',e.target.value)}/>}
-                    </div>
-                    <div className={`cup-team ${winner==='b'?'winner':''}`}>
-                      <span className="cup-team-name">{m.teamB || 'Por definir'}</span>
-                      {canScore && <input type="number" min="0" value={m.match.scoreB ?? ''} onChange={e=>setCupScore(m.key,'scoreB',e.target.value)}/>}
-                    </div>
-                    {tied && (
-                      <div className="cup-tiebreak">
-                        <span>Empate:</span>
-                        <button onClick={()=>setCupWinnerPick(m.key,'a')}>{m.teamA}</button>
-                        <button onClick={()=>setCupWinnerPick(m.key,'b')}>{m.teamB}</button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+        <div className="cup-side">
+          {sideRounds.map((roundMatches, r) => (
+            <div key={r} className="cup-round">
+              <div className="cup-round-label">{cupRoundLabel(r, rounds.length)}</div>
+              <div className="cup-round-matches">
+                {roundMatches.slice(0, roundMatches.length/2).map(renderMatch)}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
         <div className="cup-round cup-champion-col">
-          <div className="cup-round-label">Campeón</div>
-          <div className="cup-round-matches">
-            <div className={`cup-champion-card ${championName?'has-winner':''}`}>
-              <Icon name="trophy" size={18}/>
-              <span>{championName || 'Por definir'}</span>
-            </div>
+          <div className="cup-round-label">Final</div>
+          <div className="cup-round-matches cup-round-matches-final">
+            {renderMatch(finalMatch)}
           </div>
+          <div className="cup-round-label" style={{marginTop:18}}>Campeón</div>
+          <div className={`cup-champion-card ${championName?'has-winner':''}`}>
+            <Icon name="trophy" size={18}/>
+            <span>{championName || 'Por definir'}</span>
+          </div>
+        </div>
+
+        <div className="cup-side">
+          {sideRounds.slice().reverse().map((roundMatches, ri) => {
+            const r = sideRounds.length - 1 - ri;
+            return (
+              <div key={r} className="cup-round">
+                <div className="cup-round-label">{cupRoundLabel(r, rounds.length)}</div>
+                <div className="cup-round-matches">
+                  {roundMatches.slice(roundMatches.length/2).map(renderMatch)}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -778,24 +814,31 @@ const platformCSS=document.createElement('style');platformCSS.textContent=`
 .cup-setup-grid input{background:var(--bg-elev-2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12.5px;color:var(--fg);outline:none}
 .cup-setup .toggle-row{margin-bottom:14px}
 .cup-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.cup-bracket{display:flex;gap:36px;overflow-x:auto;padding-bottom:8px}
-.cup-round{display:flex;flex-direction:column;flex:none;width:190px}
+.cup-bracket{display:flex;gap:28px;align-items:center;overflow-x:auto;padding-bottom:8px}
+.cup-side{display:flex;gap:28px;align-self:stretch}
+.cup-round{display:flex;flex-direction:column;flex:none;width:180px}
 .cup-round-label{font:11px var(--font-cond);text-transform:uppercase;letter-spacing:1.4px;color:var(--fg-dim);text-align:center;margin-bottom:10px}
 .cup-round-matches{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:14px}
+.cup-round-matches-final{flex:none}
 .cup-match{display:flex;flex-direction:column;background:var(--bg-elev);border:1px solid var(--line-soft);border-radius:8px;overflow:visible;position:relative}
-.cup-team{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line-soft);font-size:12.5px}
+.cup-team{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 8px 7px 10px;border-bottom:1px solid var(--line-soft);font-size:12.5px}
 .cup-team:last-child{border-bottom:0}
 .cup-team.winner{background:color-mix(in oklch,var(--accent) 12%,transparent);font-weight:700}
-.cup-team.winner .cup-team-name{color:var(--accent)}
 .cup-team-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fg-mute)}
 .cup-team.winner .cup-team-name{color:var(--fg)}
-.cup-team input{width:34px;background:var(--bg);border:1px solid var(--line);border-radius:4px;text-align:center;color:var(--fg);font-family:var(--font-mono);font-size:12px;padding:3px 0}
+.cup-score-stepper{display:flex;align-items:center;gap:2px;flex:none}
+.cup-score-stepper button{width:18px;height:18px;padding:0;border-radius:4px;background:var(--bg-elev-2);border:1px solid var(--line);color:var(--fg-mute);font-size:11px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.cup-score-stepper button:hover{border-color:var(--accent);color:var(--accent)}
+.cup-score-stepper input{width:22px;background:transparent;border:0;text-align:center;color:var(--fg);font-family:var(--font-mono);font-size:12.5px;font-weight:700;padding:0;-moz-appearance:textfield}
+.cup-score-stepper input::-webkit-outer-spin-button,.cup-score-stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .cup-tiebreak{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;border-top:1px dashed var(--line);font-size:11px;color:var(--warn)}
 .cup-tiebreak button{padding:3px 8px;border-radius:4px;background:var(--bg-elev-2);border:1px solid var(--line);color:var(--fg);font-size:11px}
 .cup-tiebreak button:hover{border-color:var(--accent);color:var(--accent)}
-.cup-champion-col{width:170px}
-.cup-champion-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 14px;background:var(--bg-elev);border:1px dashed var(--line);border-radius:10px;color:var(--fg-dim);text-align:center;font-size:13px;height:100%;justify-content:center}
+.cup-champion-col{width:170px;align-items:center;flex:none}
+.cup-champion-col .cup-round-label{width:100%}
+.cup-champion-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 14px;background:var(--bg-elev);border:1px dashed var(--line);border-radius:10px;color:var(--fg-dim);text-align:center;font-size:13px;width:100%}
 .cup-champion-card.has-winner{border-style:solid;border-color:var(--accent);color:var(--accent);background:color-mix(in oklch,var(--accent) 10%,var(--bg-elev));font-family:var(--font-display);font-size:20px;letter-spacing:.5px}
+@media(max-width:900px){.cup-bracket{flex-direction:column;align-items:stretch}.cup-side{flex-direction:column}}
 @media(max-width:1100px){.hub-row,.hub-row.uneven,.roster-grid,.dossier-grid,.dossier-pair,.fixture-layout{grid-template-columns:1fr}}
 @media(max-width:650px){.experience-grid,.form-grid-wide{grid-template-columns:1fr}.form-grid-wide .span-2{grid-column:auto}.stat-strip{grid-template-columns:1fr 1fr}.fixture-teams{grid-template-columns:1fr}.results-row{grid-template-columns:1fr 1fr}.results-row time{grid-column:1/-1}.results-row .del-icon{grid-column:1/-1}}
 `;document.head.appendChild(platformCSS);

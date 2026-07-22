@@ -17,7 +17,7 @@ Notas de una revisión general de la app (UI y flujo). Actualizado tras implemen
 11. **Goleadores en modo Amigos**: al registrar/editar un partido ahora se pueden cargar goleadores (jugador + cantidad de goles). Home muestra una tabla "Goleadores" con el acumulado de todos los partidos cargados.
 12. **Recuperar contraseña**: en la pantalla de login hay un link "¿Olvidaste tu contraseña?" que dispara el email de recuperación de Supabase (si está configurado).
 13. **Pantallas de login/registro**: ya existían de la iteración anterior (`src/page-auth.jsx`), con tabs, Google, "Continuar sin cuenta" y sin sidebar visible en esa pantalla.
-14. **Copa / eliminatoria directa en Liga amateur**: nueva pestaña "Copa" con cuadro tipo mundial (4, 8 o 16 equipos), autocompletado con equipos guardados, sorteo opcional de posiciones del cuadro, carga de resultados por llave, desempate manual si empatan, y tarjeta de campeón al final. Se guarda en `league.cup`.
+14. **Copa / eliminatoria directa en Liga amateur**: nueva pestaña "Copa" con cuadro tipo mundial (4, 8, 16 o 32 equipos), layout de dos lados convergiendo a la Final/Campeón en el centro (como un bracket real), autocompletado con equipos guardados, sorteo opcional de posiciones del cuadro, carga de resultados con stepper +/- (sin el input numérico feo del navegador), desempate manual si empatan, y tarjeta de campeón al final. Se guarda en `league.cup`.
 
 ## Pendiente / a decidir
 
