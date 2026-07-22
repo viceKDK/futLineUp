@@ -32,7 +32,6 @@ function Pitch(props) {
   const rawPositions = formation.positions;
   const positions = rawPositions.map((p, i) => (freeMode && positionOverrides && positionOverrides[i]) || p);
 
-  const [hoverIndex, setHoverIndex] = React.useState(null);
   const [selectedIdx, setSelectedIdx] = React.useState(null);
   const svgRef = React.useRef(null);
 
@@ -76,14 +75,22 @@ function Pitch(props) {
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", String(idx));
   };
+  // Ojo: no usar setState acá. Cualquier re-render de la cancha mientras hay un
+  // drag en curso puede hacer que el navegador cancele el drag nativo si el nodo
+  // origen (que también vive en este árbol) se vuelve a pintar. El hover se marca
+  // tocando el DOM directo, así React nunca re-renderiza la cancha durante el drag.
   const handleDragOver = (e, idx) => {
     if (!interactive) return;
     e.preventDefault();
-    setHoverIndex(idx);
+    e.currentTarget.classList.add('hover');
+  };
+  const handleDragLeave = (e) => {
+    e.currentTarget.classList.remove('hover');
   };
   const handleDrop = (e, idx) => {
     if (!interactive) return;
     e.preventDefault();
+    e.currentTarget.classList.remove('hover');
     const fromData = e.dataTransfer.getData("text/plain");
     const fromRoster = e.dataTransfer.getData("application/x-roster");
     if (fromRoster) {
@@ -92,7 +99,6 @@ function Pitch(props) {
       const from = parseInt(fromData, 10);
       if (!isNaN(from) && from !== idx) onSwap && onSwap(from, idx);
     }
-    setHoverIndex(null);
   };
 
   // Convert pitch coord (formation 0-100, own goal y=0 in "up")
@@ -176,14 +182,13 @@ function Pitch(props) {
           const [sx, sy] = toScreen(p[0], p[1]);
           const player = players[idx];
           const isEmpty = !player;
-          const isHover = hoverIndex === idx;
           const isSelected = selectedIdx === idx;
           return (
             <g key={idx}
                transform={`translate(${sx},${sy})`}
-               className={`slot ${isEmpty?'empty':''} ${isHover?'hover':''} ${freeMode?'free':''} ${isSelected?'selected':''}`}
+               className={`slot ${isEmpty?'empty':''} ${freeMode?'free':''} ${isSelected?'selected':''}`}
                onDragOver={(e)=>handleDragOver(e,idx)}
-               onDragLeave={()=>setHoverIndex(null)}
+               onDragLeave={handleDragLeave}
                onDrop={(e)=>handleDrop(e,idx)}
                onPointerDown={(e)=>slotPointerDown(e,idx)}
                onClick={()=>handleSlotClick(idx)}>

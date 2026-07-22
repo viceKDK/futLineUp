@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'futbolclub-v13';
+const CACHE_VERSION = 'futbolclub-v14';
 const APP_SHELL = [
   './futbolClub.html',
   './manifest.webmanifest',
