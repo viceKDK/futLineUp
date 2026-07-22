@@ -319,7 +319,7 @@ function EditorPage() {
           <div className="pitch-hint">
             {draft.freeMode
               ? 'Arrastrá los círculos. Sumá jugadores soltándolos desde el plantel.'
-              : 'Arrastrá jugadores desde la lista o entre posiciones'}
+              : 'Arrastrá jugadores desde la lista, o tocá dos posiciones para intercambiarlas'}
           </div>
         </div>
 

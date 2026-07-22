@@ -33,7 +33,21 @@ function Pitch(props) {
   const positions = rawPositions.map((p, i) => (freeMode && positionOverrides && positionOverrides[i]) || p);
 
   const [hoverIndex, setHoverIndex] = React.useState(null);
+  const [selectedIdx, setSelectedIdx] = React.useState(null);
   const svgRef = React.useRef(null);
+
+  React.useEffect(() => { setSelectedIdx(null); }, [mode, formationIndex, freeMode]);
+
+  const handleSlotClick = (idx) => {
+    if (!interactive || freeMode) return;
+    if (selectedIdx === null) {
+      if (players[idx]) setSelectedIdx(idx);
+      return;
+    }
+    if (selectedIdx === idx) { setSelectedIdx(null); return; }
+    onSwap && onSwap(selectedIdx, idx);
+    setSelectedIdx(null);
+  };
 
   // Pitch visuals
   const pitchPalette = {
@@ -163,14 +177,16 @@ function Pitch(props) {
           const player = players[idx];
           const isEmpty = !player;
           const isHover = hoverIndex === idx;
+          const isSelected = selectedIdx === idx;
           return (
             <g key={idx}
                transform={`translate(${sx},${sy})`}
-               className={`slot ${isEmpty?'empty':''} ${isHover?'hover':''} ${freeMode?'free':''}`}
+               className={`slot ${isEmpty?'empty':''} ${isHover?'hover':''} ${freeMode?'free':''} ${isSelected?'selected':''}`}
                onDragOver={(e)=>handleDragOver(e,idx)}
                onDragLeave={()=>setHoverIndex(null)}
                onDrop={(e)=>handleDrop(e,idx)}
-               onPointerDown={(e)=>slotPointerDown(e,idx)}>
+               onPointerDown={(e)=>slotPointerDown(e,idx)}
+               onClick={()=>handleSlotClick(idx)}>
               <PlayerDot
                 player={player}
                 kit={kit}
@@ -328,8 +344,12 @@ pitchCSS.textContent = `
     z-index: 2;
   }
   .slot { transition: transform .25s ease; }
+  .slot:not(.empty):not(.free) { cursor: pointer; }
   .slot.free { cursor: grab; }
   .slot.free:active { cursor: grabbing; }
   .slot.hover circle { stroke: oklch(0.95 0.18 124) !important; stroke-width: .9 !important; }
+  .slot.selected circle:first-of-type { stroke: var(--accent) !important; stroke-width: 1 !important; }
+  .slot.selected { animation: slotPulse 1s ease-in-out infinite; }
+  @keyframes slotPulse { 0%,100% { opacity: 1; } 50% { opacity: .72; } }
 `;
 document.head.appendChild(pitchCSS);
