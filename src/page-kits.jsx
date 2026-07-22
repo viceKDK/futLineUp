@@ -4,12 +4,22 @@ function KitsPage() {
     design: "solid", primary: "#e11d48", secondary: "#0f172a",
     number: 10, name: "FUTBOLCLUB"
   });
+  const [altKit, setAltKit] = window.useStore('currentKitAlt', {
+    design: "solid", primary: "#ffffff", secondary: "#0f172a",
+    number: 10, name: "FUTBOLCLUB"
+  });
+  const [editing, setEditing] = React.useState('main'); // 'main' | 'alt'
   const [, setDraft] = window.useStore('editor', null);
 
-  const design = kit.design, primary = kit.primary, secondary = kit.secondary;
-  const number = kit.number ?? 10, teamName = kit.name ?? "FUTBOLCLUB";
+  const activeKit = editing === 'main' ? kit : altKit;
+  const setActiveKit = editing === 'main' ? setKit : setAltKit;
+  const otherKit = editing === 'main' ? altKit : kit;
+  const otherLabel = editing === 'main' ? 'Alternativa' : 'Titular';
 
-  const setField = (k, v) => setKit(prev => ({ ...prev, [k]: v }));
+  const design = activeKit.design, primary = activeKit.primary, secondary = activeKit.secondary;
+  const number = activeKit.number ?? 10, teamName = activeKit.name ?? "FUTBOLCLUB";
+
+  const setField = (k, v) => setActiveKit(prev => ({ ...prev, [k]: v }));
 
   const presets = [
     { name: "Rojo clásico",   design: "solid",   primary: "#dc2626", secondary: "#ffffff" },
@@ -27,7 +37,8 @@ function KitsPage() {
   const applyToTeam = () => {
     setDraft(d => {
       const base = d || { mode: 7, formIdx: 0, assignedIds: [], freePositions: {}, freeMode: false, name: "Mi equipo" };
-      return { ...base, kit: { design, primary, secondary } };
+      const kitObj = { design, primary, secondary };
+      return editing === 'main' ? { ...base, kit: kitObj } : { ...base, altKit: kitObj };
     });
     window.go('editor');
   };
@@ -38,9 +49,14 @@ function KitsPage() {
         <div>
           <div className="page-kicker">Editor de camisetas</div>
           <h1 className="page-title">Diseñá tu kit</h1>
-          <div className="page-sub">4 diseños base, colores libres, tipografía impresa. Aplicable a cualquier equipo guardado.</div>
+          <div className="page-sub">4 diseños base, colores libres, tipografía impresa. Cada equipo puede tener titular y alternativa.</div>
         </div>
-        <button className="btn primary" onClick={applyToTeam}>Aplicar al equipo →</button>
+        <button className="btn primary" onClick={applyToTeam}>Aplicar como {editing==='main'?'titular':'alternativa'} →</button>
+      </div>
+
+      <div className="seg kit-mode-seg">
+        <button className={editing==='main'?'on':''} onClick={()=>setEditing('main')}>Titular</button>
+        <button className={editing==='alt'?'on':''} onClick={()=>setEditing('alt')}>Alternativa</button>
       </div>
 
       <div className="kits-layout">
@@ -48,8 +64,8 @@ function KitsPage() {
           <div className="kit-stage">
             <Kit design={design} primary={primary} secondary={secondary} number={number} name={teamName} size={280}/>
             <div className="kit-back">
-              <Kit design={design} primary={primary} secondary={secondary} number={number} name={teamName} size={180}/>
-              <div className="kit-back-label">Contra</div>
+              <Kit design={otherKit.design} primary={otherKit.primary} secondary={otherKit.secondary} number={otherKit.number ?? 10} name={otherKit.name} size={180}/>
+              <div className="kit-back-label">{otherLabel}</div>
             </div>
           </div>
           <div className="kit-specs">
@@ -124,7 +140,7 @@ function KitsPage() {
             <div className="presets-grid">
               {presets.map((p) => (
                 <button key={p.name} className="preset"
-                  onClick={()=>setKit(prev => ({ ...prev, design: p.design, primary: p.primary, secondary: p.secondary }))}>
+                  onClick={()=>setActiveKit(prev => ({ ...prev, design: p.design, primary: p.primary, secondary: p.secondary }))}>
                   <Kit design={p.design} primary={p.primary} secondary={p.secondary} size={52} showNumber={false}/>
                   <span>{p.name}</span>
                 </button>
@@ -139,6 +155,7 @@ function KitsPage() {
 
 const kitsCSS = document.createElement("style");
 kitsCSS.textContent = `
+  .kit-mode-seg { margin-bottom: 16px; }
   .kits-layout {
     display: grid;
     grid-template-columns: 1fr 380px;

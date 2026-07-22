@@ -433,6 +433,17 @@
   function saveTweaks() {
     try { localStorage.setItem(TWEAKS_KEY, JSON.stringify(window.__TWEAKS)); } catch (_) {}
   }
+  function setTweak(key, value) {
+    window.__TWEAKS[key] = value;
+    applyTweaks(window.__TWEAKS);
+    saveTweaks();
+    document.querySelectorAll(`.tweaks .seg[data-tweak="${key}"] button`).forEach(b => {
+      b.classList.toggle('on', b.dataset.v === value);
+    });
+    window.dispatchEvent(new CustomEvent('fc:tweak-changed', { detail: { key, value } }));
+  }
+  window.fcSetTweak = setTweak;
+  window.fcGetTweaks = () => ({ ...window.__TWEAKS });
   applyTweaks(window.__TWEAKS);
 
   // Sync segmented buttons to stored values
@@ -450,13 +461,7 @@
   document.querySelectorAll('.tweaks .seg').forEach(seg => {
     const key = seg.dataset.tweak;
     seg.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        seg.querySelectorAll('button').forEach(b => b.classList.remove('on'));
-        btn.classList.add('on');
-        window.__TWEAKS[key] = btn.dataset.v;
-        applyTweaks(window.__TWEAKS);
-        saveTweaks();
-      });
+      btn.addEventListener('click', () => setTweak(key, btn.dataset.v));
     });
   });
 </script>

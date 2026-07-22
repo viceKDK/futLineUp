@@ -40,11 +40,13 @@ function SharePage() {
   });
   const tog = (k) => setInclude(i => ({ ...i, [k]: !i[k] }));
 
+  const [shareKitMode, setShareKitMode] = React.useState(draft.activeKit === 'alt' ? 'alt' : 'main');
+
   const mode = draft.mode || 7;
   const formIdx = draft.formIdx || 0;
   const formation = window.FORMATIONS[mode][formIdx];
   const size = formation.positions.length;
-  const kit = draft.kit || currentKit || { design: "stripes", primary: "#3b82f6", secondary: "#ffffff" };
+  const kit = (shareKitMode === 'alt' && draft.altKit) ? draft.altKit : (draft.kit || currentKit || { design: "stripes", primary: "#3b82f6", secondary: "#ffffff" });
   const freeKey = `${mode}:${formIdx}`;
   const overrides = draft.freePositions?.[freeKey] || null;
 
@@ -237,7 +239,7 @@ function SharePage() {
                 <div className="share-card-pitch">
                   <Pitch mode={mode} formationIndex={formIdx} players={players} kit={kit}
                          interactive={false} style="classic" showNames={include.names}
-                         freeMode={!!draft.freeMode} positionOverrides={overrides} label={formation.name}/>
+                         freeMode={!!draft.freeMode} positionOverrides={overrides}/>
                 </div>
                 <div className="share-card-foot">
                   <div className="share-meta-item"><span>Formación</span><strong>{formation.name}</strong></div>
@@ -306,6 +308,15 @@ function SharePage() {
         </div>
 
         <div className="share-side">
+          {draft.altKit && (
+            <div className="panel">
+              <div className="panel-head">Camiseta</div>
+              <div className="seg" style={{width:'100%'}}>
+                <button style={{flex:1}} className={shareKitMode==='main'?'on':''} onClick={()=>setShareKitMode('main')}>Titular</button>
+                <button style={{flex:1}} className={shareKitMode==='alt'?'on':''} onClick={()=>setShareKitMode('alt')}>Alternativa</button>
+              </div>
+            </div>
+          )}
           <div className="panel">
             <div className="panel-head">Partido</div>
             <div className="match-fields">

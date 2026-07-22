@@ -13,6 +13,15 @@ function EditorPage() {
     freePositions: {},     // { "mode:formIdx": [[x,y], ...] }
   });
 
+  const [playerStyle, setPlayerStyleState] = React.useState(() => window.fcGetTweaks?.().playerStyle || 'photo');
+  React.useEffect(() => {
+    const onChange = (e) => { if (e.detail.key === 'playerStyle') setPlayerStyleState(e.detail.value); };
+    window.addEventListener('fc:tweak-changed', onChange);
+    return () => window.removeEventListener('fc:tweak-changed', onChange);
+  }, []);
+
+  const activeKit = (draft.activeKit === 'alt' && draft.altKit) ? draft.altKit : draft.kit;
+
   const mode = draft.mode;
   const formIdx = draft.formIdx;
   const formation = window.FORMATIONS[mode][formIdx];
@@ -140,6 +149,8 @@ function EditorPage() {
       kit: draft.kit.design,
       color: draft.kit.primary,
       secondary: draft.kit.secondary,
+      altKit: draft.altKit || null,
+      activeKit: draft.activeKit || 'main',
       lastPlayed: "ahora",
       players: (draft.assignedIds || []).filter(Boolean).length,
       assignedIds: (draft.assignedIds || []).slice(),
@@ -266,9 +277,27 @@ function EditorPage() {
 
           <div className="panel">
             <div className="panel-head">Camiseta</div>
-            <div className="kit-mini-row">
-              <Kit design={draft.kit.design} primary={draft.kit.primary} secondary={draft.kit.secondary} number={10} size={80}/>
-              <button className="btn sm" onClick={()=>window.go('kits')}>Editar →</button>
+            <div className="kit-alt-row">
+              <button className={`kit-alt-opt ${(draft.activeKit||'main')==='main'?'on':''}`}
+                      onClick={()=>setDraft(d=>({...d, activeKit:'main'}))}>
+                <Kit design={draft.kit.design} primary={draft.kit.primary} secondary={draft.kit.secondary} number={10} size={64}/>
+                <span>Titular</span>
+              </button>
+              <button className={`kit-alt-opt ${draft.activeKit==='alt'?'on':''} ${!draft.altKit?'empty':''}`}
+                      onClick={()=> draft.altKit ? setDraft(d=>({...d, activeKit:'alt'})) : window.go('kits')}>
+                {draft.altKit
+                  ? <Kit design={draft.altKit.design} primary={draft.altKit.primary} secondary={draft.altKit.secondary} number={10} size={64}/>
+                  : <div className="kit-alt-empty"><Icon name="plus" size={16}/></div>}
+                <span>{draft.altKit ? 'Alternativa' : 'Agregar alt.'}</span>
+              </button>
+            </div>
+            <button className="btn sm" style={{width:'100%', marginTop:8}} onClick={()=>window.go('kits')}>Editar camisetas →</button>
+            <div className="kit-style-row">
+              <span>Ver en cancha</span>
+              <div className="seg">
+                <button className={playerStyle==='photo'?'on':''} onClick={()=>window.fcSetTweak('playerStyle','photo')}>Foto</button>
+                <button className={playerStyle==='shirt'?'on':''} onClick={()=>window.fcSetTweak('playerStyle','shirt')}>Camiseta</button>
+              </div>
             </div>
           </div>
         </aside>
@@ -280,7 +309,7 @@ function EditorPage() {
             players={assigned}
             onSwap={handleSwap}
             onAssign={handleAssign}
-            kit={draft.kit}
+            kit={activeKit}
             style={document.body.dataset.pitch || "classic"}
             label={draft.freeMode ? '' : formation.name}
             freeMode={draft.freeMode}
@@ -548,6 +577,27 @@ editorCSS.textContent = `
   }
 
   .kit-mini-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .kit-alt-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kit-alt-opt {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 10px 6px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--fg-mute);
+    font-size: 11px;
+  }
+  .kit-alt-opt.on { border-color: var(--accent); color: var(--fg); box-shadow: inset 0 0 0 1px var(--accent); }
+  .kit-alt-opt.empty { color: var(--fg-dim); }
+  .kit-alt-empty {
+    width: 64px; height: 64px; display: grid; place-items: center;
+    border: 1px dashed var(--line); border-radius: 8px; color: var(--fg-dim);
+  }
+  .kit-style-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-soft);
+    font-size: 12px; color: var(--fg-mute);
+  }
 
   .editor-pitch-wrap { position: relative; }
   .editor-pitch-wrap .pitch-wrap { max-height: 82vh; aspect-ratio: 100/150; }
