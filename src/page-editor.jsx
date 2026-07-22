@@ -67,6 +67,21 @@ function EditorPage() {
       return n;
     });
   };
+  const unassignFromField = (idx) => {
+    setIds(ids => {
+      const n = [...ids];
+      n[idx] = null;
+      return n;
+    });
+  };
+  const onRosterDrop = (e) => {
+    e.preventDefault();
+    const fromPitch = e.dataTransfer.getData("text/plain");
+    if (fromPitch === "") return;
+    const idx = parseInt(fromPitch, 10);
+    if (!isNaN(idx)) unassignFromField(idx);
+  };
+
   const handleMovePos = (idx, x, y) => {
     setDraft(d => {
       const map = { ...(d.freePositions || {}) };
@@ -319,12 +334,12 @@ function EditorPage() {
           <div className="pitch-hint">
             {draft.freeMode
               ? 'Arrastrá los círculos. Sumá jugadores soltándolos desde el plantel.'
-              : 'Arrastrá jugadores desde la lista, o tocá dos posiciones para intercambiarlas'}
+              : 'Arrastrá jugadores desde la lista (o de vuelta para sacarlos), o tocá dos posiciones para intercambiarlas'}
           </div>
         </div>
 
         <aside className="editor-right">
-          <div className="panel">
+          <div className="panel" onDragOver={e=>e.preventDefault()} onDrop={onRosterDrop}>
             <div className="panel-head">
               Plantel
               <span className="chip">{(draft.assignedIds || []).filter(Boolean).length}/{size}</span>
@@ -521,6 +536,12 @@ editorCSS.textContent = `
     grid-template-columns: 260px 1fr 280px;
     gap: 18px;
     align-items: start;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .editor-grid input, .editor-grid textarea {
+    -webkit-user-select: text;
+    user-select: text;
   }
   @media (max-width: 1200px) {
     .editor-grid { grid-template-columns: 1fr; }

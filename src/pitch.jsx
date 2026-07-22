@@ -34,11 +34,15 @@ function Pitch(props) {
 
   const [selectedIdx, setSelectedIdx] = React.useState(null);
   const svgRef = React.useRef(null);
+  // Evita que un click "fantasma" del navegador (a veces se dispara después
+  // de un drag nativo, o durante el gesto corto antes de que el drag arranque)
+  // dispare también un swap por tap-to-swap, duplicando el movimiento.
+  const draggingRef = React.useRef(false);
 
   React.useEffect(() => { setSelectedIdx(null); }, [mode, formationIndex, freeMode]);
 
   const handleSlotClick = (idx) => {
-    if (!interactive || freeMode) return;
+    if (!interactive || freeMode || draggingRef.current) return;
     if (selectedIdx === null) {
       if (players[idx]) setSelectedIdx(idx);
       return;
@@ -72,8 +76,15 @@ function Pitch(props) {
 
   const handleDragStart = (e, idx) => {
     if (!interactive || freeMode) return;
+    draggingRef.current = true;
+    setSelectedIdx(null);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", String(idx));
+  };
+  const handleDragEnd = () => {
+    // pequeño delay: algunos navegadores disparan un click justo después del
+    // dragend, y queremos que ese click no dispare también un tap-to-swap.
+    setTimeout(() => { draggingRef.current = false; }, 80);
   };
   // Ojo: no usar setState acá. Cualquier re-render de la cancha mientras hay un
   // drag en curso puede hacer que el navegador cancele el drag nativo si el nodo
@@ -199,6 +210,7 @@ function Pitch(props) {
                 htmlDraggable={interactive && !freeMode && !!player}
                 showName={showNames}
                 onDragStart={(e)=>handleDragStart(e,idx)}
+                onDragEnd={handleDragEnd}
                 onRemove={onRemove ? () => onRemove(idx) : null}
               />
             </g>
@@ -209,7 +221,7 @@ function Pitch(props) {
   );
 }
 
-function PlayerDot({ player, kit, interactive, htmlDraggable, showName, onDragStart, onRemove }) {
+function PlayerDot({ player, kit, interactive, htmlDraggable, showName, onDragStart, onDragEnd, onRemove }) {
   const empty = !player;
   const display = (typeof window !== 'undefined' && window.document?.body?.dataset?.playerStyle) || "photo";
 
@@ -223,7 +235,7 @@ function PlayerDot({ player, kit, interactive, htmlDraggable, showName, onDragSt
           <text y="1.5" textAnchor="middle" fontSize="5" fill="rgba(255,255,255,.55)" fontFamily="'Bebas Neue'">+</text>
         </g>
       ) : display === "shirt" ? (
-        <g draggable={htmlDraggable} onDragStart={onDragStart}>
+        <g draggable={htmlDraggable} onDragStart={onDragStart} onDragEnd={onDragEnd}>
           <foreignObject x="-5" y="-5.5" width="10" height="11">
             <div xmlns="http://www.w3.org/1999/xhtml" style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <MiniKit kit={kit} num={player.num}/>
@@ -240,7 +252,7 @@ function PlayerDot({ player, kit, interactive, htmlDraggable, showName, onDragSt
           )}
         </g>
       ) : (
-        <g draggable={htmlDraggable} onDragStart={onDragStart}>
+        <g draggable={htmlDraggable} onDragStart={onDragStart} onDragEnd={onDragEnd}>
           <circle r="5.2" fill={kit.primary} stroke="#fff" strokeWidth=".5"/>
           {player.photo ? (
             <>
