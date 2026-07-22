@@ -21,15 +21,24 @@ function KitsPage() {
 
   const setField = (k, v) => setActiveKit(prev => ({ ...prev, [k]: v }));
 
+  // Cada preset trae su alternativa a juego (titular + suplente), no solo un color suelto.
   const presets = [
-    { name: "Rojo clásico",   design: "solid",   primary: "#dc2626", secondary: "#ffffff" },
-    { name: "Blaugrana",      design: "stripes", primary: "#1e3a8a", secondary: "#991b1b" },
-    { name: "Albiceleste",    design: "stripes", primary: "#3b82f6", secondary: "#ffffff" },
-    { name: "Millonario",     design: "sash",    primary: "#ffffff", secondary: "#dc2626" },
-    { name: "Xeneize",        design: "sash",    primary: "#1e3a8a", secondary: "#eab308" },
-    { name: "Verde-negro",    design: "halves",  primary: "#16a34a", secondary: "#0f172a" },
-    { name: "Naranja mecánica", design: "solid", primary: "#ea580c", secondary: "#0f172a" },
-    { name: "Crema",          design: "stripes", primary: "#fef3c7", secondary: "#78350f" },
+    { name: "Rojo clásico",     design: "solid",   primary: "#dc2626", secondary: "#ffffff",
+      alt: { design: "solid",   primary: "#0f172a", secondary: "#dc2626" } },
+    { name: "Blaugrana",        design: "stripes", primary: "#1e3a8a", secondary: "#991b1b",
+      alt: { design: "solid",   primary: "#fbbf24", secondary: "#1e3a8a" } },
+    { name: "Albiceleste",      design: "stripes", primary: "#3b82f6", secondary: "#ffffff",
+      alt: { design: "solid",   primary: "#0f172a", secondary: "#3b82f6" } },
+    { name: "Millonario",       design: "sash",    primary: "#ffffff", secondary: "#dc2626",
+      alt: { design: "solid",   primary: "#0f172a", secondary: "#ffffff" } },
+    { name: "Xeneize",          design: "sash",    primary: "#1e3a8a", secondary: "#eab308",
+      alt: { design: "solid",   primary: "#fef3c7", secondary: "#1e3a8a" } },
+    { name: "Verde-negro",      design: "halves",  primary: "#16a34a", secondary: "#0f172a",
+      alt: { design: "solid",   primary: "#ffffff", secondary: "#16a34a" } },
+    { name: "Naranja mecánica", design: "solid",   primary: "#ea580c", secondary: "#0f172a",
+      alt: { design: "solid",   primary: "#0f172a", secondary: "#ea580c" } },
+    { name: "Crema",            design: "stripes", primary: "#fef3c7", secondary: "#78350f",
+      alt: { design: "solid",   primary: "#78350f", secondary: "#fef3c7" } },
   ];
 
   const colorSwatches = ["#dc2626","#ea580c","#eab308","#16a34a","#06b6d4","#3b82f6","#8b5cf6","#ec4899","#ffffff","#0f172a"];
@@ -136,12 +145,20 @@ function KitsPage() {
           </div>
 
           <div className="panel">
-            <div className="panel-head">Presets</div>
+            <div className="panel-head">Presets<span className="muted-note">Titular + alternativa</span></div>
             <div className="presets-grid">
               {presets.map((p) => (
                 <button key={p.name} className="preset"
-                  onClick={()=>setActiveKit(prev => ({ ...prev, design: p.design, primary: p.primary, secondary: p.secondary }))}>
-                  <Kit design={p.design} primary={p.primary} secondary={p.secondary} size={52} showNumber={false}/>
+                  title={`${p.name} — aplica titular y alternativa`}
+                  onClick={()=>{
+                    setKit(prev => ({ ...prev, design: p.design, primary: p.primary, secondary: p.secondary }));
+                    setAltKit(prev => ({ ...prev, design: p.alt.design, primary: p.alt.primary, secondary: p.alt.secondary }));
+                    window.__toast?.(`${p.name}: titular y alternativa cargadas`);
+                  }}>
+                  <div className="preset-pair">
+                    <Kit design={p.design} primary={p.primary} secondary={p.secondary} size={44} showNumber={false}/>
+                    <Kit design={p.alt.design} primary={p.alt.primary} secondary={p.alt.secondary} size={34} showNumber={false}/>
+                  </div>
                   <span>{p.name}</span>
                 </button>
               ))}
@@ -274,6 +291,8 @@ kitsCSS.textContent = `
     text-align: center; line-height: 1.1;
   }
   .preset:hover { border-color: var(--accent); color: var(--fg); }
+  .preset-pair { display: flex; align-items: flex-end; }
+  .preset-pair > *:last-child { margin-left: -14px; filter: brightness(.92); }
 `;
 document.head.appendChild(kitsCSS);
 

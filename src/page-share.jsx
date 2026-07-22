@@ -1,6 +1,12 @@
 // Compartir / exportar — PNG/PDF/ICS reales, deep-links a redes, include toggles funcionales
 function SharePage() {
   const [styleTab, setStyleTab] = React.useState("card");
+  const [playerStyle, setPlayerStyleState] = React.useState(() => window.fcGetTweaks?.().playerStyle || 'photo');
+  React.useEffect(() => {
+    const onChange = (e) => { if (e.detail.key === 'playerStyle') setPlayerStyleState(e.detail.value); };
+    window.addEventListener('fc:tweak-changed', onChange);
+    return () => window.removeEventListener('fc:tweak-changed', onChange);
+  }, []);
   const sharedSnapshot = React.useMemo(() => {
     const raw = location.hash.startsWith('#share=') ? location.hash.slice(7) : null;
     if (!raw) return null;
@@ -55,7 +61,7 @@ function SharePage() {
   for (let i=0; i<size; i++) {
     const id = ids[i];
     const p = id != null ? roster.find(x => x.id === id) : null;
-    players.push(p || roster[i] || null);
+    players.push(p || null);
   }
   const captain = players.find(Boolean)?.name || "—";
 
@@ -308,15 +314,22 @@ function SharePage() {
         </div>
 
         <div className="share-side">
-          {draft.altKit && (
-            <div className="panel">
-              <div className="panel-head">Camiseta</div>
-              <div className="seg" style={{width:'100%'}}>
+          <div className="panel">
+            <div className="panel-head">Camiseta</div>
+            <div className="share-kit-row">
+              <span>Ver en cancha</span>
+              <div className="seg">
+                <button className={playerStyle==='photo'?'on':''} onClick={()=>window.fcSetTweak('playerStyle','photo')}>Foto</button>
+                <button className={playerStyle==='shirt'?'on':''} onClick={()=>window.fcSetTweak('playerStyle','shirt')}>Camiseta</button>
+              </div>
+            </div>
+            {draft.altKit && (
+              <div className="seg" style={{width:'100%', marginTop:10}}>
                 <button style={{flex:1}} className={shareKitMode==='main'?'on':''} onClick={()=>setShareKitMode('main')}>Titular</button>
                 <button style={{flex:1}} className={shareKitMode==='alt'?'on':''} onClick={()=>setShareKitMode('alt')}>Alternativa</button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
           <div className="panel">
             <div className="panel-head">Partido</div>
             <div className="match-fields">
@@ -506,6 +519,7 @@ shareCSS.textContent = `
   }
   .match-fields input:focus { border-color: var(--accent); }
 
+  .share-kit-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--fg-mute); }
   .share-link-row { display: flex; gap: 6px; margin-bottom: 10px; }
   .share-link-row input {
     flex: 1; padding: 8px 10px; font-family: var(--font-mono); font-size: 12px;
