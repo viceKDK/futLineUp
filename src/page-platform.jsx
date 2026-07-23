@@ -495,6 +495,7 @@ function LeaguePage() {
       primary: entry.primary || t?.color || window.colorFor(name||'?'),
       secondary: entry.secondary || t?.secondary || '#0f172a',
       photo: entry.photo || undefined,
+      initials: entry.initials || undefined,
     };
   };
 

@@ -29,6 +29,7 @@ function EscudosPage() {
       primary: entry.primary || t?.color || window.colorFor(name||'?'),
       secondary: entry.secondary || t?.secondary || '#0f172a',
       photo: entry.photo || undefined,
+      initials: entry.initials || undefined,
     };
   };
 
@@ -107,6 +108,7 @@ function CrestEditorScreen({ name, entry, onSave, onReset, onBack }) {
   const [secondary, setSecondary] = React.useState(base.secondary || '#0f172a');
   const [photo, setPhoto] = React.useState(base.photo || null);
   const [hidden, setHidden] = React.useState(!!entry?.hidden);
+  const [initials, setInitials] = React.useState(base.initials || '');
   const fileRef = React.useRef(null);
 
   const onFile = async (e) => {
@@ -117,7 +119,7 @@ function CrestEditorScreen({ name, entry, onSave, onReset, onBack }) {
     catch (_) { window.__toast?.('No se pudo cargar la imagen'); }
   };
 
-  const save = () => onSave(hidden ? { hidden: true } : { design, primary, secondary, photo: photo || undefined });
+  const save = () => onSave(hidden ? { hidden: true } : { design, primary, secondary, photo: photo || undefined, initials: initials.trim() || undefined });
 
   return (
     <div>
@@ -138,7 +140,7 @@ function CrestEditorScreen({ name, entry, onSave, onReset, onBack }) {
 
       <div className="kits-layout">
         <div className="kit-preview crest-preview-stage">
-          <Crest name={name} design={design} primary={primary} secondary={secondary} photo={hidden ? 'none' : photo} size={220}/>
+          <Crest name={name} design={design} primary={primary} secondary={secondary} photo={hidden ? 'none' : photo} initials={initials} size={220}/>
           <label className="toggle-row crest-hidden-toggle">
             <input type="checkbox" checked={hidden} onChange={e=>setHidden(e.target.checked)}/> <span>Sin escudo (no mostrar nada)</span>
           </label>
@@ -146,12 +148,23 @@ function CrestEditorScreen({ name, entry, onSave, onReset, onBack }) {
 
         <div className="kit-controls">
           <div className="panel">
+            <div className="panel-head">Letras</div>
+            <label className="field" style={{marginBottom:0}}>
+              <span>Iniciales del escudo (vacío = automático)</span>
+              <input type="text" maxLength={4} value={initials}
+                     onChange={e=>setInitials(e.target.value.toUpperCase())}
+                     placeholder={window.initials(name || '?')}
+                     disabled={!!photo}/>
+            </label>
+          </div>
+
+          <div className="panel">
             <div className="panel-head">Diseño</div>
             <div className="kit-design-grid">
               {window.KIT_DESIGNS.map(d => (
                 <button key={d.id} className={`kit-design-opt ${design===d.id && !photo ?'on':''}`}
                         onClick={()=>{ setDesign(d.id); setPhoto(null); setHidden(false); }}>
-                  <Crest name={name} design={d.id} primary={primary} secondary={secondary} size={48}/>
+                  <Crest name={name} design={d.id} primary={primary} secondary={secondary} initials={initials} size={48}/>
                   <span>{d.label}</span>
                 </button>
               ))}

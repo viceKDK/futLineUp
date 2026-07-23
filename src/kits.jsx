@@ -88,9 +88,11 @@ window.Kit = Kit;
 // se genera un escudo simple con los colores/diseño del equipo e iniciales.
 const CREST_PATH = "M50,3 L92,15 C92,55 78,86 50,101 C22,86 8,55 8,15 Z";
 
-function Crest({ name, design = "solid", primary = "#3b82f6", secondary = "#0f172a", photo, size = 40 }) {
+function Crest({ name, design = "solid", primary = "#3b82f6", secondary = "#0f172a", photo, initials, size = 40 }) {
   const id = React.useId().replace(/:/g,'');
   if (photo === 'none') return null;
+  const label = (initials && initials.trim()) ? initials.trim().toUpperCase().slice(0,4) : window.initials(name || "?");
+  const labelSize = label.length > 2 ? 30 - (label.length - 2) * 5 : 30;
 
   return (
     <svg width={size} height={size * 1.06} viewBox="0 0 100 106" style={{ flex: "none" }}>
@@ -110,9 +112,9 @@ function Crest({ name, design = "solid", primary = "#3b82f6", secondary = "#0f17
             {design === "halves" && <rect x="50" y="0" width="55" height="106" fill={secondary}/>}
             <rect x="0" y="0" width="100" height="106" fill="rgba(0,0,0,.12)"/>
             <text x="50" y="62" textAnchor="middle" fontFamily="'Archivo Narrow', sans-serif"
-                  fontWeight="700" fontSize="30" fill={window.contrastTextMixed(primary, secondary, design)}
+                  fontWeight="700" fontSize={labelSize} fill={window.contrastTextMixed(primary, secondary, design)}
                   style={{ paintOrder: "stroke", stroke: window.contrastTextMixed(primary, secondary, design)==='#ffffff' ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.6)', strokeWidth: 1.2 }}>
-              {window.initials(name || "?")}
+              {label}
             </text>
           </>
         )}

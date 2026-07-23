@@ -27,6 +27,7 @@ function RivalPage() {
       primary: entry.primary || fallbackKit.primary,
       secondary: entry.secondary || fallbackKit.secondary,
       photo: entry.photo || undefined,
+      initials: entry.initials || undefined,
     };
   };
 
