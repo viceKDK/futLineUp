@@ -132,8 +132,15 @@
     margin-top: auto;
     padding-top: 14px;
     border-top: 1px solid var(--line-soft);
-    display: flex; align-items: center; gap: 10px;
   }
+  .sidebar-profile-btn {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 6px; margin: -6px;
+    border-radius: var(--radius-s);
+    text-align: left;
+    transition: background .15s;
+  }
+  .sidebar-profile-btn:hover { background: var(--bg-elev-2); }
   .avatar-me {
     width: 32px; height: 32px; border-radius: 50%;
     background: linear-gradient(135deg, #4a5a4c, #2f3a31);
@@ -329,7 +336,9 @@
     .sidebar .nav-label { display: none; }
     .nav { flex-direction: row; flex-wrap: nowrap; }
     .nav-item { white-space: nowrap; }
-    .sidebar-footer { display: none; }
+    .sidebar-footer { flex: none; margin: 0 0 0 4px; padding: 0; border: 0; }
+    .sidebar-profile-btn { width: auto; margin: 0; }
+    .sidebar-profile-btn .me-name, .sidebar-profile-btn .me-sub { display: none; }
     .main { padding: 20px; }
     .page-title { font-size: 40px; }
   }
@@ -360,7 +369,6 @@
       <div class="nav-label">Gestión</div>
       <button class="nav-item" data-page="coach"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.5a3 3 0 016 0H18a1 1 0 011 1V20a1 1 0 01-1 1H6a1 1 0 01-1-1V5.5a1 1 0 011-1h3z"></path><path d="M9 12h6M9 16h4"></path></svg> Entrenador</button>
       <button class="nav-item" data-page="league"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v6a4 4 0 01-8 0V4z"></path><path d="M8 5H5a3 3 0 003 4.5M16 5h3a3 3 0 01-3 4.5M12 14v4M8 20h8"></path></svg> Liga amateur</button>
-      <button class="nav-item" data-page="settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3.2 3.2 0 100 6.4A3.2 3.2 0 0012 5"></path><path d="M5.5 20a6.5 6.5 0 0113 0"></path></svg> Cuenta y datos</button>
     </nav>
 
     <div class="sidebar-footer" id="sidebar-footer"></div>

@@ -110,7 +110,7 @@ function Crest({ name, design = "solid", primary = "#3b82f6", secondary = "#0f17
             {design === "halves" && <rect x="50" y="0" width="55" height="106" fill={secondary}/>}
             <rect x="0" y="0" width="100" height="106" fill="rgba(0,0,0,.12)"/>
             <text x="50" y="62" textAnchor="middle" fontFamily="'Archivo Narrow', sans-serif"
-                  fontWeight="700" fontSize="30" fill="#fff">
+                  fontWeight="700" fontSize="30" fill={window.contrastText(primary)}>
               {window.initials(name || "?")}
             </text>
           </>
@@ -127,4 +127,18 @@ window.KIT_DESIGNS = [
   { id: "stripes", label: "Rayada" },
   { id: "sash",    label: "Banda" },
   { id: "halves",  label: "Mitades" },
+];
+
+window.KIT_COLOR_SWATCHES = ["#dc2626","#ea580c","#eab308","#16a34a","#06b6d4","#3b82f6","#8b5cf6","#ec4899","#ffffff","#0f172a"];
+
+// Combinaciones de escudo prearmadas, listas para elegir sin tocar colores.
+window.CREST_PRESETS = [
+  { name: "Rojo y blanco",  design: "halves",  primary: "#dc2626", secondary: "#ffffff" },
+  { name: "Azul y oro",     design: "sash",    primary: "#1e3a8a", secondary: "#eab308" },
+  { name: "Verde bosque",   design: "solid",   primary: "#166534", secondary: "#fef3c7" },
+  { name: "Celeste rayado", design: "stripes", primary: "#3b82f6", secondary: "#ffffff" },
+  { name: "Granate",        design: "solid",   primary: "#7f1d1d", secondary: "#fbbf24" },
+  { name: "Naranja y negro", design: "sash",   primary: "#0f172a", secondary: "#ea580c" },
+  { name: "Violeta",        design: "halves",  primary: "#6d28d9", secondary: "#ffffff" },
+  { name: "Negro y blanco", design: "stripes", primary: "#0f172a", secondary: "#ffffff" },
 ];

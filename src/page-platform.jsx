@@ -464,8 +464,6 @@ function LeaguePage() {
   const [scoreDrafts, setScoreDrafts] = React.useState({});
   const [newComp, setNewComp] = React.useState({name:'', season:''});
   const [showNewComp, setShowNewComp] = React.useState(false);
-  const crestInputRef = React.useRef(null);
-  const crestTargetRef = React.useRef(null);
 
   const competition = competitions.find(c => c.id === activeId) || competitions[0];
   const setCompetition = (updater) => setCompetitions(list =>
@@ -482,10 +480,25 @@ function LeaguePage() {
   ])].filter(Boolean).sort();
 
   const teamColorFor = (name) => savedTeams.find(t=>t.name===name) || null;
+  // Entradas viejas eran solo un string (dataURL o 'none'); las nuevas son un objeto
+  // { photo, hidden, design, primary, secondary } editado desde el editor de escudos.
+  const crestEntryFor = (name) => {
+    const raw = teamCrests[normalizeTeamName(name)];
+    if (!raw) return null;
+    if (typeof raw === 'string') return raw === 'none' ? { hidden: true } : { photo: raw };
+    return raw;
+  };
   const crestFor = (name) => {
-    const key = normalizeTeamName(name);
     const t = teamColorFor(name);
-    return { name, design: t?.kit || 'solid', primary: t?.color || window.colorFor(name||'?'), secondary: t?.secondary || '#0f172a', photo: teamCrests[key] };
+    const entry = crestEntryFor(name) || {};
+    if (entry.hidden) return { name, photo: 'none' };
+    return {
+      name,
+      design: entry.design || t?.kit || 'solid',
+      primary: entry.primary || t?.color || window.colorFor(name||'?'),
+      secondary: entry.secondary || t?.secondary || '#0f172a',
+      photo: entry.photo || undefined,
+    };
   };
 
   const addCompetition = () => {
@@ -503,19 +516,9 @@ function LeaguePage() {
     if (activeId === id) setActiveId(competitions.find(c => c.id !== id)?.id);
   };
 
-  const openCrestPicker = (name) => { crestTargetRef.current = name; crestInputRef.current?.click(); };
-  const onCrestFile = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    const name = crestTargetRef.current;
-    if (!file || !name) return;
-    try {
-      const dataURL = await window.fileToDataURL(file, 160);
-      setTeamCrests(prev => ({ ...prev, [normalizeTeamName(name)]: dataURL }));
-    } catch (_) { window.__toast?.('No se pudo cargar el escudo'); }
-  };
-  const clearCrest = (name) => setTeamCrests(prev => { const n = {...prev}; delete n[normalizeTeamName(name)]; return n; });
-  const hideCrest = (name) => setTeamCrests(prev => ({ ...prev, [normalizeTeamName(name)]: 'none' }));
+  const [editingCrestName, setEditingCrestName] = React.useState(null);
+  const saveCrestEntry = (name, entry) => setTeamCrests(prev => ({ ...prev, [normalizeTeamName(name)]: entry }));
+  const resetCrestEntry = (name) => setTeamCrests(prev => { const n = {...prev}; delete n[normalizeTeamName(name)]; return n; });
 
   const saveFixture=()=>{
     if(!form.home.trim()||!form.away.trim())return window.__toast?.('Completá ambos equipos');
@@ -662,21 +665,113 @@ function LeaguePage() {
         <div className="panel-head-row"><span>Escudos</span><span className="muted-note">Opcional · por defecto se genera uno simple</span></div>
         {crestTeamNames.length ? <div className="crest-manager-grid">
           {crestTeamNames.map(name => (
-            <div key={name} className="crest-manager-row">
+            <button key={name} className="crest-manager-row" onClick={()=>setEditingCrestName(name)}>
               <Crest {...crestFor(name)} size={40}/>
               <span className="crest-manager-name">{name}</span>
-              <div className="crest-manager-actions">
-                <button className="btn sm" onClick={()=>openCrestPicker(name)}>Subir</button>
-                {teamCrests[normalizeTeamName(name)] && <button className="btn sm ghost" onClick={()=>clearCrest(name)}>Generado</button>}
-                {teamCrests[normalizeTeamName(name)] !== 'none' && <button className="btn sm ghost" onClick={()=>hideCrest(name)}>Ocultar</button>}
-              </div>
-            </div>
+              <span className="crest-manager-edit">Editar →</span>
+            </button>
           ))}
         </div> : <div className="empty-state">Todavía no hay equipos cargados en esta competencia.</div>}
-        <input ref={crestInputRef} type="file" accept="image/*" hidden onChange={onCrestFile}/>
       </section>
     )}
+
+    {editingCrestName && (
+      <CrestEditorModal
+        name={editingCrestName}
+        entry={crestEntryFor(editingCrestName)}
+        onSave={(entry)=>{ saveCrestEntry(editingCrestName, entry); setEditingCrestName(null); }}
+        onReset={()=>{ resetCrestEntry(editingCrestName); setEditingCrestName(null); }}
+        onClose={()=>setEditingCrestName(null)}
+      />
+    )}
   </div>;
+}
+
+function CrestEditorModal({ name, entry, onSave, onReset, onClose }) {
+  const base = entry && !entry.hidden ? entry : {};
+  const [design, setDesign] = React.useState(base.design || 'solid');
+  const [primary, setPrimary] = React.useState(base.primary || window.colorFor(name||'?'));
+  const [secondary, setSecondary] = React.useState(base.secondary || '#0f172a');
+  const [photo, setPhoto] = React.useState(base.photo || null);
+  const [hidden, setHidden] = React.useState(!!entry?.hidden);
+  const fileRef = React.useRef(null);
+
+  const onFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try { setPhoto(await window.fileToDataURL(file, 160)); setHidden(false); }
+    catch (_) { window.__toast?.('No se pudo cargar la imagen'); }
+  };
+
+  const save = () => onSave(hidden ? { hidden: true } : { design, primary, secondary, photo: photo || undefined });
+
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal crest-editor-modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-head">
+          <div><div className="page-kicker">Escudo</div><div className="modal-title">{name}</div></div>
+          <button className="btn sm ghost" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="crest-editor-preview">
+            <Crest name={name} design={design} primary={primary} secondary={secondary} photo={hidden ? 'none' : photo} size={96}/>
+          </div>
+
+          <div className="panel-head">Diseño</div>
+          <div className="crest-design-grid">
+            {window.KIT_DESIGNS.map(d => (
+              <button key={d.id} className={`crest-design-opt ${design===d.id && !photo ?'on':''}`}
+                      onClick={()=>{ setDesign(d.id); setPhoto(null); setHidden(false); }}>
+                <Crest name={name} design={d.id} primary={primary} secondary={secondary} size={40}/>
+                <span>{d.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="panel-head">Presets</div>
+          <div className="crest-preset-grid">
+            {window.CREST_PRESETS.map(p => (
+              <button key={p.name} className="crest-preset-opt" onClick={()=>{ setDesign(p.design); setPrimary(p.primary); setSecondary(p.secondary); setPhoto(null); setHidden(false); }}>
+                <Crest name={name} design={p.design} primary={p.primary} secondary={p.secondary} size={36}/>
+                <span>{p.name}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="crest-color-row">
+            <div>
+              <div className="panel-head">Color principal</div>
+              <div className="swatches">
+                {window.KIT_COLOR_SWATCHES.map(c => <button key={c} className={`swatch ${primary===c?'on':''}`} style={{background:c}} onClick={()=>{setPrimary(c);setPhoto(null);setHidden(false);}}/>)}
+                <label className="swatch custom" style={{background:primary}}><input type="color" value={primary} onChange={e=>{setPrimary(e.target.value);setPhoto(null);setHidden(false);}}/></label>
+              </div>
+            </div>
+            <div>
+              <div className="panel-head">Color secundario</div>
+              <div className="swatches">
+                {window.KIT_COLOR_SWATCHES.map(c => <button key={c} className={`swatch ${secondary===c?'on':''}`} style={{background:c}} onClick={()=>{setSecondary(c);setPhoto(null);setHidden(false);}}/>)}
+                <label className="swatch custom" style={{background:secondary}}><input type="color" value={secondary} onChange={e=>{setSecondary(e.target.value);setPhoto(null);setHidden(false);}}/></label>
+              </div>
+            </div>
+          </div>
+
+          <div className="crest-photo-row">
+            <button className="btn sm" onClick={()=>fileRef.current?.click()}>{photo ? 'Cambiar foto' : 'Subir foto propia'}</button>
+            {photo && <button className="btn sm ghost" onClick={()=>setPhoto(null)}>Quitar foto</button>}
+            <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile}/>
+            <label className="toggle-row" style={{marginLeft:'auto'}}>
+              <input type="checkbox" checked={hidden} onChange={e=>setHidden(e.target.checked)}/> <span>Sin escudo</span>
+            </label>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn ghost" onClick={onReset}>Restablecer</button>
+          <button className="btn primary" onClick={save}>Guardar</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ---- League: Copa / eliminatoria directa ----
@@ -954,10 +1049,23 @@ const platformCSS=document.createElement('style');platformCSS.textContent=`
 .comp-pill-new-form input{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--fg);outline:none;width:120px}
 .standings-team{display:flex;align-items:center;gap:8px}
 .crest-manager-grid{display:flex;flex-direction:column;gap:2px}
-.crest-manager-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line-soft)}
+.crest-manager-row{display:flex;align-items:center;gap:12px;padding:10px 6px;border-top:1px solid var(--line-soft);width:100%;text-align:left;border-radius:6px;transition:background .15s}
 .crest-manager-row:first-child{border-top:0}
+.crest-manager-row:hover{background:var(--bg-elev-2)}
 .crest-manager-name{flex:1;font-size:13px}
-.crest-manager-actions{display:flex;gap:6px}
+.crest-manager-edit{font-size:11px;color:var(--fg-dim)}
+.crest-manager-row:hover .crest-manager-edit{color:var(--accent)}
+.crest-editor-modal{max-width:560px}
+.crest-editor-preview{display:flex;justify-content:center;padding:16px 0 20px}
+.crest-design-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px}
+.crest-design-opt{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px;background:var(--bg-elev-2);border:1px solid transparent;border-radius:6px;color:var(--fg-mute);font-size:11px}
+.crest-design-opt:hover{color:var(--fg)}
+.crest-design-opt.on{border-color:var(--accent);color:var(--fg)}
+.crest-preset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px}
+.crest-preset-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;background:var(--bg-elev-2);border:1px solid transparent;border-radius:6px;font-size:10px;color:var(--fg-mute);text-align:center;line-height:1.1}
+.crest-preset-opt:hover{border-color:var(--accent);color:var(--fg)}
+.crest-color-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.crest-photo-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line-soft)}
 @media(max-width:1100px){.hub-row,.hub-row.uneven,.roster-grid,.dossier-grid,.dossier-pair,.fixture-layout{grid-template-columns:1fr}}
 @media(max-width:650px){.experience-grid,.form-grid-wide{grid-template-columns:1fr}.form-grid-wide .span-2{grid-column:auto}.stat-strip{grid-template-columns:1fr 1fr}.fixture-teams{grid-template-columns:1fr}.results-row{grid-template-columns:1fr 1fr}.results-row time{grid-column:1/-1}.results-row .del-icon{grid-column:1/-1}}
 `;document.head.appendChild(platformCSS);
