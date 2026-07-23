@@ -3,14 +3,16 @@ import { test, expect } from '@playwright/test';
 const PAGES = [
   { id:'home', title:/MIS EQUIPOS/i }, { id:'mode', title:/CUÁNTOS POR LADO/i },
   { id:'editor', title:/.+/ }, { id:'draw', title:/REPARTIR LOS PIBES/i },
-  { id:'kits', title:/DISEÑÁ TU KIT/i }, { id:'rival', title:/NOSOTROS VS\. ELLOS/i },
+  { id:'kits', title:/DISEÑÁ TU KIT/i }, { id:'crests', title:/ESCUDO DE CADA EQUIPO/i },
+  { id:'rival', title:/NOSOTROS VS\. ELLOS/i },
   { id:'share', title:/MANDÁ LA ALINEACIÓN/i }, { id:'coach', title:/TU PLANTEL/i },
-  { id:'league', title:/.+/ }, { id:'settings', title:/TU FUTBOLCLUB/i },
+  { id:'league', title:/.+/ },
 ];
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/src/local-config.js', route => route.fulfill({ body:'window.RESET_ON_BOOT=false;', contentType:'text/javascript' }));
-  await page.goto('/futbolClub.html');
+  // #home evita la pantalla de login/registro que se muestra en la primera visita sin hash.
+  await page.goto('/futbolClub.html#home');
   await page.waitForSelector('.nav-item');
 });
 
@@ -24,6 +26,12 @@ for (const p of PAGES) test(`navega a ${p.id} y monta contenido`, async ({ page 
   await expect(page.locator(`#page-${p.id}`)).toContainText(p.title);
 });
 
+test('perfil abre Cuenta y datos', async ({ page }) => {
+  await page.click('.sidebar-profile-btn');
+  await expect(page.locator('#page-settings')).toHaveClass(/active/);
+  await expect(page.locator('#page-settings')).toContainText(/TU FUTBOLCLUB/i);
+});
+
 test('editor guarda y recupera alineación completa', async ({ page }) => {
   await page.click('[data-page="editor"]');
   await page.locator('#page-editor .editor-title-input').fill('Prueba persistencia');
@@ -33,7 +41,7 @@ test('editor guarda y recupera alineación completa', async ({ page }) => {
   expect(stored.assignedIds.filter(Boolean).length).toBeGreaterThan(0);
   await page.reload();
   await page.click('[data-page="home"]');
-  await page.getByText('Prueba persistencia', { exact:true }).click();
+  await page.locator('#page-home').getByText('Prueba persistencia', { exact:true }).click();
   await expect.poll(() => page.evaluate(() => window.db.load('editor', null)?.assignedIds?.filter(Boolean).length || 0)).toBeGreaterThan(0);
 });
 

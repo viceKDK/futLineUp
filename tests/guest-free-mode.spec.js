@@ -5,7 +5,8 @@ async function openGuestApp(page) {
     body: 'window.RESET_ON_BOOT=false;',
     contentType: 'text/javascript',
   }));
-  await page.goto('/futbolClub.html');
+  // #home evita la pantalla de login/registro que se muestra en la primera visita sin hash.
+  await page.goto('/futbolClub.html#home');
   await page.waitForSelector('.nav-item');
 }
 
@@ -23,10 +24,10 @@ test('el flujo principal se puede usar sin cuenta', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Backup y sincronización' }).click();
   await expect(page.locator('#page-settings')).toContainText('Estás usando futbolClub sin cuenta');
-  await expect(page.getByRole('button', { name: 'Seguir sin cuenta' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Iniciar sesión / Crear cuenta' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Conectar Google para sincronizar' })).toBeDisabled();
 
-  await page.getByRole('button', { name: 'Seguir sin cuenta' }).click();
+  await page.click('[data-page="home"]');
   await expect(page.locator('#page-home')).toHaveClass(/active/);
 });
 
@@ -62,7 +63,7 @@ test('Libre persiste y el enlace abre igual sin cuenta ni datos locales', async 
   await expect(page.locator('.share-card-pitch .pitch-wrap')).toHaveClass(/free/);
 
   await page.click('[data-page="home"]');
-  await page.getByText('Libre sin cuenta', { exact: true }).click();
+  await page.locator('#page-home').getByText('Libre sin cuenta', { exact: true }).click();
   await expect(page.locator('#page-editor input[type="checkbox"]').first()).toBeChecked();
   await page.getByRole('button', { name: /Guardar/ }).click();
 

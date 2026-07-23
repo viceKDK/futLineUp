@@ -1,10 +1,10 @@
 # futbolClub
 
-Aplicación web para crear alineaciones de fútbol, organizar planteles y sorteos, registrar el seguimiento de jugadores y administrar competencias amateur.
+Aplicación web para crear alineaciones de fútbol, organizar planteles y sorteos, registrar el seguimiento de jugadores y administrar competencias amateur (ligas y copas).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f.svg)](LICENSE)
-[![Branch](https://img.shields.io/badge/branch-develop-2563eb.svg)](https://github.com/viceKDK/futLineUp/tree/develop)
-[![Tests](https://img.shields.io/badge/Playwright-22%2F22%20passing-45ba4b.svg)](tests/)
+[![Branch](https://img.shields.io/badge/branch-main-2ea44f.svg)](https://github.com/viceKDK/futLineUp/tree/main)
+[![Tests](https://img.shields.io/badge/Playwright-passing-45ba4b.svg)](tests/)
 
 ![Dashboard de futbolClub](screenshots/01-home.png)
 
@@ -12,29 +12,36 @@ Aplicación web para crear alineaciones de fútbol, organizar planteles y sorteo
 
 futbolClub reúne tres experiencias dentro de una misma aplicación:
 
-- **Amigos:** creación de equipos, formaciones, sorteos, camisetas y contenido para compartir.
+- **Amigos:** creación de equipos, formaciones, sorteos, camisetas, escudos y contenido para compartir.
 - **Entrenador:** fichas de jugadores, entrenamientos, asistencia, evaluaciones y objetivos.
-- **Liga amateur:** calendario, resultados y tabla de posiciones.
+- **Liga amateur:** múltiples competencias en paralelo (ligas y copas), calendario, resultados, tabla de posiciones y cuadros de eliminación directa.
 
-La aplicación funciona en modo invitado con persistencia local: crear una cuenta nunca bloquea el editor, el sorteo ni los enlaces compartidos. La autenticación con Google y la sincronización entre dispositivos pueden habilitarse opcionalmente mediante Supabase.
+La aplicación funciona en modo invitado con persistencia local: crear una cuenta nunca bloquea el editor, el sorteo ni los enlaces compartidos. La autenticación (email/contraseña o Google) y la sincronización entre dispositivos pueden habilitarse opcionalmente mediante Supabase.
 
 ## Funcionalidades principales
+
+### Cuenta
+
+- Pantalla de login/registro en la primera visita, con email/contraseña, Google y recuperar contraseña.
+- Botón "Continuar sin cuenta" siempre disponible — no es obligatorio crear una cuenta para nada.
+- Acceso posterior a "Cuenta y datos" desde el ícono de perfil en la barra lateral.
 
 ### Equipos y alineaciones
 
 - Modalidades Fut 5, 6, 7, 8 y 11.
 - Formaciones predefinidas y posicionamiento libre.
-- Drag and drop y asignación mediante click o toque.
+- Arrastre por eventos de puntero (confiable en mouse, trackpad y touch, sin depender del drag-and-drop nativo del navegador) y asignación mediante click o toque.
 - Titulares, suplentes y capitán.
 - Fotos, dorsales, posiciones y pierna hábil.
 - Guardado y reapertura completa de cada alineación.
 
 ### Organización
 
-- Sorteo balanceado de dos, tres o cuatro equipos.
-- Registro de partidos y resultados.
-- Diseño de camisetas y presets de colores.
-- Vista de formación propia contra rival.
+- Sorteo balanceado de dos, tres o cuatro equipos, con arrastre entre equipos y "Sorteo desde 0" para armar planteles temporales sin tocar el plantel real.
+- Registro de partidos, resultados y goleadores.
+- Diseño de camisetas: titular y alternativa por equipo, 4 diseños base, presets con colores a juego, contraste automático del dorsal según el color de la camiseta.
+- Escudos de equipo opcionales: generados automáticamente con colores e iniciales, foto propia, letras editables, o sin escudo — con su propio editor visual y presets.
+- Vista de formación propia contra rival, con escudos en el enfrentamiento.
 - Backup e importación JSON.
 - Carga rápida de planteles desde texto.
 
@@ -48,10 +55,11 @@ La aplicación funciona en modo invitado con persistencia local: crear una cuent
 
 ### Liga amateur
 
-- Calendario de partidos.
-- Registro de resultados.
-- Tabla automática con puntos y diferencia de gol.
-- Gestión local de temporada y fixture.
+- Múltiples competencias en paralelo (Apertura, Clausura, copas amistosas, distintas temporadas), cada una con su propia tabla, fixture y cuadro de copa.
+- Calendario de partidos con filtro por rango de fechas.
+- Registro de resultados y tabla automática con puntos y diferencia de gol.
+- Cuadro de eliminación directa (Copa) de 4 a 32 equipos, con definición por penales en caso de empate.
+- Autocompletado de nombres de equipo a partir de los equipos guardados.
 
 ### Compartir y exportar
 
@@ -64,16 +72,17 @@ La aplicación funciona en modo invitado con persistencia local: crear una cuent
 
 - Manifest e icono para instalar futbolClub como aplicación.
 - Shell local disponible con conexión limitada después de la primera carga.
+- Aviso en la app cuando hay una versión nueva disponible para actualizar.
 - Cuenta opcional: los datos del invitado permanecen en su dispositivo.
 - Cobertura E2E del modo Libre guardado y compartido en un navegador limpio.
 
 ## Capturas
 
-| Entrenador | Ficha del jugador | Liga amateur | Fixture por fecha | Cuenta y datos |
+| Login / registro | Camisetas | Escudos | Liga: Copa | Entrenador |
 |---|---|---|---|---|
-| [![Entrenador](screenshots/09-coach.png)](screenshots/09-coach.png) | [![Ficha del jugador](screenshots/09b-coach-ficha.png)](screenshots/09b-coach-ficha.png) | [![Liga amateur](screenshots/10-league.png)](screenshots/10-league.png) | [![Fixture por fecha](screenshots/10b-league-fixture.png)](screenshots/10b-league-fixture.png) | [![Cuenta y datos](screenshots/11-settings.png)](screenshots/11-settings.png) |
+| [![Login](screenshots/12-auth.png)](screenshots/12-auth.png) | [![Camisetas](screenshots/05-kits.png)](screenshots/05-kits.png) | [![Escudos](screenshots/05b-crests.png)](screenshots/05b-crests.png) | [![Cuadro de Copa](screenshots/10c-league-cup.png)](screenshots/10c-league-cup.png) | [![Entrenador](screenshots/09-coach.png)](screenshots/09-coach.png) |
 
-La galería completa (las 15 pantallas y estados de la app) está disponible en [screenshots/README.md](screenshots/README.md).
+La galería completa (más de 15 pantallas y estados de la app) está disponible en [screenshots/README.md](screenshots/README.md).
 
 ## Ejecución local
 
@@ -103,17 +112,15 @@ npm run screenshots       # regenera la galería de capturas desktop
 npm run screenshots:mobile  # capturas a ancho de teléfono (390×844)
 ```
 
-Estado verificado en `develop`: **21 pruebas aprobadas**.
-
 ## Supabase y Google Login
 
-La nube es opcional. Sin configuración externa, futbolClub continúa funcionando con `localStorage`.
+La nube es opcional. Sin configuración externa, futbolClub continúa funcionando con `localStorage` y el botón "Continuar sin cuenta".
 
 Para habilitar autenticación y sincronización:
 
 1. Crear un proyecto en Supabase.
 2. Ejecutar [supabase/schema.sql](supabase/schema.sql) en el SQL Editor.
-3. Habilitar Google como proveedor de autenticación.
+3. Habilitar Google (y/o email/contraseña) como proveedor de autenticación.
 4. Copiar `src/local-config.example.js` como `src/local-config.js`.
 5. Completar la URL y la clave pública `anon` del proyecto.
 
@@ -123,10 +130,10 @@ Para habilitar autenticación y sincronización:
 
 - React 18 mediante UMD.
 - Babel Standalone para JSX en navegador.
-- SVG para cancha y camisetas.
+- SVG para cancha, camisetas y escudos.
 - html2canvas y jsPDF para exportaciones.
 - localStorage para el modo local.
-- Service Worker y Web App Manifest para instalación y uso con conexión limitada.
+- Service Worker y Web App Manifest para instalación, uso con conexión limitada y aviso de actualización.
 - Supabase Auth, PostgreSQL y Storage como backend opcional.
 - Playwright para pruebas E2E y capturas.
 
@@ -135,19 +142,24 @@ Para habilitar autenticación y sincronización:
 ```text
 futLineUp/
 ├── futbolClub.html
+├── service-worker.js
 ├── src/
 │   ├── data.jsx
+│   ├── icons.jsx
 │   ├── pitch.jsx
 │   ├── kits.jsx
+│   ├── sidebar.jsx
+│   ├── supabase.jsx
+│   ├── page-auth.jsx
 │   ├── page-home.jsx
 │   ├── page-mode.jsx
 │   ├── page-editor.jsx
 │   ├── page-draw.jsx
 │   ├── page-kits.jsx
+│   ├── page-crests.jsx
 │   ├── page-rival.jsx
 │   ├── page-share.jsx
-│   ├── page-platform.jsx
-│   └── supabase.jsx
+│   └── page-platform.jsx
 ├── supabase/
 │   └── schema.sql
 ├── tests/
@@ -162,6 +174,7 @@ futLineUp/
 - [Estado actual](docs/ESTADO_IMPLEMENTACION.md)
 - [Galería de capturas](screenshots/README.md)
 - [Piezas de marketing](marketing/README.md)
+- [Futuras consideraciones a implementar](futuras-consideraciones-a-implementar.md)
 
 ## Licencia
 

@@ -77,7 +77,9 @@ export async function seedDemoData(page) {
 
 export async function openSeededApp(page) {
   await page.route('**/src/local-config.js', route => route.fulfill({ body:'window.RESET_ON_BOOT=false;', contentType:'text/javascript' }));
-  await page.goto('/futbolClub.html');
+  // #home evita la pantalla de bienvenida (login/registro) que se muestra en la
+  // primera visita sin hash — el router prioriza el hash sobre ese gate.
+  await page.goto('/futbolClub.html#home');
   await page.waitForSelector('.nav-item');
   await page.waitForFunction(() => !!window.db);
   await seedDemoData(page);

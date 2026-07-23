@@ -9,7 +9,7 @@ const SHOTS = [
   { id:'home', file:'01-home.png' },
   { id:'coach', file:'09-coach.png' },
   { id:'league', file:'10-league.png' },
-  { id:'settings', file:'11-settings.png' },
+  { id:'crests', file:'05b-crests.png' },
 ];
 
 test('captura screenshots mobile de las secciones clave', async ({ page }) => {
@@ -33,4 +33,9 @@ test('captura screenshots mobile de las secciones clave', async ({ page }) => {
   await page.getByRole('button', { name:'Fixture' }).click();
   await page.waitForTimeout(250);
   await shootFull(page, 'screenshots/mobile/10b-league-fixture.png');
+
+  // Cuenta y datos: ahora se abre desde el ícono de perfil, no desde el menú.
+  await page.locator('.sidebar-profile-btn').click();
+  await page.waitForTimeout(200);
+  await shootFull(page, 'screenshots/mobile/11-settings.png');
 });
