@@ -4,22 +4,43 @@ function KitsPage() {
     design: "solid", primary: "#e11d48", secondary: "#0f172a",
     number: 10, name: "FUTBOLCLUB"
   });
+  const [altKit, setAltKit] = window.useStore('currentKitAlt', {
+    design: "solid", primary: "#ffffff", secondary: "#0f172a",
+    number: 10, name: "FUTBOLCLUB"
+  });
+  const [editing, setEditing] = React.useState('main'); // 'main' | 'alt'
   const [, setDraft] = window.useStore('editor', null);
 
-  const design = kit.design, primary = kit.primary, secondary = kit.secondary;
-  const number = kit.number ?? 10, teamName = kit.name ?? "FUTBOLCLUB";
+  const activeKit = editing === 'main' ? kit : altKit;
+  const setActiveKit = editing === 'main' ? setKit : setAltKit;
+  const otherKit = editing === 'main' ? altKit : kit;
+  const otherLabel = editing === 'main' ? 'Alternativa' : 'Titular';
 
-  const setField = (k, v) => setKit(prev => ({ ...prev, [k]: v }));
+  const design = activeKit.design, primary = activeKit.primary, secondary = activeKit.secondary;
+  const number = activeKit.number ?? 10, teamName = activeKit.name ?? "FUTBOLCLUB";
 
+  const setField = (k, v) => setActiveKit(prev => ({ ...prev, [k]: v }));
+
+  // Cada preset trae su alternativa a juego (titular + suplente), no solo un color suelto.
   const presets = [
-    { name: "Rojo clásico",   design: "solid",   primary: "#dc2626", secondary: "#ffffff" },
-    { name: "Blaugrana",      design: "stripes", primary: "#1e3a8a", secondary: "#991b1b" },
-    { name: "Albiceleste",    design: "stripes", primary: "#3b82f6", secondary: "#ffffff" },
-    { name: "Millonario",     design: "sash",    primary: "#ffffff", secondary: "#dc2626" },
-    { name: "Xeneize",        design: "sash",    primary: "#1e3a8a", secondary: "#eab308" },
-    { name: "Verde-negro",    design: "halves",  primary: "#16a34a", secondary: "#0f172a" },
-    { name: "Naranja mecánica", design: "solid", primary: "#ea580c", secondary: "#0f172a" },
-    { name: "Crema",          design: "stripes", primary: "#fef3c7", secondary: "#78350f" },
+    { name: "Rojo clásico",     design: "solid",   primary: "#dc2626", secondary: "#ffffff",
+      alt: { design: "solid",   primary: "#0f172a", secondary: "#dc2626" } },
+    { name: "Blaugrana",        design: "stripes", primary: "#1e3a8a", secondary: "#991b1b",
+      alt: { design: "solid",   primary: "#fbbf24", secondary: "#1e3a8a" } },
+    { name: "Real",             design: "solid",   primary: "#ffffff", secondary: "#1e3a8a",
+      alt: { design: "halves",  primary: "#0f172a", secondary: "#1e3a8a" } },
+    { name: "Albiceleste",      design: "stripes", primary: "#3b82f6", secondary: "#ffffff",
+      alt: { design: "solid",   primary: "#0f172a", secondary: "#3b82f6" } },
+    { name: "Millonario",       design: "sash",    primary: "#ffffff", secondary: "#dc2626",
+      alt: { design: "solid",   primary: "#0f172a", secondary: "#ffffff" } },
+    { name: "Xeneize",          design: "sash",    primary: "#1e3a8a", secondary: "#eab308",
+      alt: { design: "solid",   primary: "#fef3c7", secondary: "#1e3a8a" } },
+    { name: "Verde-negro",      design: "halves",  primary: "#16a34a", secondary: "#0f172a",
+      alt: { design: "solid",   primary: "#ffffff", secondary: "#16a34a" } },
+    { name: "Naranja mecánica", design: "solid",   primary: "#ea580c", secondary: "#0f172a",
+      alt: { design: "solid",   primary: "#0f172a", secondary: "#ea580c" } },
+    { name: "Crema",            design: "stripes", primary: "#fef3c7", secondary: "#78350f",
+      alt: { design: "solid",   primary: "#78350f", secondary: "#fef3c7" } },
   ];
 
   const colorSwatches = ["#dc2626","#ea580c","#eab308","#16a34a","#06b6d4","#3b82f6","#8b5cf6","#ec4899","#ffffff","#0f172a"];
@@ -27,7 +48,8 @@ function KitsPage() {
   const applyToTeam = () => {
     setDraft(d => {
       const base = d || { mode: 7, formIdx: 0, assignedIds: [], freePositions: {}, freeMode: false, name: "Mi equipo" };
-      return { ...base, kit: { design, primary, secondary } };
+      const kitObj = { design, primary, secondary };
+      return editing === 'main' ? { ...base, kit: kitObj } : { ...base, altKit: kitObj };
     });
     window.go('editor');
   };
@@ -38,9 +60,14 @@ function KitsPage() {
         <div>
           <div className="page-kicker">Editor de camisetas</div>
           <h1 className="page-title">Diseñá tu kit</h1>
-          <div className="page-sub">4 diseños base, colores libres, tipografía impresa. Aplicable a cualquier equipo guardado.</div>
+          <div className="page-sub">4 diseños base, colores libres, tipografía impresa. Cada equipo puede tener titular y alternativa.</div>
         </div>
-        <button className="btn primary" onClick={applyToTeam}>Aplicar al equipo →</button>
+        <button className="btn primary" onClick={applyToTeam}>Aplicar como {editing==='main'?'titular':'alternativa'} →</button>
+      </div>
+
+      <div className="seg kit-mode-seg">
+        <button className={editing==='main'?'on':''} onClick={()=>setEditing('main')}>Titular</button>
+        <button className={editing==='alt'?'on':''} onClick={()=>setEditing('alt')}>Alternativa</button>
       </div>
 
       <div className="kits-layout">
@@ -48,8 +75,8 @@ function KitsPage() {
           <div className="kit-stage">
             <Kit design={design} primary={primary} secondary={secondary} number={number} name={teamName} size={280}/>
             <div className="kit-back">
-              <Kit design={design} primary={primary} secondary={secondary} number={number} name={teamName} size={180}/>
-              <div className="kit-back-label">Contra</div>
+              <Kit design={otherKit.design} primary={otherKit.primary} secondary={otherKit.secondary} number={otherKit.number ?? 10} name={otherKit.name} size={180}/>
+              <div className="kit-back-label">{otherLabel}</div>
             </div>
           </div>
           <div className="kit-specs">
@@ -120,12 +147,20 @@ function KitsPage() {
           </div>
 
           <div className="panel">
-            <div className="panel-head">Presets</div>
+            <div className="panel-head">Presets<span className="muted-note">Titular + alternativa</span></div>
             <div className="presets-grid">
-              {presets.map((p,i) => (
-                <button key={i} className="preset"
-                  onClick={()=>setKit(prev => ({ ...prev, design: p.design, primary: p.primary, secondary: p.secondary }))}>
-                  <Kit design={p.design} primary={p.primary} secondary={p.secondary} size={52} showNumber={false}/>
+              {presets.map((p) => (
+                <button key={p.name} className="preset"
+                  title={`${p.name} — aplica titular y alternativa`}
+                  onClick={()=>{
+                    setKit(prev => ({ ...prev, design: p.design, primary: p.primary, secondary: p.secondary }));
+                    setAltKit(prev => ({ ...prev, design: p.alt.design, primary: p.alt.primary, secondary: p.alt.secondary }));
+                    window.__toast?.(`${p.name}: titular y alternativa cargadas`);
+                  }}>
+                  <div className="preset-pair">
+                    <Kit design={p.design} primary={p.primary} secondary={p.secondary} size={44} showNumber={false}/>
+                    <Kit design={p.alt.design} primary={p.alt.primary} secondary={p.alt.secondary} size={34} showNumber={false}/>
+                  </div>
                   <span>{p.name}</span>
                 </button>
               ))}
@@ -139,6 +174,7 @@ function KitsPage() {
 
 const kitsCSS = document.createElement("style");
 kitsCSS.textContent = `
+  .kit-mode-seg { margin-bottom: 16px; }
   .kits-layout {
     display: grid;
     grid-template-columns: 1fr 380px;
@@ -257,6 +293,8 @@ kitsCSS.textContent = `
     text-align: center; line-height: 1.1;
   }
   .preset:hover { border-color: var(--accent); color: var(--fg); }
+  .preset-pair { display: flex; align-items: flex-end; }
+  .preset-pair > *:last-child { margin-left: -14px; filter: brightness(.92); }
 `;
 document.head.appendChild(kitsCSS);
 

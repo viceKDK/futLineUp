@@ -70,9 +70,9 @@ const listeners = {};
 // (Para override local sin tocar el repo, ver src/local-config.js — gitignored.)
 if (typeof window.RESET_ON_BOOT === 'undefined') window.RESET_ON_BOOT = false;
 if (window.RESET_ON_BOOT) {
-  Object.keys(localStorage)
-    .filter(k => k.startsWith(STORAGE_PREFIX))
-    .forEach(k => localStorage.removeItem(k));
+  for (const key of Object.keys(localStorage)) {
+    if (key.startsWith(STORAGE_PREFIX)) localStorage.removeItem(key);
+  }
   console.info('[futbolClub] RESET_ON_BOOT activo — datos locales borrados.');
 }
 
@@ -85,8 +85,25 @@ window.db = {
     } catch (_) { return fallback; }
   },
   save(key, value) {
-    try { localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value)); } catch (_) {}
+    try {
+      localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+    } catch (error) {
+      window.dispatchEvent(new CustomEvent('fc:storage-error', { detail: { key, error } }));
+      throw error;
+    }
     (listeners[key] || new Set()).forEach(fn => { try { fn(value); } catch (_) {} });
+  },
+  remove(key) {
+    localStorage.removeItem(STORAGE_PREFIX + key);
+    (listeners[key] || new Set()).forEach(fn => { try { fn(undefined); } catch (_) {} });
+  },
+  keys() {
+    const result = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(STORAGE_PREFIX)) result.push(key.slice(STORAGE_PREFIX.length));
+    }
+    return result.sort();
   },
   subscribe(key, fn) {
     if (!listeners[key]) listeners[key] = new Set();
@@ -159,6 +176,38 @@ window.colorFor = function(seed) {
   return `oklch(0.55 0.12 ${hue})`;
 };
 
+// Color de texto legible (blanco o negro) según qué tan clara sea una camiseta.
+// hex-only (los kits guardan colores en hex); si no puede parsear, asume blanco.
+window.contrastText = function(hex) {
+  if (typeof hex !== 'string' || hex[0] !== '#') return '#ffffff';
+  let h = hex.slice(1);
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  if (h.length !== 6) return '#ffffff';
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  if ([r,g,b].some(Number.isNaN)) return '#ffffff';
+  const luminance = (0.299*r + 0.587*g + 0.114*b) / 255;
+  return luminance > 0.6 ? '#12181a' : '#ffffff';
+};
+
+// Igual que contrastText, pero pensado para texto que puede caer sobre un
+// diseño con dos colores (rayas, mitades, banda) — promedia la luminancia de
+// ambos en vez de mirar solo el primario, para no quedar blanco-sobre-blanco
+// (o negro-sobre-negro) en la franja del color secundario.
+window.contrastTextMixed = function(primary, secondary, design) {
+  if (!design || design === 'solid') return window.contrastText(primary);
+  const luminanceOf = (hex) => {
+    if (typeof hex !== 'string' || hex[0] !== '#') return 1;
+    let h = hex.slice(1);
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    if (h.length !== 6) return 1;
+    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+    if ([r,g,b].some(Number.isNaN)) return 1;
+    return (0.299*r + 0.587*g + 0.114*b) / 255;
+  };
+  const avg = (luminanceOf(primary) + luminanceOf(secondary)) / 2;
+  return avg > 0.6 ? '#12181a' : '#ffffff';
+};
+
 window.initials = function(name) {
   if (!name) return "??";
   const parts = name.split(/\s+/);
@@ -206,4 +255,84 @@ window.relDate = function(iso) {
     if (d < 30) return `hace ${Math.floor(d/7)} sem`;
     return `hace ${Math.floor(d/30)} meses`;
   } catch (_) { return ''; }
+};
+
+// ---- Product profiles, backup and share snapshots ----
+window.FC_SCHEMA_VERSION = 2;
+window.DEFAULT_PROFILE = {
+  experience: "friends",
+  displayName: "",
+  season: "",
+  onboardingDone: false,
+};
+
+window.exportFutbolClubData = function() {
+  const data = {};
+  for (const key of window.db.keys()) data[key] = window.db.load(key, null);
+  return {
+    app: "futbolClub",
+    schemaVersion: window.FC_SCHEMA_VERSION,
+    exportedAt: new Date().toISOString(),
+    data,
+  };
+};
+
+window.importFutbolClubData = function(payload, strategy = "replace") {
+  if (!payload || payload.app !== "futbolClub" || !payload.data || typeof payload.data !== "object") {
+    throw new Error("El archivo no es un backup válido de futbolClub");
+  }
+  if (Number(payload.schemaVersion || 1) > window.FC_SCHEMA_VERSION) {
+    throw new Error("El backup fue creado con una versión más nueva");
+  }
+  if (strategy === "replace") {
+    for (const key of window.db.keys()) window.db.remove(key);
+  }
+  for (const [key, value] of Object.entries(payload.data)) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(key)) continue;
+    window.db.save(key, value);
+  }
+  return Object.keys(payload.data).length;
+};
+
+window.downloadJSON = function(value, filename) {
+  const blob = new Blob([JSON.stringify(value, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+};
+
+const utf8ToBase64Url = (value) => {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+};
+const base64UrlToUtf8 = (value) => {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
+  const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+};
+
+window.encodeLineupSnapshot = function(snapshot) {
+  return utf8ToBase64Url(JSON.stringify({ v: 1, ...snapshot }));
+};
+window.decodeLineupSnapshot = function(encoded) {
+  const snapshot = JSON.parse(base64UrlToUtf8(encoded));
+  if (!snapshot || snapshot.v !== 1 || !snapshot.draft) throw new Error("Alineación compartida inválida");
+  return snapshot;
+};
+
+window.fisherYates = function(items) {
+  const result = items.slice();
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
 };

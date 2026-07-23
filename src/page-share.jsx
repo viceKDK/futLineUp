@@ -1,14 +1,28 @@
 // Compartir / exportar — PNG/PDF/ICS reales, deep-links a redes, include toggles funcionales
 function SharePage() {
   const [styleTab, setStyleTab] = React.useState("card");
-  const [roster] = window.useStore('roster', window.DEFAULT_ROSTER);
-  const [draft]  = window.useStore('editor', {
+  const [playerStyle, setPlayerStyleState] = React.useState(() => window.fcGetTweaks?.().playerStyle || 'photo');
+  React.useEffect(() => {
+    const onChange = (e) => { if (e.detail.key === 'playerStyle') setPlayerStyleState(e.detail.value); };
+    window.addEventListener('fc:tweak-changed', onChange);
+    return () => window.removeEventListener('fc:tweak-changed', onChange);
+  }, []);
+  const sharedSnapshot = React.useMemo(() => {
+    const raw = location.hash.startsWith('#share=') ? location.hash.slice(7) : null;
+    if (!raw) return null;
+    try { return window.decodeLineupSnapshot(raw); }
+    catch (_) { window.__toast?.('El enlace compartido no es válido'); return null; }
+  }, []);
+  const [storedRoster] = window.useStore('roster', window.DEFAULT_ROSTER);
+  const [storedDraft]  = window.useStore('editor', {
     name: "Los Pibes del Viernes",
     mode: 7, formIdx: 0,
     kit: { design: "stripes", primary: "#3b82f6", secondary: "#ffffff" },
     assignedIds: [],
     freePositions: {},
   });
+  const roster = sharedSnapshot?.roster || storedRoster;
+  const draft = sharedSnapshot?.draft || storedDraft;
   const [currentKit] = window.useStore('currentKit', null);
 
   // Match info (persistido, editable acá)
@@ -17,13 +31,14 @@ function SharePage() {
     d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7 || 7)); // próximo viernes
     return d.toISOString().slice(0,10);
   })();
-  const [match, setMatch] = window.useStore('matchInfo', {
+  const [storedMatch, setMatch] = window.useStore('matchInfo', {
     date: defaultDate,
     time: "21:30",
     venue: "Canchita Palermo",
     opponent: "Rival",
     myScore: null, theirScore: null,
   });
+  const match = sharedSnapshot?.match || storedMatch;
 
   // Include toggles
   const [include, setInclude] = window.useStore('shareInclude', {
@@ -31,11 +46,13 @@ function SharePage() {
   });
   const tog = (k) => setInclude(i => ({ ...i, [k]: !i[k] }));
 
+  const [shareKitMode, setShareKitMode] = React.useState(draft.activeKit === 'alt' ? 'alt' : 'main');
+
   const mode = draft.mode || 7;
   const formIdx = draft.formIdx || 0;
   const formation = window.FORMATIONS[mode][formIdx];
   const size = formation.positions.length;
-  const kit = draft.kit || currentKit || { design: "stripes", primary: "#3b82f6", secondary: "#ffffff" };
+  const kit = (shareKitMode === 'alt' && draft.altKit) ? draft.altKit : (draft.kit || currentKit || { design: "stripes", primary: "#3b82f6", secondary: "#ffffff" });
   const freeKey = `${mode}:${formIdx}`;
   const overrides = draft.freePositions?.[freeKey] || null;
 
@@ -44,12 +61,18 @@ function SharePage() {
   for (let i=0; i<size; i++) {
     const id = ids[i];
     const p = id != null ? roster.find(x => x.id === id) : null;
-    players.push(p || roster[i] || null);
+    players.push(p || null);
   }
   const captain = players.find(Boolean)?.name || "—";
 
   const slug = (draft.name || 'equipo').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-  const shareURL = `${location.origin}${location.pathname}#${slug}`;
+  const sharedPlayerIds = new Set([...(draft.assignedIds || []), ...(draft.substituteIds || [])]);
+  const sharePayload = {
+    draft: { ...draft, assignedIds: (draft.assignedIds || []).slice(), freePositions: draft.freePositions || {} },
+    roster: roster.filter(player => sharedPlayerIds.has(player.id)),
+    match,
+  };
+  const shareURL = `${location.origin}${location.pathname}#share=${window.encodeLineupSnapshot(sharePayload)}`;
   const shareText = `Alineación ${draft.name} (${formation.name}) · ${match.date} ${match.time} · ${match.venue}`;
 
   // --- Refs for capture ---
@@ -193,9 +216,9 @@ function SharePage() {
           <div className="page-sub">Descargá como imagen, PDF o evento de calendario · link directo o deep-link a redes.</div>
         </div>
         <div style={{display:'flex', gap:8}}>
-          <button className="btn" onClick={copyLink}>📋 Copiar link</button>
-          <button className="btn" onClick={downloadPNG}>💾 Descargar PNG</button>
-          <button className="btn primary" onClick={nativeShare}>📲 Compartir</button>
+          <button className="btn" onClick={copyLink}><Icon name="link" size={13}/> Copiar link</button>
+          <button className="btn" onClick={downloadPNG}><Icon name="download" size={13}/> Descargar PNG</button>
+          <button className="btn primary" onClick={nativeShare}><Icon name="send" size={13}/> Compartir</button>
         </div>
       </div>
 
@@ -222,7 +245,7 @@ function SharePage() {
                 <div className="share-card-pitch">
                   <Pitch mode={mode} formationIndex={formIdx} players={players} kit={kit}
                          interactive={false} style="classic" showNames={include.names}
-                         positionOverrides={overrides} label={formation.name}/>
+                         freeMode={!!draft.freeMode} positionOverrides={overrides}/>
                 </div>
                 <div className="share-card-foot">
                   <div className="share-meta-item"><span>Formación</span><strong>{formation.name}</strong></div>
@@ -281,7 +304,7 @@ function SharePage() {
                   <div style={{marginTop:20, flex:1, display:'flex'}}>
                     <Pitch mode={mode} formationIndex={formIdx} players={players} kit={kit}
                            interactive={false} style="classic" showNames={include.names}
-                           positionOverrides={overrides}/>
+                           freeMode={!!draft.freeMode} positionOverrides={overrides}/>
                   </div>
                   {include.watermark && <div className="share-watermark" style={{position:'static', marginTop:10}}>futbolClub.app</div>}
                 </div>
@@ -291,6 +314,22 @@ function SharePage() {
         </div>
 
         <div className="share-side">
+          <div className="panel">
+            <div className="panel-head">Camiseta</div>
+            <div className="share-kit-row">
+              <span>Ver en cancha</span>
+              <div className="seg">
+                <button className={playerStyle==='photo'?'on':''} onClick={()=>window.fcSetTweak('playerStyle','photo')}>Foto</button>
+                <button className={playerStyle==='shirt'?'on':''} onClick={()=>window.fcSetTweak('playerStyle','shirt')}>Camiseta</button>
+              </div>
+            </div>
+            {draft.altKit && (
+              <div className="seg" style={{width:'100%', marginTop:10}}>
+                <button style={{flex:1}} className={shareKitMode==='main'?'on':''} onClick={()=>setShareKitMode('main')}>Titular</button>
+                <button style={{flex:1}} className={shareKitMode==='alt'?'on':''} onClick={()=>setShareKitMode('alt')}>Alternativa</button>
+              </div>
+            )}
+          </div>
           <div className="panel">
             <div className="panel-head">Partido</div>
             <div className="match-fields">
@@ -480,6 +519,7 @@ shareCSS.textContent = `
   }
   .match-fields input:focus { border-color: var(--accent); }
 
+  .share-kit-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--fg-mute); }
   .share-link-row { display: flex; gap: 6px; margin-bottom: 10px; }
   .share-link-row input {
     flex: 1; padding: 8px 10px; font-family: var(--font-mono); font-size: 12px;

@@ -7,12 +7,57 @@ function RivalPage() {
     rivalForm: 1,
     myKit: { design: "stripes", primary: "#3b82f6", secondary: "#ffffff" },
     rivalKit: { design: "solid", primary: "#eab308", secondary: "#16a34a" },
+    rivalRoster: [], // jugadores propios del equipo rival (no salen de tu plantel)
+    rivalName: "LOS VISITANTES",
   });
+  const [rivalNameInput, setRivalNameInput] = React.useState('');
+  const [teamCrests] = window.useStore('teamCrests', {});
+  const crestEntryFor = (name) => {
+    const raw = teamCrests[(name||'').trim().toLowerCase()];
+    if (!raw) return null;
+    if (typeof raw === 'string') return raw === 'none' ? { hidden: true } : { photo: raw };
+    return raw;
+  };
+  const crestFor = (name, fallbackKit) => {
+    const entry = crestEntryFor(name) || {};
+    if (entry.hidden) return { name, photo: 'none' };
+    return {
+      name,
+      design: entry.design || fallbackKit.design,
+      primary: entry.primary || fallbackKit.primary,
+      secondary: entry.secondary || fallbackKit.secondary,
+      photo: entry.photo || undefined,
+      initials: entry.initials || undefined,
+    };
+  };
 
-  const { myMode, myForm, rivalForm, myKit, rivalKit } = state;
+  const {
+    myMode = 11, myForm = 0, rivalForm = 1,
+    myKit = { design: "stripes", primary: "#3b82f6", secondary: "#ffffff" },
+    rivalKit = { design: "solid", primary: "#eab308", secondary: "#16a34a" },
+  } = state;
+  const myTeamName = 'LOS PIBES';
+  const rivalTeamName = state.rivalName || 'LOS VISITANTES';
+  const rivalRoster = state.rivalRoster || [];
 
   const myPlayers = roster.slice(0, window.FORMATIONS[myMode][myForm].positions.length);
-  const rivalPlayers = roster.slice(10, 10 + window.FORMATIONS[myMode][rivalForm].positions.length);
+  const rivalSize = window.FORMATIONS[myMode][rivalForm].positions.length;
+  const rivalPlayers = Array.from({length: rivalSize}, (_, i) => rivalRoster[i] || null);
+
+  const addRivalPlayer = (name) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setState(s => ({ ...s, rivalRoster: [...(s.rivalRoster||[]), { id: `rv${Date.now()}${Math.random().toString(36).slice(2,6)}`, name: trimmed } ] }));
+  };
+  const generateRivalPlayers = (n) => {
+    setState(s => {
+      const base = (s.rivalRoster||[]).length;
+      const added = Array.from({length: n}, (_, i) => ({ id: `rv${Date.now()}${Math.random().toString(36).slice(2,6)}${i}`, name: `Rival ${base+i+1}` }));
+      return { ...s, rivalRoster: [...(s.rivalRoster||[]), ...added] };
+    });
+  };
+  const removeRivalPlayer = (id) => setState(s => ({ ...s, rivalRoster: (s.rivalRoster||[]).filter(p=>p.id!==id) }));
+  const clearRivalRoster = () => setState(s => ({ ...s, rivalRoster: [] }));
 
   return (
     <div>
@@ -38,8 +83,9 @@ function RivalPage() {
       <div className="rival-head-row">
         <div className="rival-side">
           <div className="rival-flag" style={{background: myKit.primary}}></div>
+          <Crest {...crestFor(myTeamName, myKit)} size={38}/>
           <div>
-            <div className="rival-name">LOS PIBES</div>
+            <div className="rival-name">{myTeamName}</div>
             <div className="rival-meta">
               <span className="chip lime">LOCAL</span>
               <span className="chip">{window.FORMATIONS[myMode][myForm].name}</span>
@@ -52,12 +98,13 @@ function RivalPage() {
         </div>
         <div className="rival-side right">
           <div>
-            <div className="rival-name">LOS VISITANTES</div>
+            <input className="rival-name-input" value={state.rivalName || ''} onChange={e=>setState(s=>({...s, rivalName: e.target.value}))} placeholder="LOS VISITANTES"/>
             <div className="rival-meta">
               <span className="chip">VISITANTE</span>
               <span className="chip">{window.FORMATIONS[myMode][rivalForm].name}</span>
             </div>
           </div>
+          <Crest {...crestFor(rivalTeamName, rivalKit)} size={38}/>
           <div className="rival-flag" style={{background: rivalKit.primary}}></div>
         </div>
       </div>
@@ -70,7 +117,7 @@ function RivalPage() {
         </div>
         <div className="half-rival">
           <Pitch mode={myMode} formationIndex={rivalForm} players={rivalPlayers} kit={rivalKit}
-                 orientation="down" interactive={false}
+                 orientation="up" interactive={false}
                  style={document.body.dataset.pitch || "classic"} showNames={true}/>
         </div>
         <div className="midline-badge">● CENTRO ●</div>
@@ -99,6 +146,33 @@ function RivalPage() {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="panel rival-roster-panel">
+        <div className="panel-head-row">
+          <span>Plantel rival · {rivalRoster.length}/{rivalSize}</span>
+          <span className="chip">No se guarda en tu plantel</span>
+        </div>
+        <div className="temp-controls">
+          <input type="text" placeholder="Nombre y Enter…" value={rivalNameInput}
+                 onChange={e=>setRivalNameInput(e.target.value)}
+                 onKeyDown={e=>{ if (e.key==='Enter') { addRivalPlayer(rivalNameInput); setRivalNameInput(''); } }}/>
+          <button className="btn" onClick={()=>{ addRivalPlayer(rivalNameInput); setRivalNameInput(''); }}>+ Agregar</button>
+          <span className="temp-divider">o</span>
+          <button className="btn" onClick={()=>generateRivalPlayers(rivalSize - rivalRoster.length > 0 ? rivalSize - rivalRoster.length : 1)}>Completar equipo rival</button>
+          {rivalRoster.length > 0 && <button className="btn ghost" onClick={clearRivalRoster}>Vaciar</button>}
+        </div>
+        {rivalRoster.length > 0 && (
+          <div className="pool-chips" style={{marginTop:10}}>
+            {rivalRoster.map(p => (
+              <div key={p.id} className="pool-chip">
+                <div className="pool-chip-avatar" style={{background: window.colorFor(p.name)}}>{window.initials(p.name)}</div>
+                <span>{p.name}</span>
+                <button className="temp-remove" onClick={()=>removeRivalPlayer(p.id)} title="Quitar">×</button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -136,6 +210,15 @@ rivalCSS.textContent = `
   }
   .rival-meta { display: flex; gap: 6px; margin-top: 6px; }
   .rival-side.right .rival-meta { justify-content: flex-end; }
+  .rival-name-input {
+    background: transparent; border: 0; border-bottom: 1px solid transparent;
+    text-align: right; padding: 0;
+    font-family: var(--font-display);
+    font-size: 28px; letter-spacing: 1.5px; line-height: 1;
+    color: var(--fg); width: 100%; outline: none;
+  }
+  .rival-name-input:hover, .rival-name-input:focus { border-bottom-color: var(--line); }
+  .rival-roster-panel { margin-top: 18px; }
   .vs-word {
     font-family: var(--font-display);
     font-size: 48px; color: var(--accent);
@@ -148,10 +231,16 @@ rivalCSS.textContent = `
 
   .combined-pitch {
     position: relative;
-    max-width: 900px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    max-width: 1200px; margin: 0 auto;
     background: #0e1210;
     border-radius: 14px;
     overflow: hidden;
+  }
+  @media (max-width: 800px) {
+    .combined-pitch { grid-template-columns: 1fr; }
   }
   .half-own, .half-rival { width: 100%; }
   .half-own .pitch-wrap, .half-rival .pitch-wrap {
@@ -159,7 +248,6 @@ rivalCSS.textContent = `
     aspect-ratio: auto;
     height: 60vh; min-height: 480px;
   }
-  .half-rival { margin-top: -1px; }
   .midline-badge {
     position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);

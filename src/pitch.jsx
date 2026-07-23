@@ -30,10 +30,27 @@ function Pitch(props) {
 
   const formation = window.FORMATIONS[mode][formationIndex];
   const rawPositions = formation.positions;
-  const positions = rawPositions.map((p, i) => (positionOverrides && positionOverrides[i]) || p);
+  const positions = rawPositions.map((p, i) => (freeMode && positionOverrides && positionOverrides[i]) || p);
 
-  const [hoverIndex, setHoverIndex] = React.useState(null);
+  const [selectedIdx, setSelectedIdx] = React.useState(null);
   const svgRef = React.useRef(null);
+  // Evita que un click "fantasma" del navegador (a veces se dispara después
+  // de un drag nativo, o durante el gesto corto antes de que el drag arranque)
+  // dispare también un swap por tap-to-swap, duplicando el movimiento.
+  const draggingRef = React.useRef(false);
+
+  React.useEffect(() => { setSelectedIdx(null); }, [mode, formationIndex, freeMode]);
+
+  const handleSlotClick = (idx) => {
+    if (!interactive || freeMode || draggingRef.current) return;
+    if (selectedIdx === null) {
+      if (players[idx]) setSelectedIdx(idx);
+      return;
+    }
+    if (selectedIdx === idx) { setSelectedIdx(null); return; }
+    onSwap && onSwap(selectedIdx, idx);
+    setSelectedIdx(null);
+  };
 
   // Pitch visuals
   const pitchPalette = {
@@ -57,28 +74,80 @@ function Pitch(props) {
     );
   }
 
-  const handleDragStart = (e, idx) => {
-    if (!interactive || freeMode) return;
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", String(idx));
-  };
+  // El drag nativo del navegador (draggable="true") sólo está bien soportado
+  // en elementos HTML. Sobre SVG (los círculos de la cancha) es poco fiable:
+  // a veces ni arranca el gesto con un mouse real, aunque el código que lo
+  // procesa esté bien. Por eso el arrastre DESDE la cancha (cancha→cancha,
+  // cancha→plantel) usa eventos de puntero a mano — la misma técnica que ya
+  // usa el modo libre — en vez de HTML5 drag-and-drop.
+  //
+  // El drag nativo se mantiene únicamente para "plantel → cancha", porque ahí
+  // el origen es un <div> HTML normal (fuera del SVG) y sí es confiable.
   const handleDragOver = (e, idx) => {
     if (!interactive) return;
     e.preventDefault();
-    setHoverIndex(idx);
+    e.currentTarget.classList.add('hover');
+  };
+  const handleDragLeave = (e) => {
+    e.currentTarget.classList.remove('hover');
   };
   const handleDrop = (e, idx) => {
     if (!interactive) return;
     e.preventDefault();
-    const fromData = e.dataTransfer.getData("text/plain");
+    e.currentTarget.classList.remove('hover');
     const fromRoster = e.dataTransfer.getData("application/x-roster");
-    if (fromRoster) {
-      onAssign && onAssign(parseInt(fromRoster, 10), idx);
-    } else if (fromData !== "" && !freeMode) {
-      const from = parseInt(fromData, 10);
-      if (!isNaN(from) && from !== idx) onSwap && onSwap(from, idx);
-    }
-    setHoverIndex(null);
+    if (fromRoster) onAssign && onAssign(parseInt(fromRoster, 10), idx);
+  };
+
+  // Arrastre de un jugador ya colocado: puntero a mano, sin drag nativo.
+  // Movimiento corto (< 6px) = se deja pasar como click normal (tap-to-swap).
+  // Movimiento largo = drag real: swap con otra posición, o remove si se
+  // suelta sobre un elemento marcado con [data-pitch-dropzone="remove"].
+  const startPlayerDrag = (e, idx) => {
+    if (!interactive || freeMode || !players[idx]) return;
+    const svg = svgRef.current;
+    if (!svg) return;
+    const startX = e.clientX, startY = e.clientY;
+    const state = { dragging: false, hoverEl: null };
+
+    const move = (ev) => {
+      if (!state.dragging) {
+        if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 6) return;
+        state.dragging = true;
+        draggingRef.current = true;
+        svg.classList.add('dragging-player');
+        svg.querySelector(`[data-slot-idx="${idx}"]`)?.classList.add('drag-source');
+      }
+      const el = document.elementFromPoint(ev.clientX, ev.clientY);
+      const slotEl = el && el.closest('[data-slot-idx]');
+      const dropEl = el && el.closest('[data-pitch-dropzone="remove"]');
+      const hoverEl = (slotEl && svg.contains(slotEl) && slotEl.dataset.slotIdx != String(idx)) ? slotEl : dropEl;
+      if (state.hoverEl && state.hoverEl !== hoverEl) state.hoverEl.classList.remove('hover');
+      if (hoverEl) hoverEl.classList.add('hover');
+      state.hoverEl = hoverEl;
+    };
+    const up = (ev) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      svg.classList.remove('dragging-player');
+      svg.querySelector(`[data-slot-idx="${idx}"]`)?.classList.remove('drag-source');
+      if (state.hoverEl) state.hoverEl.classList.remove('hover');
+      if (state.dragging) {
+        const el = document.elementFromPoint(ev.clientX, ev.clientY);
+        const slotEl = el && el.closest('[data-slot-idx]');
+        const dropEl = el && el.closest('[data-pitch-dropzone="remove"]');
+        if (slotEl && svg.contains(slotEl)) {
+          const targetIdx = parseInt(slotEl.dataset.slotIdx, 10);
+          if (!isNaN(targetIdx) && targetIdx !== idx) onSwap && onSwap(idx, targetIdx);
+        } else if (dropEl) {
+          onRemove && onRemove(idx);
+        }
+        // Evita que el click "fantasma" que sigue al gesto dispare también un tap-to-swap.
+        setTimeout(() => { draggingRef.current = false; }, 80);
+      }
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
   };
 
   // Convert pitch coord (formation 0-100, own goal y=0 in "up")
@@ -119,6 +188,11 @@ function Pitch(props) {
     };
     window.addEventListener('pointermove', update);
     window.addEventListener('pointerup', up);
+  };
+
+  const handleSlotPointerDown = (e, idx) => {
+    if (freeMode) { slotPointerDown(e, idx); return; }
+    startPlayerDrag(e, idx);
   };
 
   return (
@@ -162,22 +236,22 @@ function Pitch(props) {
           const [sx, sy] = toScreen(p[0], p[1]);
           const player = players[idx];
           const isEmpty = !player;
-          const isHover = hoverIndex === idx;
+          const isSelected = selectedIdx === idx;
           return (
             <g key={idx}
+               data-slot-idx={idx}
                transform={`translate(${sx},${sy})`}
-               className={`slot ${isEmpty?'empty':''} ${isHover?'hover':''} ${freeMode?'free':''}`}
+               className={`slot ${isEmpty?'empty':''} ${freeMode?'free':''} ${isSelected?'selected':''}`}
                onDragOver={(e)=>handleDragOver(e,idx)}
-               onDragLeave={()=>setHoverIndex(null)}
+               onDragLeave={handleDragLeave}
                onDrop={(e)=>handleDrop(e,idx)}
-               onPointerDown={(e)=>slotPointerDown(e,idx)}>
+               onPointerDown={(e)=>handleSlotPointerDown(e,idx)}
+               onClick={()=>handleSlotClick(idx)}>
               <PlayerDot
                 player={player}
                 kit={kit}
                 interactive={interactive}
-                htmlDraggable={interactive && !freeMode && !!player}
                 showName={showNames}
-                onDragStart={(e)=>handleDragStart(e,idx)}
                 onRemove={onRemove ? () => onRemove(idx) : null}
               />
             </g>
@@ -188,7 +262,7 @@ function Pitch(props) {
   );
 }
 
-function PlayerDot({ player, kit, interactive, htmlDraggable, showName, onDragStart, onRemove }) {
+function PlayerDot({ player, kit, interactive, showName, onRemove }) {
   const empty = !player;
   const display = (typeof window !== 'undefined' && window.document?.body?.dataset?.playerStyle) || "photo";
 
@@ -202,7 +276,7 @@ function PlayerDot({ player, kit, interactive, htmlDraggable, showName, onDragSt
           <text y="1.5" textAnchor="middle" fontSize="5" fill="rgba(255,255,255,.55)" fontFamily="'Bebas Neue'">+</text>
         </g>
       ) : display === "shirt" ? (
-        <g draggable={htmlDraggable} onDragStart={onDragStart}>
+        <g>
           <foreignObject x="-5" y="-5.5" width="10" height="11">
             <div xmlns="http://www.w3.org/1999/xhtml" style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <MiniKit kit={kit} num={player.num}/>
@@ -219,7 +293,7 @@ function PlayerDot({ player, kit, interactive, htmlDraggable, showName, onDragSt
           )}
         </g>
       ) : (
-        <g draggable={htmlDraggable} onDragStart={onDragStart}>
+        <g>
           <circle r="5.2" fill={kit.primary} stroke="#fff" strokeWidth=".5"/>
           {player.photo ? (
             <>
@@ -282,7 +356,9 @@ function MiniKit({ kit, num }) {
           <rect x="50" y="0" width="55" height="105" fill={kit.secondary}/>
         )}
       </g>
-      <text x="50" y="70" textAnchor="middle" fontFamily="'Bebas Neue'" fontSize="40" fill="#fff">{num}</text>
+      <text x="50" y="70" textAnchor="middle" fontFamily="'Bebas Neue'" fontSize="40"
+            fill={window.contrastTextMixed(kit.primary, kit.secondary, kit.design)}
+            style={{ paintOrder: "stroke", stroke: window.contrastTextMixed(kit.primary, kit.secondary, kit.design)==='#ffffff' ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.65)', strokeWidth: 1.8 }}>{num}</text>
     </svg>
   );
 }
@@ -301,7 +377,10 @@ pitchCSS.textContent = `
     overflow: hidden;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 20px 40px -20px rgba(0,0,0,.6);
     touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
+  .pitch-svg, .pitch-svg * { -webkit-user-select: none; user-select: none; }
   .pitch-svg { width: 100%; height: 100%; display: block; }
   .pitch-label {
     position: absolute; top: 12px; left: 14px;
@@ -325,8 +404,14 @@ pitchCSS.textContent = `
     z-index: 2;
   }
   .slot { transition: transform .25s ease; }
+  .slot:not(.empty):not(.free) { cursor: pointer; }
   .slot.free { cursor: grab; }
   .slot.free:active { cursor: grabbing; }
   .slot.hover circle { stroke: oklch(0.95 0.18 124) !important; stroke-width: .9 !important; }
+  .slot.selected circle:first-of-type { stroke: var(--accent) !important; stroke-width: 1 !important; }
+  .slot.selected { animation: slotPulse 1s ease-in-out infinite; }
+  @keyframes slotPulse { 0%,100% { opacity: 1; } 50% { opacity: .72; } }
+  .pitch-svg.dragging-player, .pitch-svg.dragging-player .slot:not(.empty) { cursor: grabbing; }
+  .slot.drag-source { opacity: .35; }
 `;
 document.head.appendChild(pitchCSS);

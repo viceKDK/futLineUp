@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1210">
+<meta name="description" content="Crea, guarda y comparte alineaciones de futbol sin crear una cuenta.">
 <title>futbolClub — armá tu equipo</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon.svg">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,6 +59,8 @@
     overflow-x: hidden;
   }
   button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   input, select, textarea { font: inherit; color: inherit; }
   img { display: block; max-width: 100%; }
 
@@ -64,6 +71,9 @@
     display: grid;
     grid-template-columns: 240px 1fr;
   }
+  .app-shell.auth-mode { grid-template-columns: 1fr; }
+  .app-shell.auth-mode .sidebar { display: none; }
+  .app-shell.auth-mode .main { padding: 0; }
 
   /* SIDEBAR */
   .sidebar {
@@ -72,7 +82,7 @@
     background: var(--bg-elev);
     border-right: 1px solid var(--line-soft);
     padding: 22px 18px;
-    display: flex; flex-direction: column; gap: 22px;
+    display: flex; flex-direction: column; gap: 14px;
   }
   .brand {
     display: flex; align-items: center; gap: 10px;
@@ -105,6 +115,7 @@
     font-size: 11px; color: var(--fg-dim);
     padding: 10px 8px 6px;
   }
+  .nav-label:first-child { padding-top: 2px; }
   .nav-item {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 10px;
@@ -116,18 +127,20 @@
   }
   .nav-item:hover { background: var(--bg-elev-2); color: var(--fg); }
   .nav-item.active { background: var(--accent); color: #0e1210; font-weight: 600; }
-  .nav-item.active .nav-dot { background: #0e1210; }
-  .nav-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--fg-dim);
-  }
+  .nav-item svg { flex: none; }
 
   .sidebar-footer {
-    margin-top: auto;
     padding-top: 14px;
     border-top: 1px solid var(--line-soft);
-    display: flex; align-items: center; gap: 10px;
   }
+  .sidebar-profile-btn {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 6px; margin: -6px;
+    border-radius: var(--radius-s);
+    text-align: left;
+    transition: background .15s;
+  }
+  .sidebar-profile-btn:hover { background: var(--bg-elev-2); }
   .avatar-me {
     width: 32px; height: 32px; border-radius: 50%;
     background: linear-gradient(135deg, #4a5a4c, #2f3a31);
@@ -295,6 +308,24 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  .update-banner {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    padding: 10px 16px;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--accent);
+    color: var(--fg);
+    font-size: 13px;
+    z-index: 2001;
+    transform: translateY(-100%);
+    transition: transform .25s ease;
+  }
+  .update-banner.show { transform: translateY(0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+
   @media (max-width: 900px) {
     .app-shell { grid-template-columns: 1fr; }
     .sidebar {
@@ -305,7 +336,9 @@
     .sidebar .nav-label { display: none; }
     .nav { flex-direction: row; flex-wrap: nowrap; }
     .nav-item { white-space: nowrap; }
-    .sidebar-footer { display: none; }
+    .sidebar-footer { flex: none; margin: 0 0 0 4px; padding: 0; border: 0; }
+    .sidebar-profile-btn { width: auto; margin: 0; }
+    .sidebar-profile-btn .me-name, .sidebar-profile-btn .me-sub { display: none; }
     .main { padding: 20px; }
     .page-title { font-size: 40px; }
   }
@@ -323,40 +356,44 @@
 
     <nav class="nav" id="nav">
       <div class="nav-label">Principal</div>
-      <button class="nav-item active" data-page="home"><span class="nav-dot"></span> Mis equipos</button>
-      <button class="nav-item" data-page="mode"><span class="nav-dot"></span> Nuevo equipo</button>
+      <button class="nav-item active" data-page="home"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.5v5.5c0 4.6-3 7.9-7 10-4-2.1-7-5.4-7-10V5.5L12 3z"></path></svg> Mis equipos</button>
+      <button class="nav-item" data-page="mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 100 18 9 9 0 000-18"></path><path d="M12 8v8M8 12h8"></path></svg> Nuevo equipo</button>
 
       <div class="nav-label">Herramientas</div>
-      <button class="nav-item" data-page="editor"><span class="nav-dot"></span> Editor de alineación</button>
-      <button class="nav-item" data-page="draw"><span class="nav-dot"></span> Sorteo</button>
-      <button class="nav-item" data-page="kits"><span class="nav-dot"></span> Camisetas</button>
-      <button class="nav-item" data-page="rival"><span class="nav-dot"></span> Modo rival</button>
-      <button class="nav-item" data-page="share"><span class="nav-dot"></span> Compartir</button>
+      <button class="nav-item" data-page="editor"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3V5"></path><path d="M12 5v14M12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5"></path></svg> Editor de alineación</button>
+      <button class="nav-item" data-page="draw"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h4v4M20 4l-6.2 6.2M4 20l5.2-5.2M16 20h4v-4M20 20l-6.2-6.2M4 4l5.2 5.2"></path></svg> Sorteo</button>
+      <button class="nav-item" data-page="kits"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4l4 2 4-2 5 4-2.5 3L16 9.5V20H8V9.5L5.5 11 3 8l5-4z"></path></svg> Camisetas</button>
+      <button class="nav-item" data-page="crests"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.6v5.4c0 4.7-2.9 8.2-7 10-4.1-1.8-7-5.3-7-10V5.6L12 3z"></path></svg> Escudos</button>
+      <button class="nav-item" data-page="rival"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a8 8 0 100 16 8 8 0 000-16"></path><path d="M12 9a3 3 0 100 6 3 3 0 000-6"></path></svg> Modo rival</button>
+      <button class="nav-item" data-page="share"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4a2.2 2.2 0 100 4.4A2.2 2.2 0 0018 4M6 9.8a2.2 2.2 0 100 4.4 2.2 2.2 0 000-4.4M18 15.6a2.2 2.2 0 100 4.4 2.2 2.2 0 000-4.4"></path><path d="M8 11l8-4.2M8 13l8 4.2"></path></svg> Compartir</button>
+
+      <div class="nav-label">Gestión</div>
+      <button class="nav-item" data-page="coach"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.5a3 3 0 016 0H18a1 1 0 011 1V20a1 1 0 01-1 1H6a1 1 0 01-1-1V5.5a1 1 0 011-1h3z"></path><path d="M9 12h6M9 16h4"></path></svg> Entrenador</button>
+      <button class="nav-item" data-page="league"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v6a4 4 0 01-8 0V4z"></path><path d="M8 5H5a3 3 0 003 4.5M16 5h3a3 3 0 01-3 4.5M12 14v4M8 20h8"></path></svg> Liga amateur</button>
     </nav>
 
-    <div class="sidebar-footer">
-      <div class="avatar-me">MS</div>
-      <div>
-        <div class="me-name">Martín S.</div>
-        <div class="me-sub">Capitán · 12 partidos</div>
-      </div>
-    </div>
+    <div class="sidebar-footer" id="sidebar-footer"></div>
   </aside>
 
   <!-- MAIN -->
   <main class="main">
+    <div id="page-auth"   class="page"></div>
     <div id="page-home"   class="page active"></div>
     <div id="page-mode"   class="page"></div>
     <div id="page-editor" class="page"></div>
     <div id="page-draw"   class="page"></div>
     <div id="page-kits"   class="page"></div>
+    <div id="page-crests" class="page"></div>
     <div id="page-rival"  class="page"></div>
-    <div id="page-share"  class="page"></div>
+    <div id="page-share"    class="page"></div>
+    <div id="page-coach"    class="page"></div>
+    <div id="page-league"   class="page"></div>
+    <div id="page-settings" class="page"></div>
   </main>
 </div>
 
 <!-- Tweaks toggle + panel -->
-<button class="tweaks-fab" id="tweaks-fab" title="Ajustes visuales">⚙</button>
+<button class="tweaks-fab" id="tweaks-fab" title="Ajustes visuales"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7"></path><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"></path></svg></button>
 <div class="tweaks" id="tweaks">
   <h3>Ajustes visuales</h3>
   <div class="tweaks-row">
@@ -406,6 +443,17 @@
   function saveTweaks() {
     try { localStorage.setItem(TWEAKS_KEY, JSON.stringify(window.__TWEAKS)); } catch (_) {}
   }
+  function setTweak(key, value) {
+    window.__TWEAKS[key] = value;
+    applyTweaks(window.__TWEAKS);
+    saveTweaks();
+    document.querySelectorAll(`.tweaks .seg[data-tweak="${key}"] button`).forEach(b => {
+      b.classList.toggle('on', b.dataset.v === value);
+    });
+    window.dispatchEvent(new CustomEvent('fc:tweak-changed', { detail: { key, value } }));
+  }
+  window.fcSetTweak = setTweak;
+  window.fcGetTweaks = () => ({ ...window.__TWEAKS });
   applyTweaks(window.__TWEAKS);
 
   // Sync segmented buttons to stored values
@@ -423,13 +471,7 @@
   document.querySelectorAll('.tweaks .seg').forEach(seg => {
     const key = seg.dataset.tweak;
     seg.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        seg.querySelectorAll('button').forEach(b => b.classList.remove('on'));
-        btn.classList.add('on');
-        window.__TWEAKS[key] = btn.dataset.v;
-        applyTweaks(window.__TWEAKS);
-        saveTweaks();
-      });
+      btn.addEventListener('click', () => setTweak(key, btn.dataset.v));
     });
   });
 </script>
@@ -442,16 +484,39 @@
     if (!btn) return;
     go(btn.dataset.page);
   });
-  function go(page) {
+  function go(page, updateHistory = true) {
+    if (!document.getElementById('page-' + page)) page = 'home';
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
+    document.querySelector('.app-shell').classList.toggle('auth-mode', page === 'auth');
+    if (updateHistory && !location.hash.startsWith('#share=')) history.pushState({page}, '', `#${page}`);
     window.scrollTo({top:0});
   }
   window.go = go;
+  window.addEventListener('popstate', event => go(event.state?.page || location.hash.slice(1) || 'home', false));
+  window.addEventListener('DOMContentLoaded', () => {
+    let initial;
+    if (location.hash.startsWith('#share=')) {
+      initial = 'share';
+    } else if (location.hash) {
+      initial = location.hash.slice(1);
+    } else {
+      let seenAuthIntro = false;
+      try { seenAuthIntro = localStorage.getItem('fc.v1.authIntroSeen') === '1'; } catch (_) {}
+      initial = seenAuthIntro ? 'home' : 'auth';
+    }
+    go(initial, false);
+  });
 </script>
 
 <!-- Toast helper -->
 <div id="toast" class="toast"></div>
+
+<!-- PWA update banner -->
+<div id="update-banner" class="update-banner">
+  <span>Hay una versión nueva de futbolClub.</span>
+  <button id="update-banner-btn" class="btn primary sm">Actualizar ahora</button>
+</div>
 <script>
   let __toastTimer = null;
   window.__toast = function(msg) {
@@ -464,9 +529,49 @@
   };
 </script>
 
+<script>
+  window.addEventListener('fc:storage-error', () => window.__toast?.('No se pudieron guardar los datos. Exportá un backup.'));
+</script>
+
+<!-- Instalación PWA: la app sigue funcionando normalmente si el navegador no la ofrece. -->
+<script>
+  window.__pwaInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    window.__pwaInstallPrompt = event;
+    window.dispatchEvent(new CustomEvent('fc:pwa-installable'));
+  });
+  window.addEventListener('appinstalled', () => {
+    window.__pwaInstallPrompt = null;
+    window.dispatchEvent(new CustomEvent('fc:pwa-installed'));
+    window.__toast?.('futbolClub quedó instalado');
+  });
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    const hadController = !!navigator.serviceWorker.controller;
+    let updateReloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || updateReloading) return;
+      document.getElementById('update-banner')?.classList.add('show');
+    });
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(() => navigator.serviceWorker.ready)
+        .then(() => window.dispatchEvent(new CustomEvent('fc:pwa-ready')))
+        .catch(error => console.warn('[futbolClub] No se pudo activar el modo offline', error));
+    });
+    document.getElementById('update-banner-btn')?.addEventListener('click', () => {
+      updateReloading = true;
+      location.reload();
+    });
+  }
+</script>
+
 <!-- Export libs -->
 <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
+
+<!-- Optional cloud backend -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- React -->
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -477,18 +582,24 @@
 <script src="src/local-config.js" onerror="void 0"></script>
 
 <!-- Shared data + components -->
+<script type="text/babel" src="src/icons.jsx"></script>
 <script type="text/babel" src="src/data.jsx"></script>
+<script type="text/babel" src="src/supabase.jsx"></script>
 <script type="text/babel" src="src/kits.jsx"></script>
 <script type="text/babel" src="src/pitch.jsx"></script>
+<script type="text/babel" src="src/sidebar.jsx"></script>
 
 <!-- Pages -->
+<script type="text/babel" src="src/page-auth.jsx"></script>
 <script type="text/babel" src="src/page-home.jsx"></script>
 <script type="text/babel" src="src/page-mode.jsx"></script>
 <script type="text/babel" src="src/page-editor.jsx"></script>
 <script type="text/babel" src="src/page-draw.jsx"></script>
 <script type="text/babel" src="src/page-kits.jsx"></script>
+<script type="text/babel" src="src/page-crests.jsx"></script>
 <script type="text/babel" src="src/page-rival.jsx"></script>
 <script type="text/babel" src="src/page-share.jsx"></script>
+<script type="text/babel" src="src/page-platform.jsx"></script>
 
 </body>
 </html>
