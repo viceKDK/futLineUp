@@ -139,11 +139,22 @@ function CrestEditorScreen({ name, entry, onSave, onReset, onBack }) {
       </div>
 
       <div className="kits-layout">
-        <div className="kit-preview crest-preview-stage">
-          <Crest name={name} design={design} primary={primary} secondary={secondary} photo={hidden ? 'none' : photo} initials={initials} size={220}/>
-          <label className="toggle-row crest-hidden-toggle">
-            <input type="checkbox" checked={hidden} onChange={e=>setHidden(e.target.checked)}/> <span>Sin escudo (no mostrar nada)</span>
-          </label>
+        <div className="kit-preview">
+          <div className="crest-preview-stage">
+            <Crest name={name} design={design} primary={primary} secondary={secondary} photo={hidden ? 'none' : photo} initials={initials} size={220}/>
+            <label className="toggle-row crest-hidden-toggle">
+              <input type="checkbox" checked={hidden} onChange={e=>setHidden(e.target.checked)}/> <span>Sin escudo (no mostrar nada)</span>
+            </label>
+          </div>
+          <div className="panel-head">Presets</div>
+          <div className="crest-preset-grid">
+            {window.CREST_PRESETS.map(p => (
+              <button key={p.name} className="crest-preset-opt" onClick={()=>{ setDesign(p.design); setPrimary(p.primary); setSecondary(p.secondary); setPhoto(null); setHidden(false); }}>
+                <Crest name={name} design={p.design} primary={p.primary} secondary={p.secondary} size={36}/>
+                <span>{p.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="kit-controls">
@@ -184,18 +195,6 @@ function CrestEditorScreen({ name, entry, onSave, onReset, onBack }) {
             <div className="swatches">
               {window.KIT_COLOR_SWATCHES.map(c => <button key={c} className={`swatch ${secondary===c?'on':''}`} style={{background:c}} onClick={()=>{setSecondary(c);setPhoto(null);setHidden(false);}}/>)}
               <label className="swatch custom" style={{background:secondary}}><input type="color" value={secondary} onChange={e=>{setSecondary(e.target.value);setPhoto(null);setHidden(false);}}/></label>
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panel-head">Presets</div>
-            <div className="crest-preset-grid">
-              {window.CREST_PRESETS.map(p => (
-                <button key={p.name} className="crest-preset-opt" onClick={()=>{ setDesign(p.design); setPrimary(p.primary); setSecondary(p.secondary); setPhoto(null); setHidden(false); }}>
-                  <Crest name={name} design={p.design} primary={p.primary} secondary={p.secondary} size={36}/>
-                  <span>{p.name}</span>
-                </button>
-              ))}
             </div>
           </div>
 
@@ -241,9 +240,10 @@ crestsPageCSS.textContent = `
     display: grid; place-items: center;
   }
   .crest-manager-remove:hover { color: var(--accent-2); border-color: var(--accent-2); }
-  .crest-preview-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 360px; }
+  .crest-preview-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 300px; }
   .crest-hidden-toggle { font-size: 12px; color: var(--fg-mute); }
-  .crest-preset-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
+  .kit-preview .panel-head { margin-top: 20px; }
+  .crest-preset-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; }
   .crest-preset-opt {
     display: flex; flex-direction: column; align-items: center; gap: 4px;
     padding: 6px 4px; background: var(--bg-elev-2); border: 1px solid transparent;
