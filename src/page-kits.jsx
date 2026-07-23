@@ -27,6 +27,8 @@ function KitsPage() {
       alt: { design: "solid",   primary: "#0f172a", secondary: "#dc2626" } },
     { name: "Blaugrana",        design: "stripes", primary: "#1e3a8a", secondary: "#991b1b",
       alt: { design: "solid",   primary: "#fbbf24", secondary: "#1e3a8a" } },
+    { name: "Real",             design: "solid",   primary: "#ffffff", secondary: "#1e3a8a",
+      alt: { design: "halves",  primary: "#0f172a", secondary: "#1e3a8a" } },
     { name: "Albiceleste",      design: "stripes", primary: "#3b82f6", secondary: "#ffffff",
       alt: { design: "solid",   primary: "#0f172a", secondary: "#3b82f6" } },
     { name: "Millonario",       design: "sash",    primary: "#ffffff", secondary: "#dc2626",

@@ -129,7 +129,7 @@ function SettingsPage() {
   };
 
   return <div>
-    <div className="page-head"><div><div className="page-kicker">Cuenta y datos</div><h1 className="page-title">Tu futbolClub</h1><div className="page-sub">Elegí la experiencia, protegé tus datos y conectá tu cuenta cuando quieras sincronizar.</div></div></div>
+    <div className="page-head"><div><div className="page-kicker">Cuenta y datos</div><h1 className="page-title">Tu futbolClub</h1><div className="page-sub">Elegí la experiencia, protegé tus datos y conectá tu cuenta cuando quieras sincronizar.</div></div><div/></div>
 
     <section className="card hub-block"><div className="panel-head">Experiencia principal</div><div className="experience-grid">
       {EXPERIENCE_OPTIONS.map(option => <button key={option.id} className={`experience-card ${profile.experience===option.id?'on':''}`} onClick={()=>setProfile(p=>({...p,experience:option.id,onboardingDone:true}))}>
@@ -139,7 +139,7 @@ function SettingsPage() {
 
     <div className="hub-row">
       <section className="card"><div className="panel-head">Perfil</div><label className="field"><span>Tu nombre</span><input value={profile.displayName||''} onChange={e=>setProfile(p=>({...p,displayName:e.target.value}))} placeholder="Nombre o apodo"/></label><label className="field"><span>Temporada</span><input value={profile.season||''} onChange={e=>setProfile(p=>({...p,season:e.target.value}))} placeholder="Ej. 2026 · Apertura"/></label></section>
-      <section className="card"><div className="panel-head">Cuenta y sincronización</div>{session ? <><div className="account-row"><div className="avatar-me">{window.initials(session.user?.user_metadata?.full_name || session.user?.email)}</div><div><strong>{session.user?.user_metadata?.full_name || 'Cuenta conectada'}</strong><small>{session.user?.email}</small></div></div><div className="action-row"><button className="btn primary" onClick={()=>window.fcCloud.uploadLocal().then(()=>window.__toast?.('Datos sincronizados')).catch(e=>window.__toast?.(e.message))}>Subir datos</button><button className="btn" onClick={()=>window.fcCloud.downloadToLocal().then(()=>{window.__toast?.('Datos recuperados');setTimeout(()=>location.reload(),500)}).catch(e=>window.__toast?.(e.message))}>Recuperar cuenta</button><button className="btn ghost" onClick={()=>window.fcAuth.signOut()}>Cerrar sesión</button></div></> : <><div className="guest-account-state"><span className="status-dot"></span><div><strong>Estás usando futbolClub sin cuenta</strong><small>Editor, sorteo, camisetas y enlaces compartidos están disponibles. Los datos se guardan solamente en este dispositivo.</small></div></div><div className="action-row"><button className="btn primary" onClick={()=>window.go('auth')}>Iniciar sesión / Crear cuenta</button><button className="btn" disabled={!window.fcAuth?.configured} onClick={()=>window.fcAuth.signInGoogle().catch(e=>window.__toast?.(e.message))}><Icon name="google" size={14}/> Conectar Google para sincronizar</button></div>{!window.fcAuth?.configured && <small className="account-note">La cuenta es opcional. Podrás conectarla cuando el servicio de sincronización esté configurado.</small>}</>}</section>
+      <section className="card"><div className="panel-head">Cuenta y sincronización</div>{session ? <><div className="account-row"><div className="avatar-me">{window.initials(session.user?.user_metadata?.full_name || session.user?.email)}</div><div><strong>{session.user?.user_metadata?.full_name || 'Cuenta conectada'}</strong><small>{session.user?.email}</small></div></div><div className="action-row"><button className="btn primary" onClick={()=>window.fcCloud.uploadLocal().then(()=>window.__toast?.('Datos sincronizados')).catch(e=>window.__toast?.(e.message))}>Subir datos</button><button className="btn" onClick={()=>window.fcCloud.downloadToLocal().then(()=>{window.__toast?.('Datos recuperados');setTimeout(()=>location.reload(),500)}).catch(e=>window.__toast?.(e.message))}>Recuperar cuenta</button><button className="btn ghost" onClick={()=>window.fcAuth.signOut()}>Cerrar sesión</button></div></> : <><div className="guest-account-state"><span className="status-dot"></span><div><strong>Estás usando futbolClub sin cuenta</strong><small>Editor, sorteo, camisetas y enlaces compartidos están disponibles. Los datos se guardan solamente en este dispositivo.</small></div></div><div className="action-row"><button className="btn primary" onClick={()=>window.go('auth')}>Iniciar sesión / Crear cuenta</button><button className="google-btn sm" disabled={!window.fcAuth?.configured} onClick={()=>window.fcAuth.signInGoogle().catch(e=>window.__toast?.(e.message))}><GoogleG size={16}/> <span>Conectar Google para sincronizar</span></button></div>{!window.fcAuth?.configured && <small className="account-note">La cuenta es opcional. Podrás conectarla cuando el servicio de sincronización esté configurado.</small>}</>}</section>
     </div>
 
     <div className="hub-row">
@@ -457,13 +457,14 @@ function LeaguePage() {
     return [legacy ? { id: 'c1', ...legacy } : { id: 'c1', name: 'Liga amateur', season: '2026', fixtures: [] }];
   });
   const [activeId, setActiveId] = window.useStore('activeCompetitionId', () => competitions[0]?.id || 'c1');
-  const [teamCrests, setTeamCrests] = window.useStore('teamCrests', {});
+  const [teamCrests] = window.useStore('teamCrests', {});
   const [savedTeams] = window.useStore('teams', window.DEFAULT_SAVED_TEAMS);
   const [tab, setTab] = React.useState('table');
   const [form,setForm]=React.useState({date:new Date().toISOString().slice(0,10),home:'',away:'',homeScore:'',awayScore:''});
   const [scoreDrafts, setScoreDrafts] = React.useState({});
   const [newComp, setNewComp] = React.useState({name:'', season:''});
   const [showNewComp, setShowNewComp] = React.useState(false);
+  const [dateFilter, setDateFilter] = React.useState({from:'', to:''});
 
   const competition = competitions.find(c => c.id === activeId) || competitions[0];
   const setCompetition = (updater) => setCompetitions(list =>
@@ -474,10 +475,6 @@ function LeaguePage() {
     ...savedTeams.map(t=>t.name),
     ...fixtures.flatMap(f=>[f.home,f.away]),
   ])].sort();
-  const crestTeamNames = [...new Set([
-    ...fixtures.flatMap(f=>[f.home,f.away]),
-    ...((competition.cup?.teams)||[]),
-  ])].filter(Boolean).sort();
 
   const teamColorFor = (name) => savedTeams.find(t=>t.name===name) || null;
   // Entradas viejas eran solo un string (dataURL o 'none'); las nuevas son un objeto
@@ -516,10 +513,6 @@ function LeaguePage() {
     if (activeId === id) setActiveId(competitions.find(c => c.id !== id)?.id);
   };
 
-  const [editingCrestName, setEditingCrestName] = React.useState(null);
-  const saveCrestEntry = (name, entry) => setTeamCrests(prev => ({ ...prev, [normalizeTeamName(name)]: entry }));
-  const resetCrestEntry = (name) => setTeamCrests(prev => { const n = {...prev}; delete n[normalizeTeamName(name)]; return n; });
-
   const saveFixture=()=>{
     if(!form.home.trim()||!form.away.trim())return window.__toast?.('Completá ambos equipos');
     const played=form.homeScore!==''&&form.awayScore!=='';
@@ -540,8 +533,10 @@ function LeaguePage() {
   const pending = fixtures.filter(f=>!f.played).slice().sort((a,b)=>a.date.localeCompare(b.date));
   const nextFixture = pending[0];
   const teamStanding = name => standings.find(t=>t.name===name);
+  const fixturesInRange = fixtures.filter(f =>
+    (!dateFilter.from || f.date >= dateFilter.from) && (!dateFilter.to || f.date <= dateFilter.to));
   const byDate = {};
-  fixtures.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(f=>{ (byDate[f.date] = byDate[f.date]||[]).push(f); });
+  fixturesInRange.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(f=>{ (byDate[f.date] = byDate[f.date]||[]).push(f); });
   const recent = played.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
 
   return <div>
@@ -573,11 +568,13 @@ function LeaguePage() {
       )}
     </div>
 
-    <div className="seg tab-seg">
-      <button className={tab==='table'?'on':''} onClick={()=>setTab('table')}>Tabla</button>
-      <button className={tab==='fixture'?'on':''} onClick={()=>setTab('fixture')}>Fixture</button>
-      <button className={tab==='cup'?'on':''} onClick={()=>setTab('cup')}>Copa</button>
-      <button className={tab==='crests'?'on':''} onClick={()=>setTab('crests')}>Escudos</button>
+    <div className="tab-seg-row">
+      <div className="seg tab-seg">
+        <button className={tab==='table'?'on':''} onClick={()=>setTab('table')}>Tabla</button>
+        <button className={tab==='fixture'?'on':''} onClick={()=>setTab('fixture')}>Fixture</button>
+        <button className={tab==='cup'?'on':''} onClick={()=>setTab('cup')}>Copa</button>
+      </div>
+      <button className="tab-external" onClick={()=>window.go('crests')}><Icon name="shield" size={13}/> Gestionar escudos →</button>
     </div>
 
     {tab==='table' && <>
@@ -625,6 +622,13 @@ function LeaguePage() {
 
     {tab==='fixture' && <div className="fixture-layout">
       <div className="fixture-days">
+        <div className="date-filter-row">
+          <span>Filtrar por fecha</span>
+          <input type="date" value={dateFilter.from} onChange={e=>setDateFilter(v=>({...v,from:e.target.value}))}/>
+          <span>a</span>
+          <input type="date" value={dateFilter.to} onChange={e=>setDateFilter(v=>({...v,to:e.target.value}))}/>
+          {(dateFilter.from||dateFilter.to) && <button className="btn sm ghost" onClick={()=>setDateFilter({from:'',to:''})}>Quitar filtro</button>}
+        </div>
         {Object.keys(byDate).sort().map(date => <div key={date} className="fixture-day">
           <div className="fixture-day-label">{date}</div>
           {byDate[date].map(f => {
@@ -647,7 +651,7 @@ function LeaguePage() {
             </article>;
           })}
         </div>)}
-        {!fixtures.length && <div className="empty-state">Todavía no hay partidos cargados. Agregá uno desde la pestaña Tabla.</div>}
+        {!fixturesInRange.length && <div className="empty-state">{fixtures.length ? 'No hay partidos en ese rango de fechas.' : 'Todavía no hay partidos cargados. Agregá uno desde la pestaña Tabla.'}</div>}
       </div>
       <div className="fixture-side">
         <section className="card">
@@ -659,129 +663,24 @@ function LeaguePage() {
     </div>}
 
     {tab==='cup' && <LeagueCup league={competition} setLeague={setCompetition} teamNameOptions={teamNameOptions} crestFor={crestFor}/>}
-
-    {tab==='crests' && (
-      <section className="card">
-        <div className="panel-head-row"><span>Escudos</span><span className="muted-note">Opcional · por defecto se genera uno simple</span></div>
-        {crestTeamNames.length ? <div className="crest-manager-grid">
-          {crestTeamNames.map(name => (
-            <button key={name} className="crest-manager-row" onClick={()=>setEditingCrestName(name)}>
-              <Crest {...crestFor(name)} size={40}/>
-              <span className="crest-manager-name">{name}</span>
-              <span className="crest-manager-edit">Editar →</span>
-            </button>
-          ))}
-        </div> : <div className="empty-state">Todavía no hay equipos cargados en esta competencia.</div>}
-      </section>
-    )}
-
-    {editingCrestName && (
-      <CrestEditorModal
-        name={editingCrestName}
-        entry={crestEntryFor(editingCrestName)}
-        onSave={(entry)=>{ saveCrestEntry(editingCrestName, entry); setEditingCrestName(null); }}
-        onReset={()=>{ resetCrestEntry(editingCrestName); setEditingCrestName(null); }}
-        onClose={()=>setEditingCrestName(null)}
-      />
-    )}
   </div>;
-}
-
-function CrestEditorModal({ name, entry, onSave, onReset, onClose }) {
-  const base = entry && !entry.hidden ? entry : {};
-  const [design, setDesign] = React.useState(base.design || 'solid');
-  const [primary, setPrimary] = React.useState(base.primary || window.colorFor(name||'?'));
-  const [secondary, setSecondary] = React.useState(base.secondary || '#0f172a');
-  const [photo, setPhoto] = React.useState(base.photo || null);
-  const [hidden, setHidden] = React.useState(!!entry?.hidden);
-  const fileRef = React.useRef(null);
-
-  const onFile = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    try { setPhoto(await window.fileToDataURL(file, 160)); setHidden(false); }
-    catch (_) { window.__toast?.('No se pudo cargar la imagen'); }
-  };
-
-  const save = () => onSave(hidden ? { hidden: true } : { design, primary, secondary, photo: photo || undefined });
-
-  return (
-    <div className="modal-back" onClick={onClose}>
-      <div className="modal crest-editor-modal" onClick={e=>e.stopPropagation()}>
-        <div className="modal-head">
-          <div><div className="page-kicker">Escudo</div><div className="modal-title">{name}</div></div>
-          <button className="btn sm ghost" onClick={onClose}>✕</button>
-        </div>
-        <div className="modal-body">
-          <div className="crest-editor-preview">
-            <Crest name={name} design={design} primary={primary} secondary={secondary} photo={hidden ? 'none' : photo} size={96}/>
-          </div>
-
-          <div className="panel-head">Diseño</div>
-          <div className="crest-design-grid">
-            {window.KIT_DESIGNS.map(d => (
-              <button key={d.id} className={`crest-design-opt ${design===d.id && !photo ?'on':''}`}
-                      onClick={()=>{ setDesign(d.id); setPhoto(null); setHidden(false); }}>
-                <Crest name={name} design={d.id} primary={primary} secondary={secondary} size={40}/>
-                <span>{d.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="panel-head">Presets</div>
-          <div className="crest-preset-grid">
-            {window.CREST_PRESETS.map(p => (
-              <button key={p.name} className="crest-preset-opt" onClick={()=>{ setDesign(p.design); setPrimary(p.primary); setSecondary(p.secondary); setPhoto(null); setHidden(false); }}>
-                <Crest name={name} design={p.design} primary={p.primary} secondary={p.secondary} size={36}/>
-                <span>{p.name}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="crest-color-row">
-            <div>
-              <div className="panel-head">Color principal</div>
-              <div className="swatches">
-                {window.KIT_COLOR_SWATCHES.map(c => <button key={c} className={`swatch ${primary===c?'on':''}`} style={{background:c}} onClick={()=>{setPrimary(c);setPhoto(null);setHidden(false);}}/>)}
-                <label className="swatch custom" style={{background:primary}}><input type="color" value={primary} onChange={e=>{setPrimary(e.target.value);setPhoto(null);setHidden(false);}}/></label>
-              </div>
-            </div>
-            <div>
-              <div className="panel-head">Color secundario</div>
-              <div className="swatches">
-                {window.KIT_COLOR_SWATCHES.map(c => <button key={c} className={`swatch ${secondary===c?'on':''}`} style={{background:c}} onClick={()=>{setSecondary(c);setPhoto(null);setHidden(false);}}/>)}
-                <label className="swatch custom" style={{background:secondary}}><input type="color" value={secondary} onChange={e=>{setSecondary(e.target.value);setPhoto(null);setHidden(false);}}/></label>
-              </div>
-            </div>
-          </div>
-
-          <div className="crest-photo-row">
-            <button className="btn sm" onClick={()=>fileRef.current?.click()}>{photo ? 'Cambiar foto' : 'Subir foto propia'}</button>
-            {photo && <button className="btn sm ghost" onClick={()=>setPhoto(null)}>Quitar foto</button>}
-            <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile}/>
-            <label className="toggle-row" style={{marginLeft:'auto'}}>
-              <input type="checkbox" checked={hidden} onChange={e=>setHidden(e.target.checked)}/> <span>Sin escudo</span>
-            </label>
-          </div>
-        </div>
-        <div className="modal-foot">
-          <button className="btn ghost" onClick={onReset}>Restablecer</button>
-          <button className="btn primary" onClick={save}>Guardar</button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 // ---- League: Copa / eliminatoria directa ----
 function getCupWinner(match) {
   if (!match) return null;
-  if (match.winnerPick) return match.winnerPick;
   if (match.scoreA === undefined || match.scoreB === undefined || match.scoreA === '' || match.scoreB === '') return null;
   const a = Number(match.scoreA), b = Number(match.scoreB);
   if (a > b) return 'a';
   if (b > a) return 'b';
+  // Empate en el resultado — se define por penales (solo tiene sentido en copa
+  // eliminatoria) o, si no se cargaron, con la elección manual como respaldo.
+  if (match.penA !== undefined && match.penB !== undefined && match.penA !== '' && match.penB !== '') {
+    const pa = Number(match.penA), pb = Number(match.penB);
+    if (pa > pb) return 'a';
+    if (pb > pa) return 'b';
+  }
+  if (match.winnerPick) return match.winnerPick;
   return null;
 }
 
@@ -847,9 +746,20 @@ function LeagueCup({ league, setLeague, teamNameOptions, crestFor }) {
   const setCupWinnerPick = (key, side) => {
     setLeague(l => ({ ...l, cup: { ...l.cup, matches: { ...l.cup.matches, [key]: { ...(l.cup.matches?.[key]||{}), winnerPick: side } } } }));
   };
+  const setCupPenalty = (key, field, value) => {
+    setLeague(l => {
+      const prev = l.cup.matches?.[key] || {};
+      const { winnerPick, ...rest } = prev;
+      return { ...l, cup: { ...l.cup, matches: { ...l.cup.matches, [key]: { ...rest, [field]: value } } } };
+    });
+  };
   const stepCupScore = (key, field, current, delta) => {
     const next = Math.max(0, (Number(current) || 0) + delta);
     setCupScore(key, field, String(next));
+  };
+  const stepCupPenalty = (key, field, current, delta) => {
+    const next = Math.max(0, (Number(current) || 0) + delta);
+    setCupPenalty(key, field, String(next));
   };
 
   if (!cup) {
@@ -883,12 +793,12 @@ function LeagueCup({ league, setLeague, teamNameOptions, crestFor }) {
   const renderMatch = (m) => {
     const winner = getCupWinner(m.match);
     const canScore = m.teamA && m.teamB;
-    const tied = canScore && m.match.scoreA !== '' && m.match.scoreB !== '' && m.match.scoreA !== undefined && m.match.scoreB !== undefined && Number(m.match.scoreA) === Number(m.match.scoreB) && !m.match.winnerPick;
-    const stepper = (field, value) => (
+    const tiedScore = canScore && m.match.scoreA !== '' && m.match.scoreB !== '' && m.match.scoreA !== undefined && m.match.scoreB !== undefined && Number(m.match.scoreA) === Number(m.match.scoreB);
+    const stepper = (field, value, onStep, onChange) => (
       <div className="cup-score-stepper">
-        <button type="button" onClick={()=>stepCupScore(m.key, field, value, -1)} aria-label="Restar gol">−</button>
-        <input type="number" min="0" value={value ?? ''} onChange={e=>setCupScore(m.key, field, e.target.value)}/>
-        <button type="button" onClick={()=>stepCupScore(m.key, field, value, 1)} aria-label="Sumar gol">+</button>
+        <button type="button" onClick={()=>onStep(field, value, -1)} aria-label="Restar">−</button>
+        <input type="number" min="0" value={value ?? ''} onChange={e=>onChange(field, e.target.value)}/>
+        <button type="button" onClick={()=>onStep(field, value, 1)} aria-label="Sumar">+</button>
       </div>
     );
     return (
@@ -896,18 +806,26 @@ function LeagueCup({ league, setLeague, teamNameOptions, crestFor }) {
         <div className={`cup-team ${winner==='a'?'winner':''}`}>
           {m.teamA && <Crest {...crestFor(m.teamA)} size={18}/>}
           <span className="cup-team-name">{m.teamA || 'Por definir'}</span>
-          {canScore && stepper('scoreA', m.match.scoreA)}
+          {canScore && stepper('scoreA', m.match.scoreA, (f,v,d)=>stepCupScore(m.key,f,v,d), (f,v)=>setCupScore(m.key,f,v))}
         </div>
         <div className={`cup-team ${winner==='b'?'winner':''}`}>
           {m.teamB && <Crest {...crestFor(m.teamB)} size={18}/>}
           <span className="cup-team-name">{m.teamB || 'Por definir'}</span>
-          {canScore && stepper('scoreB', m.match.scoreB)}
+          {canScore && stepper('scoreB', m.match.scoreB, (f,v,d)=>stepCupScore(m.key,f,v,d), (f,v)=>setCupScore(m.key,f,v))}
         </div>
-        {tied && (
+        {tiedScore && (
           <div className="cup-tiebreak">
-            <span>Empate:</span>
-            <button onClick={()=>setCupWinnerPick(m.key,'a')}>{m.teamA}</button>
-            <button onClick={()=>setCupWinnerPick(m.key,'b')}>{m.teamB}</button>
+            <span>Empate · penales</span>
+            <div className="cup-pen-row">
+              {stepper('penA', m.match.penA, (f,v,d)=>stepCupPenalty(m.key,f,v,d), (f,v)=>setCupPenalty(m.key,f,v))}
+              <span className="cup-pen-sep">–</span>
+              {stepper('penB', m.match.penB, (f,v,d)=>stepCupPenalty(m.key,f,v,d), (f,v)=>setCupPenalty(m.key,f,v))}
+            </div>
+            {!winner && <div className="cup-tiebreak-manual">
+              <span>o elegí a mano:</span>
+              <button onClick={()=>setCupWinnerPick(m.key,'a')}>{m.teamA}</button>
+              <button onClick={()=>setCupWinnerPick(m.key,'b')}>{m.teamB}</button>
+            </div>}
           </div>
         )}
       </div>
@@ -982,7 +900,10 @@ const platformCSS=document.createElement('style');platformCSS.textContent=`
 .eval-form-card .form-grid-wide{margin-bottom:10px}
 .stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.stat-card{background:var(--bg-elev);border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px}.stat-n{font:34px var(--font-display);line-height:1}.stat-l{font:10.5px var(--font-cond);text-transform:uppercase;letter-spacing:1px;color:var(--fg-dim);margin-top:4px}
 .next-session-banner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 18px;margin-bottom:0}.banner-icon{width:38px;height:38px;border-radius:8px;background:var(--bg-elev-2);display:grid;place-items:center;color:var(--accent);flex:none}.banner-body{flex:1;min-width:200px}.avatar-stack{display:flex;align-items:center}.stack-avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;border:2px solid var(--bg);margin-left:-8px;color:#fff}.stack-avatar:first-child{margin-left:0;border-color:var(--accent)}.stack-more{font-size:11px;color:var(--fg-dim);margin-left:6px}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}.seg button{padding:5px 12px;font-size:11px;color:var(--fg-mute);background:transparent}.seg button.on{background:var(--accent);color:#0e1210;font-weight:600}.tab-seg{margin-bottom:16px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}.seg button{padding:5px 12px;font-size:11px;color:var(--fg-mute);background:transparent}.seg button.on{background:var(--accent);color:#0e1210;font-weight:600}
+.tab-seg-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.tab-external{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--fg-mute)}
+.tab-external:hover{color:var(--accent)}
 .roster-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.roster-overview-card{text-align:left;background:var(--bg-elev);border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:0;transition:border-color .15s}.roster-overview-card:hover{border-color:var(--accent)}
 .roc-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}.roc-name{flex:1;min-width:0}.roc-name strong{display:block;font-size:14px}.roc-name small{color:var(--fg-dim);font-size:11px}
 .roc-bar-row{display:flex;justify-content:space-between;font:10.5px var(--font-cond);text-transform:uppercase;letter-spacing:1px;color:var(--fg-dim);margin-bottom:4px}.roc-bar-row span:last-child{color:var(--fg);font-weight:600;font-family:var(--font-body);text-transform:none}
@@ -998,6 +919,8 @@ const platformCSS=document.createElement('style');platformCSS.textContent=`
 .form-row{display:inline-flex;gap:3px}.form-dot{width:14px;height:14px;border-radius:4px;background:var(--bg-elev-2);color:var(--fg-mute);font-style:normal;font-size:9px;font-weight:700;display:grid;place-items:center}.form-dot.g{background:var(--accent);color:#0e1210}.form-dot.p{background:var(--accent-2);color:#fff}
 .results-list{display:flex;flex-direction:column}.results-row{display:grid;grid-template-columns:100px 1fr auto 1fr 28px;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line-soft);text-align:center;font-size:13px}.results-row:first-child{border-top:0}.results-row time{color:var(--fg-dim);text-align:left;font-size:12px}.results-row strong.right{text-align:right}.score-chip{font-family:var(--font-mono);font-weight:600;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 10px}.del-icon{color:var(--fg-dim);display:grid;place-items:center}.del-icon:hover{color:var(--accent-2)}
 .fixture-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}.fixture-days{display:flex;flex-direction:column;gap:16px}.fixture-day-label{font:11px var(--font-cond);text-transform:uppercase;letter-spacing:1.4px;color:var(--fg-dim);margin-bottom:8px}
+.date-filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--fg-mute)}
+.date-filter-row input[type=date]{background:var(--bg-elev-2);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--fg);outline:none;color-scheme:dark}
 .fixture-card{background:var(--bg-elev);border:1px solid var(--line-soft);border-radius:10px;padding:14px 16px;margin-bottom:10px}.fixture-card.pending{border-color:var(--accent)}.fixture-card-top{display:flex;justify-content:space-between;margin-bottom:10px}
 .badge{padding:2px 9px;border-radius:99px;font:700 10px var(--font-cond);text-transform:uppercase;letter-spacing:1px}.badge.final{background:var(--accent);color:#0e1210}.badge.pending{background:var(--bg-elev-2);border:1px solid var(--line);color:var(--warn)}
 .fixture-teams{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}.fixture-team{display:flex;align-items:center;gap:8px;min-width:0}.fixture-team.right{justify-content:flex-end;text-align:right}.score-inputs{display:inline-flex;gap:6px;align-items:center}.score-inputs input{width:38px;height:34px;background:var(--bg);border:1px solid var(--line);border-radius:6px;text-align:center;color:var(--fg);font-family:var(--font-mono)}
@@ -1026,9 +949,12 @@ const platformCSS=document.createElement('style');platformCSS.textContent=`
 .cup-score-stepper button:hover{border-color:var(--accent);color:var(--accent)}
 .cup-score-stepper input{width:22px;background:transparent;border:0;text-align:center;color:var(--fg);font-family:var(--font-mono);font-size:12.5px;font-weight:700;padding:0;-moz-appearance:textfield}
 .cup-score-stepper input::-webkit-outer-spin-button,.cup-score-stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.cup-tiebreak{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;border-top:1px dashed var(--line);font-size:11px;color:var(--warn)}
-.cup-tiebreak button{padding:3px 8px;border-radius:4px;background:var(--bg-elev-2);border:1px solid var(--line);color:var(--fg);font-size:11px}
-.cup-tiebreak button:hover{border-color:var(--accent);color:var(--accent)}
+.cup-tiebreak{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-top:1px dashed var(--line);font-size:11px;color:var(--warn)}
+.cup-pen-row{display:flex;align-items:center;gap:6px}
+.cup-pen-sep{color:var(--fg-dim)}
+.cup-tiebreak-manual{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px;color:var(--fg-dim)}
+.cup-tiebreak-manual button{padding:3px 8px;border-radius:4px;background:var(--bg-elev-2);border:1px solid var(--line);color:var(--fg);font-size:11px}
+.cup-tiebreak-manual button:hover{border-color:var(--accent);color:var(--accent)}
 .cup-champion-col{width:170px;align-items:center;flex:none}
 .cup-champion-col .cup-round-label{width:100%}
 .cup-champion-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 14px;background:var(--bg-elev);border:1px dashed var(--line);border-radius:10px;color:var(--fg-dim);text-align:center;font-size:13px;width:100%}
@@ -1048,29 +974,11 @@ const platformCSS=document.createElement('style');platformCSS.textContent=`
 .comp-pill-new-form{display:flex;align-items:center;gap:6px;padding:6px}
 .comp-pill-new-form input{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--fg);outline:none;width:120px}
 .standings-team{display:flex;align-items:center;gap:8px}
-.crest-manager-grid{display:flex;flex-direction:column;gap:2px}
-.crest-manager-row{display:flex;align-items:center;gap:12px;padding:10px 6px;border-top:1px solid var(--line-soft);width:100%;text-align:left;border-radius:6px;transition:background .15s}
-.crest-manager-row:first-child{border-top:0}
-.crest-manager-row:hover{background:var(--bg-elev-2)}
-.crest-manager-name{flex:1;font-size:13px}
-.crest-manager-edit{font-size:11px;color:var(--fg-dim)}
-.crest-manager-row:hover .crest-manager-edit{color:var(--accent)}
-.crest-editor-modal{max-width:560px}
-.crest-editor-preview{display:flex;justify-content:center;padding:16px 0 20px}
-.crest-design-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px}
-.crest-design-opt{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px;background:var(--bg-elev-2);border:1px solid transparent;border-radius:6px;color:var(--fg-mute);font-size:11px}
-.crest-design-opt:hover{color:var(--fg)}
-.crest-design-opt.on{border-color:var(--accent);color:var(--fg)}
-.crest-preset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px}
-.crest-preset-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;background:var(--bg-elev-2);border:1px solid transparent;border-radius:6px;font-size:10px;color:var(--fg-mute);text-align:center;line-height:1.1}
-.crest-preset-opt:hover{border-color:var(--accent);color:var(--fg)}
-.crest-color-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
-.crest-photo-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line-soft)}
 @media(max-width:1100px){.hub-row,.hub-row.uneven,.roster-grid,.dossier-grid,.dossier-pair,.fixture-layout{grid-template-columns:1fr}}
 @media(max-width:650px){.experience-grid,.form-grid-wide{grid-template-columns:1fr}.form-grid-wide .span-2{grid-column:auto}.stat-strip{grid-template-columns:1fr 1fr}.fixture-teams{grid-template-columns:1fr}.results-row{grid-template-columns:1fr 1fr}.results-row time{grid-column:1/-1}.results-row .del-icon{grid-column:1/-1}}
 `;document.head.appendChild(platformCSS);
 const accountCSS = document.createElement('style');
-accountCSS.textContent = '.guest-account-state{display:flex;gap:10px;align-items:flex-start;padding:12px;margin-bottom:12px;background:var(--bg-elev-2);border-radius:8px}.guest-account-state small,.account-note{display:block;color:var(--fg-dim);margin-top:4px}.status-dot{width:9px;height:9px;flex:0 0 auto;margin-top:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in oklch,var(--accent) 18%,transparent)}';
+accountCSS.textContent = '.guest-account-state{display:flex;gap:10px;align-items:flex-start;padding:12px;margin-bottom:12px;background:var(--bg-elev-2);border-radius:8px}.guest-account-state small,.account-note{display:block;color:var(--fg-dim);margin-top:4px}.status-dot{width:9px;height:9px;flex:0 0 auto;margin-top:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in oklch,var(--accent) 18%,transparent)}.google-btn.sm{width:auto;padding:8px 14px;font-size:13px}';
 document.head.appendChild(accountCSS);
 ReactDOM.createRoot(document.getElementById('page-coach')).render(<CoachPage/>);
 ReactDOM.createRoot(document.getElementById('page-league')).render(<LeaguePage/>);

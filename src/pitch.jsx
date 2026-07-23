@@ -357,8 +357,8 @@ function MiniKit({ kit, num }) {
         )}
       </g>
       <text x="50" y="70" textAnchor="middle" fontFamily="'Bebas Neue'" fontSize="40"
-            fill={window.contrastText(kit.primary)}
-            style={{ paintOrder: "stroke", stroke: window.contrastText(kit.primary)==='#ffffff' ? 'rgba(0,0,0,.4)' : 'rgba(255,255,255,.5)', strokeWidth: 1.5 }}>{num}</text>
+            fill={window.contrastTextMixed(kit.primary, kit.secondary, kit.design)}
+            style={{ paintOrder: "stroke", stroke: window.contrastTextMixed(kit.primary, kit.secondary, kit.design)==='#ffffff' ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.65)', strokeWidth: 1.8 }}>{num}</text>
     </svg>
   );
 }

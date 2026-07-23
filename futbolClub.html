@@ -82,7 +82,7 @@
     background: var(--bg-elev);
     border-right: 1px solid var(--line-soft);
     padding: 22px 18px;
-    display: flex; flex-direction: column; gap: 22px;
+    display: flex; flex-direction: column; gap: 14px;
   }
   .brand {
     display: flex; align-items: center; gap: 10px;
@@ -115,6 +115,7 @@
     font-size: 11px; color: var(--fg-dim);
     padding: 10px 8px 6px;
   }
+  .nav-label:first-child { padding-top: 2px; }
   .nav-item {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 10px;
@@ -129,7 +130,6 @@
   .nav-item svg { flex: none; }
 
   .sidebar-footer {
-    margin-top: auto;
     padding-top: 14px;
     border-top: 1px solid var(--line-soft);
   }
@@ -363,6 +363,7 @@
       <button class="nav-item" data-page="editor"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3V5"></path><path d="M12 5v14M12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5"></path></svg> Editor de alineación</button>
       <button class="nav-item" data-page="draw"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h4v4M20 4l-6.2 6.2M4 20l5.2-5.2M16 20h4v-4M20 20l-6.2-6.2M4 4l5.2 5.2"></path></svg> Sorteo</button>
       <button class="nav-item" data-page="kits"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4l4 2 4-2 5 4-2.5 3L16 9.5V20H8V9.5L5.5 11 3 8l5-4z"></path></svg> Camisetas</button>
+      <button class="nav-item" data-page="crests"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.6v5.4c0 4.7-2.9 8.2-7 10-4.1-1.8-7-5.3-7-10V5.6L12 3z"></path></svg> Escudos</button>
       <button class="nav-item" data-page="rival"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a8 8 0 100 16 8 8 0 000-16"></path><path d="M12 9a3 3 0 100 6 3 3 0 000-6"></path></svg> Modo rival</button>
       <button class="nav-item" data-page="share"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4a2.2 2.2 0 100 4.4A2.2 2.2 0 0018 4M6 9.8a2.2 2.2 0 100 4.4 2.2 2.2 0 000-4.4M18 15.6a2.2 2.2 0 100 4.4 2.2 2.2 0 000-4.4"></path><path d="M8 11l8-4.2M8 13l8 4.2"></path></svg> Compartir</button>
 
@@ -382,6 +383,7 @@
     <div id="page-editor" class="page"></div>
     <div id="page-draw"   class="page"></div>
     <div id="page-kits"   class="page"></div>
+    <div id="page-crests" class="page"></div>
     <div id="page-rival"  class="page"></div>
     <div id="page-share"    class="page"></div>
     <div id="page-coach"    class="page"></div>
@@ -594,6 +596,7 @@
 <script type="text/babel" src="src/page-editor.jsx"></script>
 <script type="text/babel" src="src/page-draw.jsx"></script>
 <script type="text/babel" src="src/page-kits.jsx"></script>
+<script type="text/babel" src="src/page-crests.jsx"></script>
 <script type="text/babel" src="src/page-rival.jsx"></script>
 <script type="text/babel" src="src/page-share.jsx"></script>
 <script type="text/babel" src="src/page-platform.jsx"></script>

@@ -184,9 +184,15 @@ function DrawPage() {
   const sendToRival = (ti) => {
     const teamPlayers = teams[ti];
     if (!teamPlayers.length) return window.__toast?.('Ese equipo está vacío');
-    const current = window.db.load('rival', {});
+    const defaults = {
+      myMode: 11, myForm: 0, rivalForm: 1,
+      myKit: { design: "stripes", primary: "#3b82f6", secondary: "#ffffff" },
+      rivalKit: { design: "solid", primary: "#eab308", secondary: "#16a34a" },
+      rivalRoster: [], rivalName: "LOS VISITANTES",
+    };
+    const current = window.db.load('rival', defaults);
     const rivalRoster = teamPlayers.map(p => ({ id: `rv_${p.id}_${Date.now()}`, name: p.name }));
-    window.db.save('rival', { ...current, rivalRoster, rivalName: teamNames[ti].toUpperCase() });
+    window.db.save('rival', { ...defaults, ...current, rivalRoster, rivalName: teamNames[ti].toUpperCase() });
     window.__toast?.(`${teamNames[ti]} enviado a Modo rival`);
     window.go('rival');
   };

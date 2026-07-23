@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'futbolclub-v21';
+const CACHE_VERSION = 'futbolclub-v24';
 const APP_SHELL = [
   './futbolClub.html',
   './manifest.webmanifest',
@@ -15,6 +15,7 @@ const APP_SHELL = [
   './src/page-editor.jsx',
   './src/page-draw.jsx',
   './src/page-kits.jsx',
+  './src/page-crests.jsx',
   './src/page-rival.jsx',
   './src/page-share.jsx',
   './src/page-platform.jsx',

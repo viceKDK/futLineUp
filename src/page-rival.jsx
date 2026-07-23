@@ -12,9 +12,29 @@ function RivalPage() {
   });
   const [rivalNameInput, setRivalNameInput] = React.useState('');
   const [teamCrests] = window.useStore('teamCrests', {});
-  const crestPhotoFor = (name) => teamCrests[(name||'').trim().toLowerCase()];
+  const crestEntryFor = (name) => {
+    const raw = teamCrests[(name||'').trim().toLowerCase()];
+    if (!raw) return null;
+    if (typeof raw === 'string') return raw === 'none' ? { hidden: true } : { photo: raw };
+    return raw;
+  };
+  const crestFor = (name, fallbackKit) => {
+    const entry = crestEntryFor(name) || {};
+    if (entry.hidden) return { name, photo: 'none' };
+    return {
+      name,
+      design: entry.design || fallbackKit.design,
+      primary: entry.primary || fallbackKit.primary,
+      secondary: entry.secondary || fallbackKit.secondary,
+      photo: entry.photo || undefined,
+    };
+  };
 
-  const { myMode, myForm, rivalForm, myKit, rivalKit } = state;
+  const {
+    myMode = 11, myForm = 0, rivalForm = 1,
+    myKit = { design: "stripes", primary: "#3b82f6", secondary: "#ffffff" },
+    rivalKit = { design: "solid", primary: "#eab308", secondary: "#16a34a" },
+  } = state;
   const myTeamName = 'LOS PIBES';
   const rivalTeamName = state.rivalName || 'LOS VISITANTES';
   const rivalRoster = state.rivalRoster || [];
@@ -62,7 +82,7 @@ function RivalPage() {
       <div className="rival-head-row">
         <div className="rival-side">
           <div className="rival-flag" style={{background: myKit.primary}}></div>
-          <Crest name={myTeamName} design={myKit.design} primary={myKit.primary} secondary={myKit.secondary} photo={crestPhotoFor(myTeamName)} size={38}/>
+          <Crest {...crestFor(myTeamName, myKit)} size={38}/>
           <div>
             <div className="rival-name">{myTeamName}</div>
             <div className="rival-meta">
@@ -83,7 +103,7 @@ function RivalPage() {
               <span className="chip">{window.FORMATIONS[myMode][rivalForm].name}</span>
             </div>
           </div>
-          <Crest name={rivalTeamName} design={rivalKit.design} primary={rivalKit.primary} secondary={rivalKit.secondary} photo={crestPhotoFor(rivalTeamName)} size={38}/>
+          <Crest {...crestFor(rivalTeamName, rivalKit)} size={38}/>
           <div className="rival-flag" style={{background: rivalKit.primary}}></div>
         </div>
       </div>

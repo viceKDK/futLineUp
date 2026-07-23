@@ -60,12 +60,12 @@ function Kit({ design = "solid", primary = "#e11d48", secondary = "#0f172a", num
             fill="none" stroke="rgba(0,0,0,.35)" strokeWidth="1"/>
 
       {showNumber && number !== undefined && (() => {
-        const light = window.contrastText(primary) === '#ffffff';
+        const light = window.contrastTextMixed(primary, secondary, design) === '#ffffff';
         return (
           <text x="50" y="72" textAnchor="middle"
                 fontFamily="'Bebas Neue', 'Archivo Narrow', sans-serif"
                 fontSize="38" fill={light ? "rgba(255,255,255,.95)" : "rgba(18,24,26,.95)"}
-                style={{ paintOrder: "stroke", stroke: light ? "rgba(0,0,0,.4)" : "rgba(255,255,255,.5)", strokeWidth: 1 }}>
+                style={{ paintOrder: "stroke", stroke: light ? "rgba(0,0,0,.55)" : "rgba(255,255,255,.65)", strokeWidth: 1.6 }}>
             {number}
           </text>
         );
@@ -110,7 +110,8 @@ function Crest({ name, design = "solid", primary = "#3b82f6", secondary = "#0f17
             {design === "halves" && <rect x="50" y="0" width="55" height="106" fill={secondary}/>}
             <rect x="0" y="0" width="100" height="106" fill="rgba(0,0,0,.12)"/>
             <text x="50" y="62" textAnchor="middle" fontFamily="'Archivo Narrow', sans-serif"
-                  fontWeight="700" fontSize="30" fill={window.contrastText(primary)}>
+                  fontWeight="700" fontSize="30" fill={window.contrastTextMixed(primary, secondary, design)}
+                  style={{ paintOrder: "stroke", stroke: window.contrastTextMixed(primary, secondary, design)==='#ffffff' ? 'rgba(0,0,0,.5)' : 'rgba(255,255,255,.6)', strokeWidth: 1.2 }}>
               {window.initials(name || "?")}
             </text>
           </>
@@ -133,6 +134,8 @@ window.KIT_COLOR_SWATCHES = ["#dc2626","#ea580c","#eab308","#16a34a","#06b6d4","
 
 // Combinaciones de escudo prearmadas, listas para elegir sin tocar colores.
 window.CREST_PRESETS = [
+  { name: "Blaugrana",      design: "stripes", primary: "#1e3a8a", secondary: "#991b1b" },
+  { name: "Real",           design: "solid",   primary: "#ffffff", secondary: "#1e3a8a" },
   { name: "Rojo y blanco",  design: "halves",  primary: "#dc2626", secondary: "#ffffff" },
   { name: "Azul y oro",     design: "sash",    primary: "#1e3a8a", secondary: "#eab308" },
   { name: "Verde bosque",   design: "solid",   primary: "#166534", secondary: "#fef3c7" },

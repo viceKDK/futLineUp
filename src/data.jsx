@@ -189,6 +189,25 @@ window.contrastText = function(hex) {
   return luminance > 0.6 ? '#12181a' : '#ffffff';
 };
 
+// Igual que contrastText, pero pensado para texto que puede caer sobre un
+// diseño con dos colores (rayas, mitades, banda) — promedia la luminancia de
+// ambos en vez de mirar solo el primario, para no quedar blanco-sobre-blanco
+// (o negro-sobre-negro) en la franja del color secundario.
+window.contrastTextMixed = function(primary, secondary, design) {
+  if (!design || design === 'solid') return window.contrastText(primary);
+  const luminanceOf = (hex) => {
+    if (typeof hex !== 'string' || hex[0] !== '#') return 1;
+    let h = hex.slice(1);
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    if (h.length !== 6) return 1;
+    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+    if ([r,g,b].some(Number.isNaN)) return 1;
+    return (0.299*r + 0.587*g + 0.114*b) / 255;
+  };
+  const avg = (luminanceOf(primary) + luminanceOf(secondary)) / 2;
+  return avg > 0.6 ? '#12181a' : '#ffffff';
+};
+
 window.initials = function(name) {
   if (!name) return "??";
   const parts = name.split(/\s+/);

@@ -27,6 +27,7 @@ window.ICON_PATHS = {
   session:  ['M5 6h14v14H5V6zM5 10h14M9 4v4M15 4v4'],
   warning:  ['M12 4l9 16H3L12 4z', 'M12 10v4M12 17.5h.01'],
   trash:    ['M5 7h14M9 7V5h6v2M8 7l1 13h6l1-13'],
+  shield:   ['M12 3l7 2.6v5.4c0 4.7-2.9 8.2-7 10-4.1-1.8-7-5.3-7-10V5.6L12 3z'],
   google:   ['M7 18a4.5 4.5 0 01-.6-9A6 6 0 0118 10.6 4 4 0 0117 18H7z'],
 };
 
@@ -42,3 +43,17 @@ function Icon({ name, size = 16, strokeWidth = 1.8, style, className }) {
   );
 }
 window.Icon = Icon;
+
+// Logo oficial de Google (4 colores) — para el botón "Continuar con Google",
+// que debe verse igual al estándar de todas las webs, no el ícono genérico de Icon.
+function GoogleG({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" style={{ flex: 'none', display: 'block' }}>
+      <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.9 2.4 30.4 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.1 17.7 9.5 24 9.5z"/>
+      <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.6c-.5 3-2.2 5.5-4.7 7.2l7.3 5.7c4.3-4 6.8-9.8 6.8-17.4z"/>
+      <path fill="#FBBC05" d="M10.5 19.3A14.5 14.5 0 009.8 24c0 1.7.3 3.3.7 4.7l-7.9 6.1A24 24 0 010 24c0-3.9.9-7.5 2.6-10.8l7.9 6.1z"/>
+      <path fill="#34A853" d="M24 48c6.4 0 11.8-2.1 15.7-5.7l-7.3-5.7c-2 1.4-4.7 2.3-8.4 2.3-6.3 0-11.6-3.6-13.5-8.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/>
+    </svg>
+  );
+}
+window.GoogleG = GoogleG;

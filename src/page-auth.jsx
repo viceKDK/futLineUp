@@ -108,8 +108,8 @@ function AuthPage() {
 
         <div className="auth-divider"><span>o</span></div>
 
-        <button className="btn google-btn" onClick={google} disabled={!configured}>
-          <Icon name="google" size={16} /> Continuar con Google
+        <button className="google-btn" onClick={google} disabled={!configured}>
+          <GoogleG size={18} /> <span>Continuar con Google</span>
         </button>
 
         <button className="auth-guest-btn" onClick={goHomeAsGuest}>
@@ -157,7 +157,15 @@ authCSS.textContent = `
   .auth-switch button { color: var(--accent); font-weight: 600; }
   .auth-divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: var(--fg-dim); font-size: 11px; }
   .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--line-soft); }
-  .google-btn { width: 100%; justify-content: center; }
+  .google-btn {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 10px 16px;
+    background: #fff; border: 1px solid #dadce0; border-radius: 4px;
+    color: #3c4043; font-family: Roboto, Arial, sans-serif; font-size: 14px; font-weight: 500;
+    transition: box-shadow .15s, background .15s;
+  }
+  .google-btn:hover:not(:disabled) { background: #f8f9fa; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .google-btn:disabled { opacity: .5; cursor: not-allowed; }
   .auth-guest-btn {
     display: flex; align-items: center; justify-content: center;
     width: 100%; margin-top: 20px;
