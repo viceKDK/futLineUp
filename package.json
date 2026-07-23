@@ -4,6 +4,9 @@
   "private": true,
   "description": "Aplicación web para crear alineaciones, gestionar planteles y organizar fútbol amateur.",
   "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "serve": "http-server -p 8765 -c-1 .",
     "test": "playwright test",

@@ -4,7 +4,8 @@ Aplicación web para crear alineaciones de fútbol, organizar planteles y sorteo
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f.svg)](LICENSE)
 [![Branch](https://img.shields.io/badge/branch-main-2ea44f.svg)](https://github.com/viceKDK/futLineUp/tree/main)
-[![Tests](https://img.shields.io/badge/Playwright-passing-45ba4b.svg)](tests/)
+[![Tests](https://github.com/viceKDK/futLineUp/actions/workflows/tests.yml/badge.svg)](https://github.com/viceKDK/futLineUp/actions/workflows/tests.yml)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-2ea44f.svg)](package.json)
 
 ![Dashboard de futbolClub](screenshots/01-home.png)
 
