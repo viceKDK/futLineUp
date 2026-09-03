@@ -1,0 +1,16 @@
+{
+  "name": "futbolclub-remotion",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "remotion studio src/index.jsx",
+    "render": "remotion render src/index.jsx"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "^4.0.200",
+    "@remotion/cli": "^4.0.200",
+    "@remotion/google-fonts": "^4.0.200"
+  }
+}

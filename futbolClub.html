@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1210">
+<meta name="description" content="Crea, guarda y comparte alineaciones de futbol sin crear una cuenta.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src-elem 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<title>futbolClub — armá tu equipo</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Archivo+Narrow:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/pages.css">
+<link rel="stylesheet" href="styles/league-table-upgrade.css">
+<link rel="stylesheet" href="styles/league-setup.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><img src="icons/icon.svg" alt="" /></div>
+      <div class="brand-name">futbol<em>Club</em></div>
+    </div>
+    <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-controls="nav" aria-expanded="false" aria-label="Abrir menú de navegación"><span aria-hidden="true">☰</span><span>Menú</span></button>
+
+    <nav class="nav" id="nav">
+      <div class="nav-label">Principal</div>
+      <button class="nav-item active" data-page="home"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.5v5.5c0 4.6-3 7.9-7 10-4-2.1-7-5.4-7-10V5.5L12 3z"></path></svg> Mis equipos</button>
+      <button class="nav-item" data-page="mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 100 18 9 9 0 000-18"></path><path d="M12 8v8M8 12h8"></path></svg> Nuevo equipo</button>
+
+      <div class="nav-label">Herramientas</div>
+      <button class="nav-item" data-page="editor"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3V5"></path><path d="M12 5v14M12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5"></path></svg> Editor de alineación</button>
+      <button class="nav-item" data-page="draw"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h4v4M20 4l-6.2 6.2M4 20l5.2-5.2M16 20h4v-4M20 20l-6.2-6.2M4 4l5.2 5.2"></path></svg> Sorteo</button>
+      <button class="nav-item" data-page="kits"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4l4 2 4-2 5 4-2.5 3L16 9.5V20H8V9.5L5.5 11 3 8l5-4z"></path></svg> Camisetas</button>
+      <button class="nav-item" data-page="crests"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.6v5.4c0 4.7-2.9 8.2-7 10-4.1-1.8-7-5.3-7-10V5.6L12 3z"></path></svg> Escudos</button>
+      <button class="nav-item" data-page="rival"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a8 8 0 100 16 8 8 0 000-16"></path><path d="M12 9a3 3 0 100 6 3 3 0 000-6"></path></svg> Modo rival</button>
+      <button class="nav-item" data-page="share"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4a2.2 2.2 0 100 4.4A2.2 2.2 0 0018 4M6 9.8a2.2 2.2 0 100 4.4 2.2 2.2 0 000-4.4M18 15.6a2.2 2.2 0 100 4.4 2.2 2.2 0 000-4.4"></path><path d="M8 11l8-4.2M8 13l8 4.2"></path></svg> Compartir</button>
+
+      <div class="nav-label">Gestión</div>
+      <button class="nav-item" data-page="coach"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.5a3 3 0 016 0H18a1 1 0 011 1V20a1 1 0 01-1 1H6a1 1 0 01-1-1V5.5a1 1 0 011-1h3z"></path><path d="M9 12h6M9 16h4"></path></svg> Entrenador</button>
+      <button class="nav-item" data-page="league"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v6a4 4 0 01-8 0V4z"></path><path d="M8 5H5a3 3 0 003 4.5M16 5h3a3 3 0 01-3 4.5M12 14v4M8 20h8"></path></svg> Liga amateur</button>
+    </nav>
+
+    <div class="sidebar-footer" id="sidebar-footer"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div id="page-auth"   class="page"></div>
+    <div id="page-home"   class="page active"></div>
+    <div id="page-mode"   class="page"></div>
+    <div id="page-editor" class="page"></div>
+    <div id="page-draw"   class="page"></div>
+    <div id="page-kits"   class="page"></div>
+    <div id="page-crests" class="page"></div>
+    <div id="page-rival"  class="page"></div>
+    <div id="page-share"    class="page"></div>
+    <div id="page-coach"    class="page"></div>
+    <div id="page-league"   class="page"></div>
+    <div id="page-settings" class="page"></div>
+  </main>
+</div>
+
+<!-- Tweaks toggle + panel -->
+<button class="tweaks-fab" id="tweaks-fab" title="Ajustes visuales" aria-label="Ajustes visuales" aria-controls="tweaks" aria-expanded="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7"></path><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"></path></svg></button>
+<div class="tweaks" id="tweaks">
+  <h3>Ajustes visuales</h3>
+  <div class="tweaks-row">
+    <span>Estilo cancha</span>
+    <div class="seg" data-tweak="pitchStyle">
+      <button data-v="classic" class="on">Clásica</button>
+      <button data-v="flat">Flat</button>
+      <button data-v="dark">Noche</button>
+    </div>
+  </div>
+  <div class="tweaks-row">
+    <span>Jugador en cancha</span>
+    <div class="seg" data-tweak="playerStyle">
+      <button data-v="photo" class="on">Foto</button>
+      <button data-v="shirt">Camiseta</button>
+    </div>
+  </div>
+  <div class="tweaks-row">
+    <span>Acento</span>
+    <div class="seg" data-tweak="accent">
+      <button data-v="lime" class="on">Lima</button>
+      <button data-v="cyan">Cyan</button>
+      <button data-v="red">Rojo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tweaks config (persistido en localStorage) -->
+
+
+<!-- Router + page mounts -->
+
+
+<!-- Toast helper -->
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<!-- PWA update banner -->
+<div id="update-banner" class="update-banner">
+  <span>Hay una versión nueva de futbolClub.</span>
+  <button id="update-banner-btn" class="btn primary sm">Actualizar ahora</button>
+</div>
+
+
+
+
+<!-- Instalación PWA: la app sigue funcionando normalmente si el navegador no la ofrece. -->
+
+
+<!-- Configuración local opcional + versión/observabilidad temprana -->
+<script src="src/local-config.js"></script>
+<script src="compiled/release.js"></script>
+<script src="vendor/web-vitals.attribution.iife.js"></script>
+<script src="src/observability.js"></script>
+<script src="src/bootstrap.js"></script>
+
+<!-- Export libs -->
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+
+<!-- Optional cloud backend -->
+<script src="vendor/supabase.js"></script>
+
+<!-- React -->
+<script src="vendor/react.production.min.js"></script>
+<script src="vendor/react-dom.production.min.js"></script>
+
+<!-- Shared data + components -->
+<script src="compiled/icons.js"></script>
+<script src="compiled/data.js"></script>
+<script src="src/auto-backup.js"></script>
+<script src="compiled/supabase.js"></script>
+<script src="compiled/kits.js"></script>
+<script src="compiled/pitch.js"></script>
+<script src="compiled/sidebar.js"></script>
+
+<!-- Pages -->
+<script src="compiled/page-auth.js"></script>
+<script src="compiled/page-home.js"></script>
+<script src="compiled/page-mode.js"></script>
+<script src="compiled/page-editor.js"></script>
+<script src="compiled/page-draw.js"></script>
+<script src="compiled/page-kits.js"></script>
+<script src="compiled/page-crests.js"></script>
+<script src="compiled/page-rival.js"></script>
+<script src="compiled/page-share.js"></script>
+<script src="compiled/platform-charts.js"></script>
+<script src="compiled/page-settings.js"></script>
+<script src="compiled/page-coach.js"></script>
+<script src="compiled/page-league.js"></script>
+<script src="compiled/league-table-upgrade.js"></script>
+<script src="compiled/page-league-setup.js"></script>
+<script src="compiled/league-participant-guard.js"></script>
+<script src="compiled/platform-mount.js"></script>
+
+</body>
+</html>

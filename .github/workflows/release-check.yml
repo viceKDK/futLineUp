@@ -1,0 +1,30 @@
+name: Release integrity
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm audit
+      - run: npm run release:manifest
+      - run: npm run release:verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-manifest
+          path: .dist/releases/

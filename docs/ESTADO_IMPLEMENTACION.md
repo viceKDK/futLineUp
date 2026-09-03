@@ -1,0 +1,55 @@
+# Estado de implementación
+
+Fecha: 2026-07-20
+
+Rama de integración actual: `develop` · Commit base de la implementación: `40a694a`. La rama temporal de trabajo fue integrada y eliminada local y remotamente.
+
+## Implementado
+
+- Persistencia completa de alineaciones: titulares, posiciones libres, suplentes, capitán y kit.
+- Reapertura y duplicación de equipos.
+- Edición ampliada de jugadores con posición secundaria y pierna hábil.
+- Asignación rápida con toque/click como alternativa al drag and drop.
+- Backup JSON versionado, importación y carga rápida de planteles pegando texto.
+- Enlaces de alineación autocontenidos mediante snapshots codificados en la URL.
+- Sorteo Fisher–Yates y verificación de balance sin duplicados.
+- Perfil de uso: Amigos, Entrenador o Liga amateur.
+- Modo Entrenador: ficha, sesiones, asistencia, evaluaciones, fortalezas, mejoras y objetivos.
+- Modo Liga: calendario, resultados y tabla calculada con desempate por diferencia de gol.
+- Cuenta y datos: Google Login opcional, modo invitado y sincronización de backup entre dispositivos.
+- Modo invitado explícito en Inicio y Cuenta: las funciones principales no requieren autenticación.
+- PWA instalable con manifest, icono y shell offline después de la primera carga.
+- Esquema Supabase con tablas normalizadas, backup de cuenta y políticas RLS.
+- Navegación con historial/hash, foco visible y reducción de movimiento.
+- Suite Playwright ampliada: 21 pruebas aprobadas.
+- Regresión E2E de modo Libre: guardar, reabrir y compartir en un navegador limpio sin cuenta.
+- React Doctor sobre los archivos cambiados: sin hallazgos (`--scope changed`); conserva la limitación conocida de detección por React UMD/Babel Standalone.
+
+## Configuración externa pendiente
+
+Para activar login y sincronización real hace falta crear un proyecto Supabase, ejecutar `supabase/schema.sql`, habilitar Google en Authentication y copiar `src/local-config.example.js` como `src/local-config.js` con URL y anon key.
+
+No se guardan secretos ni credenciales en el repositorio. Sin esa configuración la aplicación continúa funcionando como invitado local.
+
+## Próximas iteraciones recomendadas
+
+El alcance funcional del roadmap está representado, pero estas mejoras requieren validación de producto o una infraestructura real:
+
+- Invitaciones multiusuario y roles administrables desde UI.
+- Sincronización fila por fila en lugar de backup completo.
+- Evaluaciones con permisos para familia/jugador y consentimiento para menores.
+- Equipos oficiales de liga y fixture por rondas en lugar de nombres libres.
+- Notificaciones y colaboración en tiempo real.
+- Historial de auditoría para resultados oficiales.
+- Planes comerciales y métricas, únicamente después de validar uso recurrente.
+
+Estas tareas no pueden cerrarse responsablemente sin proyecto Supabase, usuarios reales y decisiones de privacidad/operación.
+## Evidencia visual
+
+Las capturas actualizadas están documentadas en [`screenshots/README.md`](../screenshots/README.md). Incluyen las diez pantallas navegables y tres estados especiales: editor autocompletado, sorteo terminado y panel de ajustes.
+
+Nuevas capturas principales:
+
+- `screenshots/09-coach.png`
+- `screenshots/10-league.png`
+- `screenshots/11-settings.png`

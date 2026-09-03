@@ -1,0 +1,21 @@
+{
+  "name": "futbolClub - arma tu equipo",
+  "short_name": "futbolClub",
+  "description": "Crea, guarda y comparte alineaciones de futbol sin crear una cuenta.",
+  "id": "./futbolClub.html",
+  "start_url": "./futbolClub.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e1210",
+  "theme_color": "#0e1210",
+  "lang": "es-AR",
+  "categories": ["sports", "productivity"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

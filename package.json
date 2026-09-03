@@ -1,0 +1,52 @@
+{
+  "name": "futbolclub",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aplicación web para crear alineaciones, gestionar planteles y organizar fútbol amateur.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "serve": "http-server -p 8765 -c-1 .",
+    "build:client": "node scripts/build-client.mjs",
+    "preserve": "npm run build:client",
+    "pretest": "npm run build:client",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:edge": "playwright test --project=msedge",
+    "test:supabase": "playwright test tests/supabase-live.spec.js --project=chromium --workers=1",
+    "test:backups": "playwright test tests/backup-recovery.spec.js --project=chromium",
+    "perf:vitals": "playwright test tests/web-vitals.spec.js --project=chromium",
+    "pretest:functional": "npm run build:client",
+    "test:functional": "playwright test tests/smoke.spec.js tests/guest-free-mode.spec.js tests/mobile-ux.spec.js tests/schema-security.spec.js tests/static-quality.spec.js tests/backup-recovery.spec.js tests/web-vitals.spec.js --project=chromium",
+    "lint": "eslint src tests scripts service-worker.js playwright.config.js",
+    "format": "prettier --write src tests scripts service-worker.js playwright.config.js eslint.config.js package.json",
+    "format:check": "prettier --check src tests scripts service-worker.js playwright.config.js eslint.config.js package.json",
+    "vendor:sync": "node scripts/sync-vendor.mjs",
+    "monitor:availability": "node scripts/health-check.mjs",
+    "release:manifest": "npm run build:client && node scripts/release-manifest.mjs",
+    "release:verify": "node scripts/verify-release.mjs",
+    "rollback:plan": "node scripts/rollback-plan.mjs",
+    "quality": "npm run format:check && npm run lint && npm audit && npm run test:functional",
+    "screenshots": "playwright test tests/screenshots.spec.js --reporter=list",
+    "screenshots:mobile": "playwright test tests/screenshots-mobile.spec.js --reporter=list"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.112.3",
+    "html2canvas": "1.4.1",
+    "jspdf": "4.2.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "web-vitals": "6.1.1"
+  },
+  "devDependencies": {
+    "@babel/standalone": "7.29.0",
+    "@playwright/test": "^1.47.0",
+    "eslint": "^9.39.5",
+    "globals": "^16.5.0",
+    "http-server": "^14.1.1",
+    "prettier": "^3.9.6"
+  }
+}

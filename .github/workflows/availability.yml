@@ -1,0 +1,21 @@
+name: Availability monitor
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    if: ${{ vars.FUTBOLCLUB_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check public application
+        env:
+          FC_MONITOR_URL: ${{ vars.FUTBOLCLUB_URL }}
+        run: node scripts/health-check.mjs
