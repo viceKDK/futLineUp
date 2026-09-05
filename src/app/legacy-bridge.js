@@ -8,6 +8,7 @@ import * as leagueCup from "../features/league/domain/cup.js";
 import * as lineup from "../features/lineup/domain/lineup-draft.js";
 import * as coach from "../features/coach/domain/coach.js";
 import * as draw from "../features/draw/domain/team-balancer.js";
+import * as teams from "../features/teams/domain/team-dashboard.js";
 import { createAutomaticBackupService, createBackupScheduler } from "../features/backup/application/automatic-backup-service.js";
 import { createIndexedDbBackupRepository } from "../features/backup/infrastructure/indexeddb-backup-repository.js";
 import { createCloudBackupService } from "../features/auth/application/cloud-backup-service.js";
@@ -23,6 +24,7 @@ Object.assign(window, {
   fcLineup: Object.freeze({ ...lineup }),
   fcCoachDomain: Object.freeze({ ...coach }),
   fcDrawDomain: Object.freeze({ ...draw }),
+  fcTeamsDomain: Object.freeze({ ...teams }),
   fcBackupFactories: Object.freeze({ createAutomaticBackupService, createBackupScheduler, createIndexedDbBackupRepository }),
   fcCloudFactories: Object.freeze({ createCloudBackupService, createSupabaseBackupAdapter, createSyncStamp }),
 });

@@ -19,6 +19,7 @@ self.FC_MODULE_PRECACHE = [
   "./src/features/lineup/domain/catalog.js",
   "./src/features/lineup/domain/lineup-draft.js",
   "./src/features/sharing/application/snapshot-service.js",
+  "./src/features/teams/domain/team-dashboard.js",
   "./src/shared/application/store.js",
   "./src/shared/domain/display.js",
   "./src/shared/domain/json-tree.js",

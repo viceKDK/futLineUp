@@ -2,7 +2,7 @@
 
 ## Dirección
 
-`futbolClub` usa organización **feature-first con capas internas**. Una feature contiene solo las capas que realmente necesita:
+`futbolClub` usa organización **feature-first con capas internas**:
 
 ```text
 src/
@@ -19,65 +19,47 @@ src/
   shared/{domain,application,infrastructure,presentation}
 ```
 
-Dominio importa dominio. Application coordina casos de uso y contratos. Infrastructure implementa puertos concretos. Presentation renderiza y traduce eventos de UI. `shared` nunca depende de una feature. `app` es el único lugar autorizado a componer implementaciones concretas y a mantener el bridge de compatibilidad.
+Dominio importa dominio. Application coordina casos de uso/puertos. Infrastructure implementa adapters. Presentation renderiza y traduce eventos de UI. `shared` no depende de features. `app` compone implementaciones concretas y mantiene el bridge de compatibilidad mientras las entradas de presentación sigan siendo scripts clásicos.
 
-`tests/architecture` analiza imports reales, módulos inexistentes, ciclos, dependencias externas, browser globals en domain/application, publicación de facades y tamaño del core.
+`tests/architecture` comprueba imports, módulos inexistentes, ciclos, globals prohibidos, publicación de facades, modernización de presentaciones y tamaño del core.
 
-## Núcleo extraído
+## Features extraídas y conectadas
 
-### Liga
+**Liga:** standings, reglas de puntos/desempate, validación de resultados, round-robin, participantes, CSV y copa viven en `features/league/domain`. Las pantallas consumen estas APIs. Al cambiar un resultado de una ronda temprana de Copa se invalidan resultados posteriores para preservar consistencia del cuadro.
 
-`features/league/domain` contiene clasificación, validación de resultados, round-robin ida/vuelta, normalización de participantes, importación CSV y copa eliminatoria. Desempates y políticas de puntos son sustituibles. `page-league-setup.jsx` ya delega CSV y nombres al dominio; `page-league.jsx` continúa como deuda de presentación grande mientras se mantiene su contrato visual.
+**Alineaciones:** `lineup-draft.js` contiene resize/asignación/swap, auto-fill con arquero, suplentes, posiciones libres, selección de modo y snapshot de equipo. Editor usa esas operaciones y queda enfocado en estado/DOM.
 
-### Alineaciones
+**Sorteo:** `TeamBalancer` usa Strategy `count`/`rating`, conserva locks y acepta estrategias adicionales por composición. La UI ya no contiene el algoritmo.
 
-`features/lineup/domain/lineup-draft.js` contiene asignación, swap, auto-fill con arquero, suplentes/capitán, posiciones libres, selección de modo y snapshot de equipo. Las funciones son inmutables y no conocen React/DOM.
+**Entrenador:** asistencia, evaluaciones, tendencia, atributos, objetivos y overview son dominio puro. Coach consume esas funciones y conserva solo interacción/presentación.
 
-### Sorteo
-
-`features/draw/domain/team-balancer.js` implementa Strategy: balance por cantidad y por rating, conserva locks y permite registrar estrategias adicionales sin modificar el algoritmo coordinador. La pantalla ya consume esta API y no implementa el balance por su cuenta.
-
-### Entrenador
-
-`features/coach/domain/coach.js` concentra asistencia, evaluaciones, tendencia, atributos, objetivos y overview. La pantalla heredada aún contiene parte del wiring y se mantiene bajo techo de migración.
-
-### Backups y nube
-
-`AutomaticBackupService` decide cuándo crear, retener y restaurar. `BackupScheduler` recibe puertos de timer. IndexedDB es un adapter separado. La sincronización cloud recibe un puerto remoto; Supabase implementa ese puerto. Antes de reemplazar estado local por remoto, el caso de uso ofrece `preserveLocal`, que la UI usa para exportar el snapshot de seguridad.
+**Backups/nube:** `AutomaticBackupService` coordina política/retención/restauración; `BackupScheduler` recibe timers; IndexedDB es adapter. Cloud sync recibe un puerto remoto; Supabase lo implementa. `preserveLocal` ocurre antes de reemplazar estado local.
 
 ## SOLID
 
-**SRP:** validación, reglas, persistencia, scheduling, remote sync y UI tienen razones de cambio distintas.
+- **SRP:** reglas, persistencia, scheduling, remote sync y UI tienen razones de cambio distintas.
+- **OCP:** validadores/estrategias de backup, puntos/desempates y balanceadores se extienden por composición/registros.
+- **LSP:** adapters sustituibles cumplen contract tests comunes.
+- **ISP:** casos de uso reciben capacidades mínimas en vez de plataformas completas.
+- **DIP:** domain/application no construyen Supabase, IndexedDB, localStorage, timers reales ni React.
 
-**OCP:** campos/estrategias de backup, desempates, políticas de puntos y balanceadores se extienden mediante composición/registros, no agregando `if` al caso de uso estable.
+Patrones deliberados: Strategy, Adapter, Observer, Composition Root y Facade temporal. No se agregan patrones sin variación/frontera real.
 
-**LSP:** adapters de almacenamiento pasan contratos compartidos; una implementación puede sustituir a otra sin cambiar consumidores.
+## Persistencia y concurrencia
 
-**ISP:** los casos de uso reciben capacidades mínimas (`reader`, `writer`, repository, remote, timer, codec, clock) en lugar de objetos de plataforma completos.
+Ediciones normales pueden degradar a memoria si storage falla y emiten diagnóstico. Importaciones destructivas preparan estado previo y realizan rollback best-effort, sin prometer atomicidad inexistente. Eventos `storage` invalidan snapshots entre pestañas y Playwright contiene una prueba con dos páginas reales.
 
-**DIP:** domain/application no construyen Supabase, IndexedDB, localStorage, timers reales ni React. `app`/infrastructure inyectan esas implementaciones.
+## Fitness functions
 
-Patrones deliberados: Strategy, Adapter, Observer, Composition Root y Facade temporal. No se agrega un patrón si no existe una variación o frontera real.
+- ADP: ciclos prohibidos.
+- Ca/Ce/I: derivados del grafo real.
+- A/D: A usa módulos de contrato explícitos como aproximación compatible con JavaScript; D=`|A+I-1|`.
+- SDP: se reportan dependencias estable→más inestable.
+- SAP: observado con A/I/D.
+- CCP/CRP/REP: se revisan con historial de cambio/reuso/release, no con números inventados de una snapshot.
 
-## Persistencia
+## Tamaño
 
-La edición normal puede continuar en memoria si `localStorage` falla, notificando el error. Las importaciones destructivas preparan el estado previo, escriben de forma estricta y realizan rollback best-effort. No se promete atomicidad que el navegador no ofrece. Un rollback incompleto se reporta como tal.
+Core (`domain/application/infrastructure`) tiene límite 300 líneas; presentación nueva, 500. Las pocas excepciones heredadas restantes tienen techos congelados en `scripts/source-quality.mjs` y aparecen como migration debt. Liga, League Setup, Editor, Coach y Draw ya no están en esa lista.
 
-Eventos `storage` invalidan snapshots entre pestañas, incluido remove/clear. Playwright tiene una prueba con dos páginas reales del mismo contexto para esta propiedad.
-
-## Fitness functions y métricas
-
-- **ADP:** ciclos prohibidos automáticamente.
-- **Ca/Ce/I:** calculados desde el grafo real de imports.
-- **A/D:** A usa módulos de contrato explícito como aproximación compatible con JavaScript; D = `|A + I - 1|`.
-- **SDP:** reporte de dependencias donde un paquete sustancialmente más estable depende de otro más inestable.
-- **SAP:** visible mediante A/I/D.
-- **CCP/CRP/REP:** no se falsifican como números instantáneos; se revisan con historial de cambio, reuso y superficie de release.
-
-Ver `npm run metrics:packages` y ADR 0005.
-
-## Tamaño y deuda
-
-Core nuevo (`domain/application/infrastructure`) tiene límite de 300 líneas. Presentación nueva tiene 500. Algunos componentes heredados poseen techos congelados explícitos en `scripts/source-quality.mjs`: no pueden crecer y deben salir de la lista al reducirse. `page-league-setup.jsx` ya salió de esa excepción después de delegar CSV/nombres al dominio.
-
-El objetivo final es eliminar todos los techos legacy y luego `legacy-bridge.js`. Hasta entonces el bridge es compatibilidad, no destino de nueva lógica.
+El paso final de largo plazo es convertir las entradas de presentación a ES Modules y eliminar `legacy-bridge.js`. Hasta entonces el bridge solo adapta contratos existentes: no es destino permitido para nuevas reglas.

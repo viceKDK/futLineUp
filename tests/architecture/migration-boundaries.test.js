@@ -15,7 +15,7 @@ test("legacy bridge is the only native module allowed to publish fc feature faca
   for (const file of await nativeModules(process.cwd())) {
     const source = await readFile(file, "utf8");
     if (file === "src/app/legacy-bridge.js") continue;
-    assert.doesNotMatch(source, /\bfc(?:League|Lineup|CoachDomain|DrawDomain|BackupFactories|CloudFactories)\s*[:=]/, file);
+    assert.doesNotMatch(source, /\bfc(?:League|Lineup|CoachDomain|DrawDomain|TeamsDomain|BackupFactories|CloudFactories)\s*[:=]/, file);
   }
 });
 

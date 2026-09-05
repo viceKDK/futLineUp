@@ -33,10 +33,12 @@ test("source budgets enforce 300 core, 500 new presentation and frozen legacy ce
   assert.equal(metric.lines, 4); assert.ok(metric.decisions >= 1);
   assert.equal(budgetFor("src/features/a/domain/a.js"), 300);
   assert.equal(budgetFor("src/features/a/presentation/new.jsx"), 500);
-  assert.equal(budgetFor("src/features/league/presentation/page-league.jsx"), LEGACY_PRESENTATION_CEILINGS["src/features/league/presentation/page-league.jsx"]);
+  assert.equal(budgetFor("src/features/league/presentation/page-league.jsx"), 500);
+  assert.ok(LEGACY_PRESENTATION_CEILINGS["src/features/sharing/presentation/page-share.jsx"] > 500);
+  assert.ok(LEGACY_PRESENTATION_CEILINGS["src/features/league/presentation/league-participant-guard.jsx"] > 500);
   assert.equal(budgetViolations([{ file: "src/features/a/domain/a.js", lines: 301 }]).length, 1);
   assert.equal(budgetViolations([{ file: "src/features/a/presentation/a.jsx", lines: 501 }]).length, 1);
   assert.equal(budgetViolations([{ file: "src/features/a/presentation/a.jsx", lines: 500 }]).length, 0);
-  assert.equal(budgetViolations([{ file: "src/features/league/presentation/page-league.jsx", lines: 1201 }]).length, 1);
+  assert.equal(budgetViolations([{ file: "src/features/league/presentation/page-league.jsx", lines: 501 }]).length, 1);
   assert.equal(migrationDebt([{ file: "x", lines: 501 }, { file: "y", lines: 500 }]).length, 1);
 });

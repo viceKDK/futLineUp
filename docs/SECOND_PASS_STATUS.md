@@ -2,25 +2,25 @@
 
 ## Implementado
 
-La segunda pasada extrajo reglas que seguían mezcladas con presentación: clasificación y fixture de Liga, CSV, copa eliminatoria, transformaciones del editor de alineaciones, dominio de Entrenador, balance de equipos por cantidad/rating, política/scheduler de backups automáticos y sincronización cloud. IndexedDB y Supabase quedan como adapters; reloj, random, timers y repositorios son sustituibles en tests.
+La segunda pasada extrajo y conectó reglas que estaban mezcladas con presentación: clasificación, fixture round-robin, CSV y copa de Liga; transformaciones del editor de alineaciones; asistencia/evaluaciones/objetivos de Entrenador; balance de equipos por cantidad/rating; backups automáticos; y sincronización cloud.
 
-El sorteo ya consume el `TeamBalancer` extraído y permite Strategy `count`/`rating`. El bridge de compatibilidad expone temporalmente los módulos a pantallas clásicas, pero no contiene reglas de negocio nuevas. Se corrigió además el flujo cloud para ofrecer la preservación del snapshot local antes de reemplazarlo por la copia remota.
+Las pantallas de **Liga**, **configuración/importación de Liga**, **Editor**, **Entrenador** y **Sorteo** ya delegan sus reglas a `domain`/`application` mediante las facades temporales del composition root. Esos archivos salieron de sus excepciones de tamaño legacy. Tests arquitectónicos impiden volver a copiar parsers, balanceadores, standings o transformaciones de lineup/coach en presentación.
 
-La calidad ahora incluye pruebas basadas en invariantes para round-robin y balance, mutation smoke de reglas sensibles, tests de contratos, gates de dirección/ciclos/globals, pruebas de concurrencia real entre pestañas, métricas Ca/Ce/I/A/D y presupuestos de tamaño. Presentación nueva no puede superar 500 líneas; core nuevo, 300. Los archivos heredados grandes tienen techos congelados para impedir crecimiento mientras se reducen.
+IndexedDB y Supabase son adapters. Clock, random, timers, almacenamiento y remotos son sustituibles en tests. La sincronización cloud preserva/exporta el snapshot local antes del reemplazo destructivo. Copa invalida resultados de rondas posteriores cuando cambia un ganador previo, evitando scores asociados a equipos antiguos.
 
-Se añadieron ADRs para arquitectura feature-first, puertos/adapters y bridge, FIRST/cobertura/mutación, persistencia/rollback y métricas de paquetes.
+La calidad incluye pruebas basadas en invariantes, mutation smoke, contract tests, gates de dirección/ciclos/globals, concurrencia real entre pestañas, métricas Ca/Ce/I/A/D, source budgets, ADRs y Definition of Done.
 
-## Deuda de migración deliberadamente visible
+## Deuda visible restante
 
-`page-league.jsx`, `page-editor.jsx`, `page-coach.jsx`, `page-share.jsx` y algunas pantallas auxiliares siguen siendo componentes heredados grandes. La lógica reutilizable ya tiene hogar fuera de ellos, pero aún contienen wiring/UI y algunas transformaciones duplicadas. No se los marca como “terminados”: aparecen en el reporte `metrics:source` hasta quedar por debajo del objetivo de 500 líneas y hasta que el bridge pueda eliminarse.
+El objetivo global sigue siendo 500 líneas. Las únicas excepciones de presentación que permanecen registradas en `scripts/source-quality.mjs` son áreas heredadas que no formaban el núcleo de negocio de esta pasada: compartir, home, participant guard y escenas de promo. Tienen techo congelado: no pueden crecer y deben salir de esa lista al ser trabajadas. Core nuevo conserva límite de 300 líneas.
 
-La regla es monotónica: esos archivos no pueden crecer por encima de su techo actual y cualquier trabajo funcional nuevo debe usar los módulos extraídos. No se introducen nuevos globals ni nuevas reglas dentro del bridge.
+`legacy-bridge.js` sigue siendo temporal porque las pantallas se cargan como scripts clásicos y consumen React/servicios globales existentes. No contiene reglas de negocio y no se permite agregar nuevas facades fuera de ese composition root. Su eliminación completa requiere migrar el sistema de entradas de presentación a módulos nativos; se mantiene como deuda explícita, no como arquitectura objetivo.
 
 ## Validación
 
-La primera pasada fue ejecutada anteriormente con 33 tests unitarios/de contrato + 7 de arquitectura y 100% line/branch/function sobre su alcance de 14 módulos. Desde entonces el alcance aumentó sustancialmente; por eso ese porcentaje histórico **no se reutiliza** para afirmar cobertura de la segunda pasada.
+La primera pasada se ejecutó con 33 tests unitarios/de contrato + 7 de arquitectura y 100% line/branch/function sobre el alcance de 14 módulos de ese momento. El alcance actual es mayor, por lo que ese porcentaje histórico no se reutiliza.
 
-La segunda pasada agrega pruebas y gates al repositorio, pero en este entorno no se volvió a ejecutar `npm ci`, Babel completo, ESLint, Prettier ni Playwright. La validación de entrega requerida es:
+En esta segunda pasada los tests/gates fueron agregados al repositorio pero este entorno no volvió a ejecutar `npm ci`, Babel completo, ESLint, Prettier ni Playwright. Para validar una entrega ejecutar:
 
 ```sh
 npm run format
@@ -32,4 +32,4 @@ npm run test:functional
 npm run test:e2e
 ```
 
-`test:supabase` queda fuera de FIRST y solo debe ejecutarse con staging explícito. No se agregó GitHub Actions.
+`test:supabase` queda separado y solo debe apuntar a staging. No se agregó GitHub Actions.

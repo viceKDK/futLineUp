@@ -17,8 +17,7 @@ export function createCup(teams, { shuffle = false, randomize = (values) => valu
   if (![4, 8, 16, 32].includes(teams?.length)) throw new Error("La copa requiere 4, 8, 16 o 32 equipos");
   const clean = teams.map((team) => String(team || "").trim());
   if (clean.some((team) => !team)) throw new Error("Todos los equipos deben tener nombre");
-  const normalized = clean.map((team) => team.toLocaleLowerCase());
-  if (new Set(normalized).size !== clean.length) throw new Error("No puede haber equipos repetidos");
+  if (new Set(clean.map((team) => team.toLocaleLowerCase())).size !== clean.length) throw new Error("No puede haber equipos repetidos");
   return { size: clean.length, teams: shuffle ? randomize(clean) : clean, matches: {} };
 }
 
@@ -50,6 +49,14 @@ export function cupRoundLabel(round, total) {
 
 export function updateCupMatch(cup, key, patch) {
   if (!cup?.matches || typeof key !== "string") throw new Error("Copa inválida");
-  const previous = cup.matches[key] || {};
-  return { ...cup, matches: { ...cup.matches, [key]: { ...previous, ...patch } } };
+  const [roundText] = key.split("-");
+  const round = Number(roundText);
+  if (!Number.isInteger(round) || round < 0) throw new Error("Partido de copa inválido");
+  const matches = {};
+  for (const [existingKey, value] of Object.entries(cup.matches)) {
+    const existingRound = Number(existingKey.split("-")[0]);
+    if (existingRound <= round) matches[existingKey] = value;
+  }
+  matches[key] = { ...(cup.matches[key] || {}), ...patch };
+  return { ...cup, matches };
 }
