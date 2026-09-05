@@ -16,3 +16,21 @@ test("draw page delegates balancing and lineup mode policy", async () => {
   assert.match(source, /fcLineup\.chooseModeForPlayerCount/);
   assert.doesNotMatch(source, /function\s+(?:countBalance|ratingBalance|fisherYates)\b/);
 });
+
+test("coach page delegates business rules to coach domain", async () => {
+  const source = await readFile("src/features/coach/presentation/page-coach.jsx", "utf8");
+  assert.match(source, /window\.fcCoachDomain/);
+  for (const name of ["attendancePct", "createSession", "createEvaluation", "setPlayerAttribute", "addObjective", "coachOverview"]) {
+    assert.match(source, new RegExp(`D\\.${name}`));
+  }
+  assert.doesNotMatch(source, /function\s+inLastDays\b/);
+});
+
+test("editor delegates assignment/free-position/team snapshot rules to lineup domain", async () => {
+  const source = await readFile("src/features/lineup/presentation/page-editor.jsx", "utf8");
+  assert.match(source, /window\.fcLineup/);
+  for (const name of ["resizeAssignments", "assignPlayer", "swapSlots", "autoFillAssignments", "moveFreePosition", "createTeamEntry"]) {
+    assert.match(source, new RegExp(`L\\.${name}`));
+  }
+  assert.doesNotMatch(source, /const\s+autoFill\s*=\s*\(\)\s*=>\s*\{\s*setIds\(\(ids\)\s*=>\s*\{/s);
+});

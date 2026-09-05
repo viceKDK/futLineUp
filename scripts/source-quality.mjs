@@ -4,8 +4,6 @@ import { listFiles } from "./source-files.mjs";
 
 export const LEGACY_PRESENTATION_CEILINGS = Object.freeze({
   "src/features/league/presentation/page-league.jsx": 1200,
-  "src/features/coach/presentation/page-coach.jsx": 1000,
-  "src/features/lineup/presentation/page-editor.jsx": 900,
   "src/features/sharing/presentation/page-share.jsx": 900,
   "src/features/teams/presentation/page-home.jsx": 800,
   "src/features/league/presentation/league-participant-guard.jsx": 800,
@@ -18,7 +16,6 @@ export function measureSource(file, source) {
   const functions = (source.match(/\bfunction\b|=>/g) || []).length;
   return { file, lines, decisions, functions, decisionDensity: Number((decisions / Math.max(lines, 1)).toFixed(3)) };
 }
-
 export async function collectSourceQuality(root = process.cwd()) {
   const base = resolve(root);
   const files = (await listFiles(resolve(root, "src"))).filter((file) => /\.(?:js|jsx)$/.test(file));
@@ -27,23 +24,19 @@ export async function collectSourceQuality(root = process.cwd()) {
     return measureSource(file, await readFile(absolute, "utf8"));
   }));
 }
-
 export function budgetFor(file, { targetLines = 500, coreLines = 300 } = {}) {
   if (/\/(?:domain|application|infrastructure)\//.test(file)) return coreLines;
   return LEGACY_PRESENTATION_CEILINGS[file] || targetLines;
 }
-
 export function budgetViolations(metrics, options = {}) {
   return metrics.flatMap((metric) => {
     const max = budgetFor(metric.file, options);
     return metric.lines > max ? [{ ...metric, max }] : [];
   });
 }
-
 export function migrationDebt(metrics, targetLines = 500) {
   return metrics.filter((metric) => metric.lines > targetLines).map((metric) => ({ ...metric, target: targetLines }));
 }
-
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replaceAll("\\", "/"))) {
   const metrics = await collectSourceQuality();
   const violations = budgetViolations(metrics);
