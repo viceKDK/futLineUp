@@ -1,5 +1,6 @@
 import { readdir, stat } from "node:fs/promises";
 import { resolve, relative } from "node:path";
+import { nativeModules } from "./source-files.mjs";
 
 export const releaseRoots = [
   "futbolClub.html",
@@ -31,5 +32,7 @@ export async function collectReleaseFiles(root) {
     if ((await stat(absolute)).isDirectory()) await visit(absolute);
     else files.push(item);
   }
-  return [...new Set(files)].sort();
+  // Native imports are runtime assets. Do not include all of src blindly:
+  // local-config.js and other root-level private configuration stay excluded.
+  return [...new Set([...files, ...(await nativeModules(root))])].sort();
 }

@@ -5,6 +5,7 @@ build/
 test-results/
 playwright-report/
 .playwright-mcp/
+coverage/
 src/local-config.js
 .DS_Store
 Thumbs.db

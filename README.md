@@ -1,136 +1,110 @@
 # futbolClub
 
-Aplicación web para crear alineaciones de fútbol, organizar planteles y sorteos, registrar el seguimiento de jugadores y administrar competencias amateur (ligas y copas).
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f.svg)](LICENSE)
-[![Branch](https://img.shields.io/badge/branch-main-2ea44f.svg)](https://github.com/viceKDK/futLineUp/tree/main)
-[![Node](https://img.shields.io/badge/node-%3E%3D18-2ea44f.svg)](package.json)
+Aplicación web para crear alineaciones de fútbol, organizar planteles y sorteos, registrar el seguimiento de jugadores y administrar competencias amateur. El modo invitado funciona con persistencia local; cuenta y sincronización mediante Supabase son opcionales.
 
 ![Dashboard de futbolClub](./screenshots/01-home.png)
 
-## Descripción
+## Desarrollo y calidad
 
-futbolClub reúne tres experiencias dentro de una misma aplicación:
+Usar Node de `.nvmrc` (22.16.0) y npm. Las pruebas del núcleo no requieren descargar dependencias:
 
-- **Amigos:** creación de equipos, formaciones, sorteos, camisetas, escudos y contenido para compartir.
-- **Entrenador:** fichas de jugadores, entrenamientos, asistencia, evaluaciones y objetivos.
-- **Liga amateur:** múltiples competencias en paralelo (ligas y copas), calendario, resultados, tabla de posiciones y cuadros de eliminación directa.
+```sh
+npm test
+npm run quality:core
+```
 
-La aplicación funciona en modo invitado con persistencia local: crear una cuenta nunca bloquea el editor, el sorteo ni los enlaces compartidos. La autenticación (email/contraseña o Google) y la sincronización entre dispositivos pueden habilitarse opcionalmente mediante Supabase.
+Para compilar, servir y ejecutar la aplicación completa:
 
-## Funcionalidades principales
-
-### Cuenta
-
-- Pantalla de login/registro en la primera visita, con email/contraseña, Google y recuperar contraseña.
-- Botón "Continuar sin cuenta" siempre disponible — no es obligatorio crear una cuenta para nada.
-- Acceso posterior a "Cuenta y datos" desde el ícono de perfil en la barra lateral.
-
-### Equipos y alineaciones
-
-- Modalidades Fut 5, 6, 7, 8 y 11.
-- Formaciones predefinidas y posicionamiento libre.
-- Arrastre por eventos de puntero (confiable en mouse, trackpad y touch, sin depender del drag-and-drop nativo del navegador) y asignación mediante click o toque.
-- Titulares, suplentes y capitán.
-- Fotos, dorsales, posiciones y pierna hábil.
-- Guardado y reapertura completa de cada alineación.
-
-### Organización
-
-- Sorteo balanceado de dos, tres o cuatro equipos, con arrastre entre equipos y "Sorteo desde 0" para armar planteles temporales sin tocar el plantel real.
-- Registro de partidos, resultados y goleadores.
-- Diseño de camisetas: titular y alternativa por equipo, 4 diseños base, presets con colores a juego, contraste automático del dorsal según el color de la camiseta.
-- Escudos de equipo opcionales: generados automáticamente con colores e iniciales, foto propia, letras editables, o sin escudo — con su propio editor visual y presets.
-- Vista de formación propia contra rival, con escudos en el enfrentamiento.
-- Backup e importación JSON.
-- Carga rápida de planteles desde texto.
-
-### Entrenador
-
-- Fichas individuales de jugadores.
-- Sesiones de entrenamiento y asistencia.
-- Evaluaciones por entrenamiento o partido.
-- Fortalezas, aspectos por mejorar y próximos objetivos.
-- Historial básico de evolución.
-
-### Liga amateur
-
-- Múltiples competencias en paralelo (Apertura, Clausura, copas amistosas, distintas temporadas), cada una con su propia tabla, fixture y cuadro de copa.
-- Calendario de partidos con filtro por rango de fechas.
-- Registro de resultados y tabla automática con puntos y diferencia de gol.
-- Cuadro de eliminación directa (Copa) de 4 a 32 equipos, con definición por penales en caso de empate.
-- Autocompletado de nombres de equipo a partir de los equipos guardados.
-
-### Compartir y exportar
-
-- Diseños Card, Lista y Stories 9:16.
-- Exportación PNG, PDF e ICS.
-- Enlaces autocontenidos con la alineación.
-- WhatsApp, Telegram, Instagram, X y Web Share API.
-
-### Instalación y modo offline
-
-- Manifest e icono para instalar futbolClub como aplicación.
-- Shell local disponible con conexión limitada después de la primera carga.
-- Aviso en la app cuando hay una versión nueva disponible para actualizar.
-- Cuenta opcional: los datos del invitado permanecen en su dispositivo.
-- Cobertura E2E del modo Libre guardado y compartido en un navegador limpio.
-
-## Capturas
-
-| Login / registro | Camisetas | Escudos | Liga: Copa | Entrenador |
-|---|---|---|---|---|
-| [![Login](screenshots/12-auth.png)](screenshots/12-auth.png) | [![Camisetas](screenshots/05-kits.png)](screenshots/05-kits.png) | [![Escudos](screenshots/05b-crests.png)](screenshots/05b-crests.png) | [![Cuadro de Copa](screenshots/10c-league-cup.png)](screenshots/10c-league-cup.png) | [![Entrenador](screenshots/09-coach.png)](screenshots/09-coach.png) |
-
-La galería completa (más de 15 pantallas y estados de la app) está disponible en [screenshots/README.md](screenshots/README.md).
-
-## Ejecución local
-
-Requisitos:
-
-- Node.js 18 o superior.
-- npm.
-- Chrome y Edge para ejecutar las pruebas Playwright configuradas en el proyecto (`chromium` y `msedge`).
-
-```powershell
-npm install
+```sh
+npm ci
 npm run serve
 ```
 
-Abrir `http://localhost:8765/futbolClub.html`.
+Abrir `http://localhost:8765/futbolClub.html`. `preserve` compila el JSX antes de iniciar el servidor. Las bibliotecas de ejecución se conservan en `vendor/`; el navegador no compila JSX.
 
-El código JSX se compila antes de servir o probar la aplicación. Las librerías de ejecución se guardan en `vendor/`, de modo que la interfaz no depende de un CDN para iniciar.
-
-## Scripts
-
-```powershell
-npm run serve             # servidor local en el puerto 8765
-npm run build:client      # compila src/*.jsx en compiled/*.js
-npm run vendor:sync       # actualiza las librerías locales desde node_modules
-npm test                  # suite completa de Playwright (Chrome)
-npm run test:functional   # flujo funcional rápido en Chromium
-npm run test:supabase     # integración optativa contra Supabase de staging
-npm run lint              # análisis estático del código
-npm run format:check      # verifica el formato sin modificar archivos
-npm run test:edge         # suite completa en Edge (chequeo cross-browser)
-npm run test:headed       # pruebas con navegador visible
-npm run screenshots       # regenera la galería de capturas desktop
-npm run screenshots:mobile  # capturas a ancho de teléfono (390×844)
+```sh
+npm run test:unit           # pruebas rápidas y contratos sin navegador
+npm run test:architecture   # fronteras, ciclos e inventario offline
+npm run test:coverage       # umbrales 95% líneas / 90% ramas / 95% funciones del núcleo
+npm run test:functional     # build + selección de pruebas Chromium
+npm run test:e2e            # suite Playwright y sus proyectos configurados
+npm run test:edge           # compatibilidad con Edge instalado
+npm run test:headed         # navegador visible
+npm run lint
+npm run format:check
+npm run format
+npm run quality            # formato + lint + arquitectura + coverage + funcional
+npm run security:audit     # auditoría de dependencias, separada de FIRST
+npm run build:client
+npm run vendor:sync
+npm run screenshots
+npm run screenshots:mobile
 ```
 
-## Supabase y Google Login
+**Cambio de comando:** `npm test` ejecuta ahora la suite unitaria. La antigua ejecución de Playwright está en `npm run test:e2e`. Instalar los navegadores de Playwright/Edge correspondientes para esa suite. No confundir el porcentaje del núcleo con cobertura de todas las pantallas.
 
-La nube es opcional. Sin configuración externa, futbolClub continúa funcionando con `localStorage` y el botón "Continuar sin cuenta".
+## Arquitectura
 
-Para habilitar autenticación y sincronización:
+```text
+src/
+├── app/                       # composición y puente de compatibilidad
+├── features/
+│   ├── backup/                # domain + application
+│   ├── lineup/                # domain + presentation
+│   ├── draw/                  # domain + presentation
+│   ├── sharing/               # application + presentation
+│   ├── auth/                  # infrastructure + presentation
+│   ├── teams/                 # presentation
+│   ├── kits/                  # presentation
+│   ├── crests/                # presentation
+│   ├── rival/                 # presentation
+│   ├── settings/              # presentation
+│   ├── coach/                 # presentation
+│   └── league/                # presentation
+├── shared/
+│   ├── domain/
+│   ├── application/
+│   ├── infrastructure/
+│   └── presentation/
+└── bootstrap.js, auto-backup.js, observability.js, configuración y promo heredados
+scripts/                       # build, inventario, controles y release
+compiled/                      # salidas estables y manifiesto offline generado
+tests/
+├── unit/
+├── contracts/
+├── architecture/
+└── *.spec.js                  # integración y E2E existentes
+supabase/                      # esquema, migraciones y verificación de seguridad
+docs/
+```
 
-1. Crear un proyecto en Supabase.
-2. Ejecutar [supabase/schema.sql](supabase/schema.sql) en el SQL Editor.
-3. Habilitar Google (y/o email/contraseña) como proveedor de autenticación.
-4. Copiar `src/local-config.example.js` como `src/local-config.js`.
-5. Completar la URL y la clave pública `anon` del proyecto.
+El antiguo `data.jsx` se divide en reglas puras, casos de uso, adaptadores y presentación. Las pantallas JSX se agrupan por funcionalidad y mantienen sus APIs mediante `src/app/legacy-bridge.js`. Esto es una migración progresiva: las pantallas grandes, el scheduler automático y la integración cloud aún tienen deuda explícita.
 
-Los cambios de base de datos están versionados en `supabase/migrations/`. Después de aplicarlos en un entorno de staging, ejecutar `supabase/verify-security.sql` y luego la prueba en vivo con estas variables de entorno:
+El manifiesto `scripts/client-entries.mjs` resuelve las rutas nuevas sin cambiar las URLs compiladas de las pantallas. La entrada de datos usa ES Modules; sus consumidores clásicos esperan con `defer`. El service worker incluye automáticamente los módulos nuevos mediante `compiled/module-precache.js`. Publicar fuentes, compilados y service worker juntos.
+
+Detalles: [Arquitectura y OCP](docs/ARCHITECTURE.md), [FIRST y coverage](docs/TESTING.md), [validación de esta migración](docs/VALIDATION_ARCHITECTURE.md) y [contribuciones](CONTRIBUTING.md).
+
+## Funcionalidades del producto
+
+**Amigos y alineaciones:** modalidades Fut 5, 6, 7, 8 y 11, formaciones y posiciones libres, arrastre por puntero, titulares, suplentes, capitán, fotos, dorsales y pierna hábil. Guardado/reapertura de equipos y carga rápida de planteles desde texto.
+
+**Organización:** sorteo balanceado de dos a cuatro equipos, sorteo temporal desde cero, registro de partidos/resultados/goleadores, camisetas titular y alternativa con cuatro diseños base, presets y contraste del dorsal. Escudos automáticos, foto propia, letras editables o sin escudo. Comparación contra rival.
+
+**Entrenador:** fichas individuales, sesiones, asistencia, evaluaciones, fortalezas, objetivos e historial básico de evolución.
+
+**Liga amateur:** múltiples competencias y temporadas, fixture, calendario filtrable, resultados, tabla automática y copas de 4 a 32 equipos con penales. Nombres de equipos autocompletados desde los guardados.
+
+**Compartir:** diseños Card, Lista y Stories 9:16, PNG, PDF, ICS, enlaces autocontenidos, WhatsApp, Telegram, Instagram, X y Web Share API. Backups JSON y recuperación. El modo local continúa disponible sin crear una cuenta.
+
+**PWA:** manifest, icono, shell offline tras la primera carga y aviso de nueva versión. El funcionamiento offline depende de publicar también todos los módulos de `src/` que importa la entrada de datos.
+
+## Cuenta opcional y Supabase
+
+Se conserva login/registro, Google, recuperación de contraseña y el botón de continuar sin cuenta. Sin configuración externa, la app usa almacenamiento local.
+
+Para habilitar la nube, crear un proyecto Supabase, ejecutar [el esquema](supabase/schema.sql), aplicar las migraciones correspondientes de `supabase/migrations/` y habilitar los proveedores de autenticación. Copiar `src/local-config.example.js` a `src/local-config.js` y completar la URL y clave pública `anon`. Nunca guardar claves privadas en el repositorio.
+
+Verificar seguridad con `supabase/verify-security.sql`. La integración real es optativa:
 
 ```powershell
 $env:SUPABASE_TEST_URL="https://proyecto-de-staging.supabase.co"
@@ -140,71 +114,14 @@ $env:SUPABASE_TEST_PASSWORD="contraseña-de-pruebas"
 npm run test:supabase
 ```
 
-La prueba restaura el backup previo del usuario al finalizar. Nunca debe apuntarse a producción.
+Esta prueba modifica datos y restaura el backup previo de ese usuario. **Nunca apuntarla a producción.** No forma parte del circuito FIRST ni es necesaria para usar la aplicación como invitado.
 
-`src/local-config.js` está ignorado por Git. No deben guardarse secretos ni claves privadas en el repositorio.
+## Documentación y capturas
 
-## Tecnologías
+[Plan de implementación](docs/PLAN_IMPLEMENTACION.md) · [Estado del producto](docs/ESTADO_IMPLEMENTACION.md) · [Futura aplicación móvil](docs/ARQUITECTURA_MOVIL.md) · [Galería de capturas](screenshots/README.md) · [Marketing](marketing/README.md) · [Consideraciones futuras](futuras-consideraciones-a-implementar.md).
 
-- React 18 mediante archivos UMD locales.
-- Babel como herramienta de compilación, sin compilador JSX en producción.
-- SVG para cancha, camisetas y escudos.
-- html2canvas y jsPDF para exportaciones.
-- localStorage para el modo local.
-- Service Worker y Web App Manifest para instalación, uso con conexión limitada y aviso de actualización.
-- Supabase Auth, PostgreSQL y Storage como backend opcional.
-- Playwright para pruebas E2E y capturas.
-
-## Estructura del proyecto
-
-```text
-futLineUp/
-├── futbolClub.html
-├── service-worker.js
-├── styles/
-│   ├── app.css
-│   └── pages.css
-├── src/
-│   ├── bootstrap.js
-│   ├── data.jsx
-│   ├── icons.jsx
-│   ├── pitch.jsx
-│   ├── kits.jsx
-│   ├── sidebar.jsx
-│   ├── supabase.jsx
-│   ├── page-auth.jsx
-│   ├── page-home.jsx
-│   ├── page-mode.jsx
-│   ├── page-editor.jsx
-│   ├── page-draw.jsx
-│   ├── page-kits.jsx
-│   ├── page-crests.jsx
-│   ├── page-rival.jsx
-│   ├── page-share.jsx
-│   ├── platform-charts.jsx
-│   ├── page-settings.jsx
-│   ├── page-coach.jsx
-│   ├── page-league.jsx
-│   └── platform-mount.jsx
-├── supabase/
-│   ├── schema.sql
-│   ├── verify-security.sql
-│   └── migrations/
-├── tests/
-├── screenshots/
-├── marketing/
-└── docs/
-```
-
-## Documentación
-
-- [Plan de implementación](docs/PLAN_IMPLEMENTACION.md)
-- [Estado actual](docs/ESTADO_IMPLEMENTACION.md)
-- [Galería de capturas](screenshots/README.md)
-- [Piezas de marketing](marketing/README.md)
-- [Futuras consideraciones a implementar](futuras-consideraciones-a-implementar.md)
-- [Preparación para la futura aplicación móvil](docs/ARQUITECTURA_MOVIL.md)
+Tecnologías: React 18, Babel, SVG, html2canvas, jsPDF, almacenamiento local, Service Worker y Supabase opcional. Pruebas nativas Node y Playwright.
 
 ## Licencia
 
-Este proyecto se distribuye bajo la [Licencia MIT](LICENSE).
+[MIT](LICENSE).
