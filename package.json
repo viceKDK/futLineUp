@@ -5,9 +5,7 @@
   "type": "module",
   "description": "Aplicación web para crear alineaciones, gestionar planteles y organizar fútbol amateur.",
   "license": "MIT",
-  "engines": {
-    "node": ">=18"
-  },
+  "engines": { "node": ">=18" },
   "scripts": {
     "serve": "http-server -p 8765 -c-1 .",
     "build:client": "node scripts/build-client.mjs",
@@ -16,6 +14,10 @@
     "test:unit": "node scripts/test-unit.mjs",
     "test:coverage": "node scripts/test-unit.mjs --coverage",
     "test:architecture": "node scripts/test-architecture.mjs",
+    "test:mutation": "node scripts/mutation-smoke.mjs",
+    "test:source-budgets": "node scripts/source-quality.mjs --check",
+    "metrics:packages": "node --experimental-vm-modules scripts/package-metrics.mjs",
+    "metrics:source": "node scripts/source-quality.mjs",
     "pretest:e2e": "npm run build:client",
     "test:e2e": "playwright test",
     "test:headed": "npm run build:client && playwright test --headed",
@@ -31,9 +33,9 @@
     "vendor:sync": "node scripts/sync-vendor.mjs",
     "monitor:availability": "node scripts/health-check.mjs",
     "release:manifest": "npm run build:client && node scripts/release-manifest.mjs",
-    "release:verify": "node scripts/verify-release.mjs",
+    "release:verify": "npm run build:client && node scripts/verify-release.mjs",
     "rollback:plan": "node scripts/rollback-plan.mjs",
-    "quality:core": "npm run test:architecture && npm run test:coverage",
+    "quality:core": "npm run test:architecture && npm run test:coverage && npm run test:mutation && npm run test:source-budgets",
     "quality": "npm run format:check && npm run lint && npm run quality:core && npm run test:functional",
     "security:audit": "npm audit",
     "screenshots": "playwright test tests/screenshots.spec.js --reporter=list",
