@@ -1,0 +1,217 @@
+{
+  "baselineCommit": "b77403acdb3512167732e15652efee2df3b51b00",
+  "date": "2026-09-05",
+  "node": "v22.16.0",
+  "command": "node scripts/test-sharing.mjs --coverage",
+  "exitCode": 0,
+  "tests": {
+    "passed": 31,
+    "failed": 0
+  },
+  "scope": "Sharing domain/application/infrastructure + shared/domain/civil-date.js; not whole application",
+  "coverage": {
+    "totalLineCount": 615,
+    "totalBranchCount": 230,
+    "totalFunctionCount": 64,
+    "coveredLineCount": 615,
+    "coveredBranchCount": 224,
+    "coveredFunctionCount": 64,
+    "coveredLinePercent": 100,
+    "coveredBranchPercent": 97.3913043478261,
+    "coveredFunctionPercent": 100
+  },
+  "coverageFiles": [
+    {
+      "totalLineCount": 94,
+      "totalBranchCount": 32,
+      "totalFunctionCount": 14,
+      "coveredLineCount": 94,
+      "coveredBranchCount": 32,
+      "coveredFunctionCount": 14,
+      "coveredLinePercent": 100,
+      "coveredBranchPercent": 100,
+      "coveredFunctionPercent": 100,
+      "path": "src/features/sharing/application/share-service.js"
+    },
+    {
+      "totalLineCount": 43,
+      "totalBranchCount": 23,
+      "totalFunctionCount": 5,
+      "coveredLineCount": 43,
+      "coveredBranchCount": 23,
+      "coveredFunctionCount": 5,
+      "coveredLinePercent": 100,
+      "coveredBranchPercent": 100,
+      "coveredFunctionPercent": 100,
+      "path": "src/features/sharing/application/snapshot-service.js"
+    },
+    {
+      "totalLineCount": 88,
+      "totalBranchCount": 21,
+      "totalFunctionCount": 5,
+      "coveredLineCount": 88,
+      "coveredBranchCount": 21,
+      "coveredFunctionCount": 5,
+      "coveredLinePercent": 100,
+      "coveredBranchPercent": 100,
+      "coveredFunctionPercent": 100,
+      "path": "src/features/sharing/domain/calendar-event.js"
+    },
+    {
+      "totalLineCount": 195,
+      "totalBranchCount": 86,
+      "totalFunctionCount": 16,
+      "coveredLineCount": 195,
+      "coveredBranchCount": 80,
+      "coveredFunctionCount": 16,
+      "coveredLinePercent": 100,
+      "coveredBranchPercent": 93.02325581395348,
+      "coveredFunctionPercent": 100,
+      "path": "src/features/sharing/domain/share-model.js"
+    },
+    {
+      "totalLineCount": 20,
+      "totalBranchCount": 5,
+      "totalFunctionCount": 3,
+      "coveredLineCount": 20,
+      "coveredBranchCount": 5,
+      "coveredFunctionCount": 3,
+      "coveredLinePercent": 100,
+      "coveredBranchPercent": 100,
+      "coveredFunctionPercent": 100,
+      "path": "src/features/sharing/infrastructure/browser-download.js"
+    },
+    {
+      "totalLineCount": 77,
+      "totalBranchCount": 23,
+      "totalFunctionCount": 9,
+      "coveredLineCount": 77,
+      "coveredBranchCount": 23,
+      "coveredFunctionCount": 9,
+      "coveredLinePercent": 100,
+      "coveredBranchPercent": 100,
+      "coveredFunctionPercent": 100,
+      "path": "src/features/sharing/infrastructure/browser-exporters.js"
+    },
+    {
+      "totalLineCount": 33,
+      "totalBranchCount": 12,
+      "totalFunctionCount": 6,
+      "coveredLineCount": 33,
+      "coveredBranchCount": 12,
+      "coveredFunctionCount": 6,
+      "coveredLinePercent": 100,
+      "coveredBranchPercent": 100,
+      "coveredFunctionPercent": 100,
+      "path": "src/features/sharing/infrastructure/browser-share.js"
+    },
+    {
+      "totalLineCount": 32,
+      "totalBranchCount": 11,
+      "totalFunctionCount": 3,
+      "coveredLineCount": 32,
+      "coveredBranchCount": 11,
+      "coveredFunctionCount": 3,
+      "coveredLinePercent": 100,
+      "coveredBranchPercent": 100,
+      "coveredFunctionPercent": 100,
+      "path": "src/features/sharing/infrastructure/browser-time.js"
+    },
+    {
+      "totalLineCount": 33,
+      "totalBranchCount": 17,
+      "totalFunctionCount": 3,
+      "coveredLineCount": 33,
+      "coveredBranchCount": 17,
+      "coveredFunctionCount": 3,
+      "coveredLinePercent": 100,
+      "coveredBranchPercent": 100,
+      "coveredFunctionPercent": 100,
+      "path": "src/shared/domain/civil-date.js"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "src/app/mount-share.js",
+      "lines": 133,
+      "gitBlobSha": "205a1f10296dcb6dd6e233c42ec40cf53ddcba56"
+    },
+    {
+      "path": "src/features/sharing/application/share-service.js",
+      "lines": 94,
+      "gitBlobSha": "781fbd0c70c45085164a78c006bcb764aa044e86"
+    },
+    {
+      "path": "src/features/sharing/application/snapshot-service.js",
+      "lines": 43,
+      "gitBlobSha": "d613eda467788d6c8ac802100ab2981dff08ee34"
+    },
+    {
+      "path": "src/features/sharing/domain/calendar-event.js",
+      "lines": 88,
+      "gitBlobSha": "a7a8a677b5386b47bf992c5c5e0f4926b901e8c0"
+    },
+    {
+      "path": "src/features/sharing/domain/share-model.js",
+      "lines": 195,
+      "gitBlobSha": "82ae2ac6bcdb2d4460107ad6982ff77d065b0498"
+    },
+    {
+      "path": "src/features/sharing/infrastructure/browser-download.js",
+      "lines": 20,
+      "gitBlobSha": "992afd54dbab48e22b41414d33fbf9eff6a3b447"
+    },
+    {
+      "path": "src/features/sharing/infrastructure/browser-exporters.js",
+      "lines": 77,
+      "gitBlobSha": "564f645f918ac2a7806dc71daf7dd7bb61970cd3"
+    },
+    {
+      "path": "src/features/sharing/infrastructure/browser-share.js",
+      "lines": 33,
+      "gitBlobSha": "1c11e6aa40face9672dcf3b45028a98f326d0e83"
+    },
+    {
+      "path": "src/features/sharing/infrastructure/browser-time.js",
+      "lines": 32,
+      "gitBlobSha": "9baa5b8a736d88b1eb02e4ed787b3cd6b486bb6e"
+    },
+    {
+      "path": "src/features/sharing/presentation/share-controls.js",
+      "lines": 183,
+      "gitBlobSha": "dfd173426cd26bbc5de235277c9e5dafb14851a1"
+    },
+    {
+      "path": "src/features/sharing/presentation/share-page.js",
+      "lines": 348,
+      "gitBlobSha": "61fdc9bcd0285fce9b8d2f9907a7484c6922c77f"
+    },
+    {
+      "path": "src/features/sharing/presentation/share-preview.js",
+      "lines": 152,
+      "gitBlobSha": "e802da0c8e7c0e8b63c26e0c55533286a1989b06"
+    },
+    {
+      "path": "src/shared/domain/civil-date.js",
+      "lines": 33,
+      "gitBlobSha": "be4347b112d974fa9fb7a81194ceee0163bbbb73"
+    }
+  ],
+  "additionalChecks": [
+    "Native JS syntax (node --check)",
+    "New source size budgets: <=300 core and <=500 presentation/app",
+    "Native entry generation matches committed loader",
+    "Offline inventory includes sharing dependencies"
+  ],
+  "formatTool": "Prettier 3.10.0-dev artifact from upstream; not pinned project formatter",
+  "notExecuted": [
+    "Full repository quality:core",
+    "npm ci (npm registry lookup failed EAI_AGAIN)",
+    "Pinned Babel full client build",
+    "Pinned Prettier and ESLint",
+    "React DOM/hook rendering and actual browser E2E",
+    "Real canvas/PDF downloads and PWA lifecycle",
+    "Supabase live integration"
+  ],
+  "presentationTestScope": "Stateless element-tree contracts with a createElement test double, plus startup port tests; not React renderer tests"
+}
