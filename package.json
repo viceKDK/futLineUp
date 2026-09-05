@@ -26,7 +26,7 @@
     "test:backups": "npm run build:client && playwright test tests/backup-recovery.spec.js --project=chromium",
     "perf:vitals": "playwright test tests/web-vitals.spec.js --project=chromium",
     "pretest:functional": "npm run build:client",
-    "test:functional": "playwright test tests/smoke.spec.js tests/guest-free-mode.spec.js tests/mobile-ux.spec.js tests/schema-security.spec.js tests/static-quality.spec.js tests/backup-recovery.spec.js tests/web-vitals.spec.js tests/runtime-architecture.spec.js --project=chromium",
+    "test:functional": "playwright test tests/smoke.spec.js tests/guest-free-mode.spec.js tests/mobile-ux.spec.js tests/schema-security.spec.js tests/static-quality.spec.js tests/backup-recovery.spec.js tests/web-vitals.spec.js tests/runtime-architecture.spec.js tests/storage-concurrency.spec.js tests/draw-strategy.spec.js --project=chromium",
     "lint": "eslint src tests scripts service-worker.js playwright.config.js",
     "format": "prettier --write src tests scripts service-worker.js playwright.config.js eslint.config.js package.json",
     "format:check": "prettier --check src tests scripts service-worker.js playwright.config.js eslint.config.js package.json",

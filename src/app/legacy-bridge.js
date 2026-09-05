@@ -4,6 +4,7 @@ import { installBrowserFiles } from "../shared/presentation/browser-files.js";
 import * as leagueStandings from "../features/league/domain/standings.js";
 import * as leagueFixture from "../features/league/domain/fixture.js";
 import * as leagueCsv from "../features/league/domain/csv.js";
+import * as leagueCup from "../features/league/domain/cup.js";
 import * as lineup from "../features/lineup/domain/lineup-draft.js";
 import * as coach from "../features/coach/domain/coach.js";
 import * as draw from "../features/draw/domain/team-balancer.js";
@@ -18,7 +19,7 @@ installBrowserRuntime(window);
 installReactHelpers(window, window.React, window.ReactDOM);
 installBrowserFiles(window);
 Object.assign(window, {
-  fcLeague: Object.freeze({ ...leagueStandings, ...leagueFixture, ...leagueCsv }),
+  fcLeague: Object.freeze({ ...leagueStandings, ...leagueFixture, ...leagueCsv, ...leagueCup }),
   fcLineup: Object.freeze({ ...lineup }),
   fcCoachDomain: Object.freeze({ ...coach }),
   fcDrawDomain: Object.freeze({ ...draw }),

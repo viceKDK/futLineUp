@@ -24,8 +24,11 @@
   window.fcCloud = {
     uploadLocal: cloud.upload,
     async downloadToLocal() {
-      const result = await cloud.download();
-      window.downloadJSON(result.localBefore, `futbolclub-antes-de-sincronizar-${new Date().toISOString().slice(0, 10)}.json`);
+      const result = await cloud.restoreRemote({
+        preserveLocal: async (snapshot) => {
+          window.downloadJSON(snapshot, `futbolclub-antes-de-sincronizar-${new Date().toISOString().slice(0, 10)}.json`);
+        },
+      });
       return result.updatedAt;
     },
   };

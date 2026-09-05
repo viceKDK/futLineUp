@@ -13,6 +13,7 @@ self.FC_MODULE_PRECACHE = [
   "./src/features/draw/domain/shuffle.js",
   "./src/features/draw/domain/team-balancer.js",
   "./src/features/league/domain/csv.js",
+  "./src/features/league/domain/cup.js",
   "./src/features/league/domain/fixture.js",
   "./src/features/league/domain/standings.js",
   "./src/features/lineup/domain/catalog.js",
