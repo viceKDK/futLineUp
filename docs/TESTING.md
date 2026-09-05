@@ -1,49 +1,49 @@
-# Pruebas, FIRST y cobertura
+# Estrategia de pruebas
 
-## Comandos
+## FIRST
 
-Usar Node 22.16.0 (`.nvmrc`). El runtime mantiene el rango previo del paquete; los umbrales nativos de cobertura requieren Node >=22.8.
+La suite primaria del núcleo usa `node:test` y no necesita navegador, red, servidor ni credenciales. Cada caso crea su propio estado. Clock, random, timers, repositories y remote adapters son inyectables. Las assertions validan comportamiento y error paths; un fallo retorna código no cero.
 
 ```sh
-npm test                    # unitarias y contratos; no instala ni abre navegador
-npm run test:architecture   # imports estáticos, capas, ciclos e inventario offline
-npm run test:coverage       # 95% líneas, 90% ramas, 95% funciones como mínimos globales del núcleo
-npm run quality:core        # arquitectura + cobertura, sin red ni npm ci
-npm ci
-npm run format:check
-npm run lint
-npm run test:functional     # build + selección de pruebas Chromium, sin Supabase real
-npm run test:e2e            # suite Playwright, incluyendo proyectos configurados
-npm run quality            # formato, lint, núcleo y selección funcional
-npm run security:audit     # auditoría de dependencias separada; requiere red
+npm test
+npm run test:architecture
+npm run test:coverage
+npm run test:mutation
+npm run test:source-budgets
+npm run quality:core
 ```
 
-`npm test` ya no es el alias de Playwright: ese comportamiento pasa a `test:e2e`. `testMatch: **/*.spec.js` impide que Playwright ejecute los tests nativos `.test.js`.
+`Timely` se aplica como regla de contribución: el comportamiento o bug debe tener una prueba que lo reproduzca antes de aceptar la implementación. La cobertura no prueba que TDD haya ocurrido.
 
-## FIRST en este repositorio
+## Cobertura
 
-**Fast:** dominio, servicios y adaptadores se verifican con `node:test`, sin navegador, servidor ni instalación previa. La integración visual queda en otra suite.
+El inventario de cobertura incluye los módulos core nativos y los importa aunque no tengan un test dedicado, evitando que un archivo nuevo desaparezca del denominador. Los umbrales configurados son 95% líneas, 90% ramas y 95% funciones para ese alcance. No representan cobertura total de JSX/pantallas.
 
-**Independent:** cada prueba crea almacenes, runtimes y listeners propios. Se verifica el contrato de ambos adaptadores con los mismos casos. No compartir un singleton entre pruebas.
+El resultado histórico de 100% pertenecía a la primera extracción de 14 módulos. La segunda pasada amplió el alcance; hay que volver a ejecutar el reporte antes de citar un porcentaje nuevo.
 
-**Repeatable:** inyectar reloj, secuencia aleatoria y puertos. Se prueban fallos de cuota, bloqueo de lectura y rollback con dobles locales. No depender de red, credenciales, fechas del día ni pausas arbitrarias.
+## Propiedades e invariantes
 
-**Self-validating:** assertions comprueban resultados, excepciones, preservación de datos y notificaciones. Cualquier fallo o umbral insuficiente devuelve salida distinta de cero. También se prueban infracciones deliberadas del guardián arquitectónico.
+`feature-domain.test.js` no prueba solamente ejemplos felices: recorre distintos tamaños para round-robin y balance, verifica unicidad de pares, conservación de jugadores, diferencia máxima de tamaños, locks y determinismo con random inyectado. Copa, CSV, lineups y Coach cubren límites e inputs inválidos.
 
-**Timely:** escribir el caso que reproduce el defecto o la nueva regla antes de implementarla y conservarlo como regresión. La cobertura no demuestra que se haya seguido TDD ni certifica este principio por sí sola.
+## Mutation smoke
 
-## Qué se mide y qué no
+`npm run test:mutation` aplica alteraciones reales sobre reglas sensibles (orden de puntos, frontera temporal, unicidad en lineup). Cada mutante debe ser detectado por un invariante; sobrevivir hace fallar el comando. Es una señal complementaria, no un sustituto de una herramienta de mutación exhaustiva.
 
-El inventario incluye todos los módulos JavaScript nativos de `domain`, `application` e `infrastructure`, más `create-runtime.js` e `install-browser-runtime.js`. La prueba de inventario importa cada módulo para que un archivo sin pruebas no desaparezca del denominador. El runner usa exactamente ese inventario como lista de inclusión, también para subcarpetas nuevas.
+## Arquitectura y métricas
 
-Se generan `coverage/lcov.info` y `coverage/summary.json`. **No es cobertura global de la aplicación.** No incluye JSX heredado, hooks/UI, el bridge con efectos de arranque, los schedulers planos ni archivos generados. Los umbrales son agregados: revisar además cada archivo del reporte. No elevar un porcentaje eliminando módulos del inventario o excluyendo ramas difíciles.
+`tests/architecture` valida dirección, ciclos, globals, contratos, inventario offline, release assets y source budgets. `metrics:packages` produce Ca/Ce/I/A/D y candidatos SDP. `metrics:source` produce líneas, decisiones, funciones, deuda >500 y violaciones de techo.
 
-La validación de comportamiento cubre límites y claves peligrosas de JSON, Unicode y tamaño real en bytes, formatos de backup compatibles, extensiones, sorteos reproducibles, snapshots estables, suscripciones, almacenamiento fallido, recuperación con y sin fallos secundarios y contratos de persistencia.
+## Integración
 
-## Integración y seguridad
+Playwright conserva journeys existentes y agrega:
 
-Las pruebas `.spec.js` existentes se conservan. `runtime-architecture.spec.js` comprueba las APIs heredadas sobre el núcleo nuevo en el navegador. Las pruebas de PWA verifican la experiencia offline en su proyecto con service workers habilitados.
+- `runtime-architecture.spec.js`: compatibilidad del núcleo modular;
+- `storage-concurrency.spec.js`: propagación real entre dos pestañas;
+- `draw-strategy.spec.js`: Strategy count/rating desde UI;
+- backups/PWA/seguridad/mobile/web-vitals existentes.
 
-No ejecutar `test:supabase` contra producción. Requiere credenciales explícitas de staging y modifica datos de ese usuario. No es parte del circuito FIRST ni una condición del modo invitado.
+`npm run test:functional` incluye los casos críticos anteriores en Chromium. `npm run test:e2e` ejecuta la suite configurada. Supabase real queda separado en `test:supabase` y solo debe apuntar a staging explícito.
 
-Un informe honesto distingue pruebas ejecutadas, configuradas y pendientes. Sin ejecutar `npm ci`, build, lint y la suite de navegador no se puede afirmar que toda la calidad de entrega esté validada.
+## Política de reporte
+
+Distinguir siempre entre tests configurados y tests ejecutados. No declarar un build o porcentaje aprobado si el entorno no permitió correrlo. No se rebajan umbrales ni se excluyen módulos para lograr verde.

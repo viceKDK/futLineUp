@@ -1,94 +1,83 @@
-# Arquitectura y decisiones
+# Arquitectura
 
-## Alcance real
+## Dirección
 
-La extracción de `data.jsx` crea un núcleo ES Modules sin React ni estado global en dominio/aplicación. Las pantallas JSX existentes se organizan por funcionalidad, pero **moverlas no elimina automáticamente su deuda de diseño**. `src/app/legacy-bridge.js` mantiene temporalmente las APIs `window.db`, backups, snapshots, hooks y utilidades que esas pantallas consumen.
-
-No se introduce un contenedor de inyección, una jerarquía artificial de clases ni dependencias de producción nuevas. Las fábricas reciben objetos con contratos pequeños y devuelven APIs explícitas.
-
-## Organización
+`futbolClub` usa organización **feature-first con capas internas**. Una feature contiene solo las capas que realmente necesita:
 
 ```text
 src/
-  app/                         # Composición, puente temporal y montaje
+  app/                           # composition root + bridge temporal
   features/
-    backup/{domain,application}/
-    sharing/{application,presentation}/
-    draw/{domain,presentation}/
-    lineup/{domain,presentation}/
-    auth/{infrastructure,presentation}/
-    teams/presentation/
-    kits/presentation/
-    crests/presentation/
-    rival/presentation/
-    settings/presentation/
-    coach/presentation/
-    league/presentation/
-  shared/
-    domain/                    # JSON seguro, registro, formato puro
-    application/               # Store observable y escritura estricta
-    infrastructure/            # Storage local/memoria, codec Base64URL
-    presentation/              # Hooks, archivos del navegador, UI común
+    league/{domain,presentation}
+    lineup/{domain,presentation}
+    draw/{domain,presentation}
+    coach/{domain,presentation}
+    backup/{domain,application,infrastructure}
+    auth/{application,infrastructure,presentation}
+    sharing/{application,presentation}
+    ...
+  shared/{domain,application,infrastructure,presentation}
 ```
 
-`bootstrap.js`, `observability.js`, `auto-backup.js` y la configuración local conservan sus URLs actuales. Los archivos promocionales aún son scripts heredados. No deben convertirse en destino de nuevas reglas de negocio.
+Dominio importa dominio. Application coordina casos de uso y contratos. Infrastructure implementa puertos concretos. Presentation renderiza y traduce eventos de UI. `shared` nunca depende de una feature. `app` es el único lugar autorizado a componer implementaciones concretas y a mantener el bridge de compatibilidad.
 
-## Dependencias permitidas
+`tests/architecture` analiza imports reales, módulos inexistentes, ciclos, dependencias externas, browser globals en domain/application, publicación de facades y tamaño del core.
 
-Dominio solo importa dominio. Aplicación importa dominio/aplicación, nunca adaptadores ni UI. Infraestructura implementa puertos y puede importar esas capas internas. Presentación consume aplicación/dominio/presentación. Solo `app` conecta implementaciones concretas. `shared` no depende de funcionalidades. El control automático analiza imports estáticos reales y detecta ciclos, módulos inexistentes y dependencias externas en el núcleo.
+## Núcleo extraído
 
-La comprobación estructural no demuestra toda la semántica de SOLID. Las reglas ESLint complementan el grafo prohibiendo APIs del navegador en dominio/aplicación. Evitar imports dinámicos o accesos indirectos que eludan estas fronteras.
+### Liga
 
-## SOLID aplicado
+`features/league/domain` contiene clasificación, validación de resultados, round-robin ida/vuelta, normalización de participantes, importación CSV y copa eliminatoria. Desempates y políticas de puntos son sustituibles. `page-league-setup.jsx` ya delega CSV y nombres al dominio; `page-league.jsx` continúa como deuda de presentación grande mientras se mantiene su contrato visual.
 
-| Principio | Aplicación concreta |
-|---|---|
-| SRP | Validación, almacenamiento, importación, codec, catálogo y React están separados por razones de cambio. |
-| OCP | Validadores de campos y estrategias de importación se agregan al componer el caso de uso, no ampliando cadenas de condiciones. |
-| LSP | Memoria y adaptador local ejecutan el mismo contrato de lectura, escritura, eliminación y claves. |
-| ISP | El servicio de backup recibe puertos separados `reader` y `writer`; exportar no necesita conocer React, Supabase ni eventos. |
-| DIP | `createRuntime` conecta los puertos. Los casos de uso no construyen almacenamiento concreto. Reloj, codec y política de modos son inyectables. |
+### Alineaciones
 
-Patrones utilizados: **Strategy** para políticas de importación; **Adapter** para almacenamiento y codec; **Observer** para suscripciones; **Composition Root** para inyección explícita; **Facade temporal** para compatibilidad con las pantallas existentes. No agregar patrones solo para aumentar su cantidad.
+`features/lineup/domain/lineup-draft.js` contiene asignación, swap, auto-fill con arquero, suplentes/capitán, posiciones libres, selección de modo y snapshot de equipo. Las funciones son inmutables y no conocen React/DOM.
 
-## Extender sin modificar el importador
+### Sorteo
 
-```js
-const runtime = createRuntime({
-  storage,
-  codec,
-  supportsMode: (mode) => Object.hasOwn(formations, mode),
-  fieldValidators: {
-    tactics(value) {
-      if (!Array.isArray(value)) throw new Error("Tácticas inválidas");
-    },
-  },
-  strategies: {
-    appendMissing: ({ data, existingKeys }) => ({
-      set: Object.fromEntries(Object.entries(data)
-        .filter(([key]) => !existingKeys.includes(key))),
-      remove: [],
-    }),
-  },
-});
-```
+`features/draw/domain/team-balancer.js` implementa Strategy: balance por cantidad y por rating, conserva locks y permite registrar estrategias adicionales sin modificar el algoritmo coordinador. La pantalla ya consume esta API y no implementa el balance por su cuenta.
 
-Las extensiones se registran con nombres nuevos: no pueden reemplazar silenciosamente validadores o estrategias incorporadas. Una estrategia devuelve un plan sin efectos; el escritor realiza y valida la operación. Cada extensión necesita pruebas propias, no solo el ejemplo de documentación.
+### Entrenador
 
-## Persistencia y recuperación
+`features/coach/domain/coach.js` concentra asistencia, evaluaciones, tendencia, atributos, objetivos y overview. La pantalla heredada aún contiene parte del wiring y se mantiene bajo techo de migración.
 
-La clave local `fc.v1.` y el formato de backup v1/v2 se conservan. La edición normal puede continuar en memoria cuando el navegador bloquea almacenamiento; se publica `fc:storage-error`. Esto **no equivale a haber guardado duraderamente**.
+### Backups y nube
 
-La importación usa `store.commit`: serializa y obtiene el estado previo antes de escribir; publica a los observadores después de completar todas las escrituras; ante un fallo intenta revertir las escrituras efectuadas. `localStorage` no ofrece transacciones nativas: no hay garantía de atomicidad frente al cierre del proceso, fallos persistentes o escrituras simultáneas de otra pestaña. Si el rollback falla, el error lo indica expresamente.
+`AutomaticBackupService` decide cuándo crear, retener y restaurar. `BackupScheduler` recibe puertos de timer. IndexedDB es un adapter separado. La sincronización cloud recibe un puerto remoto; Supabase implementa ese puerto. Antes de reemplazar estado local por remoto, el caso de uso ofrece `preserveLocal`, que la UI usa para exportar el snapshot de seguridad.
 
-`replace` reemplaza los datos reconocidos de la aplicación y preserva claves ajenas como preferencias o flags de inicio. `merge` sustituye los campos presentes sin eliminar otros; no fusiona individualmente jugadores. Los eventos entre pestañas invalidan snapshots, incluido `localStorage.clear()`.
+## SOLID
 
-## Build, carga y offline
+**SRP:** validación, reglas, persistencia, scheduling, remote sync y UI tienen razones de cambio distintas.
 
-`scripts/client-entries.mjs` es el mapa de nombres de salida a fuentes. Las URLs `compiled/page-*.js` siguen estables. `compiled/data.js` es un módulo nativo y los scripts consumidores posteriores usan `defer`, por lo que no deben volver a convertirse en scripts síncronos ni `async`.
+**OCP:** campos/estrategias de backup, desempates, políticas de puntos y balanceadores se extienden mediante composición/registros, no agregando `if` al caso de uso estable.
 
-El build genera `compiled/module-precache.js` a partir de las fuentes nativas, y el service worker incluye esos módulos. No editar a mano el inventario al agregar una dependencia. Publicar siempre fuentes `src/`, archivos compilados y el nuevo service worker juntos; no desplegar únicamente `compiled/`.
+**LSP:** adapters de almacenamiento pasan contratos compartidos; una implementación puede sustituir a otra sin cambiar consumidores.
 
-## Deuda pendiente explícita
+**ISP:** los casos de uso reciben capacidades mínimas (`reader`, `writer`, repository, remote, timer, codec, clock) en lugar de objetos de plataforma completos.
 
-Extraer sucesivamente reglas de fixture/clasificación, entrenamiento, edición de alineaciones y sorteos balanceados desde los componentes grandes. Separar autenticación/sincronización Supabase de `window`. Migrar el scheduler de backups automáticos a puertos de temporizador/IndexedDB. Sustituir el montaje global por presentación modular al completar los consumidores. Añadir pruebas de componentes, accesibilidad y concurrencia real entre pestañas; medir esas capas por separado. No describir esta primera extracción como cobertura total ni como migración completa.
+**DIP:** domain/application no construyen Supabase, IndexedDB, localStorage, timers reales ni React. `app`/infrastructure inyectan esas implementaciones.
+
+Patrones deliberados: Strategy, Adapter, Observer, Composition Root y Facade temporal. No se agrega un patrón si no existe una variación o frontera real.
+
+## Persistencia
+
+La edición normal puede continuar en memoria si `localStorage` falla, notificando el error. Las importaciones destructivas preparan el estado previo, escriben de forma estricta y realizan rollback best-effort. No se promete atomicidad que el navegador no ofrece. Un rollback incompleto se reporta como tal.
+
+Eventos `storage` invalidan snapshots entre pestañas, incluido remove/clear. Playwright tiene una prueba con dos páginas reales del mismo contexto para esta propiedad.
+
+## Fitness functions y métricas
+
+- **ADP:** ciclos prohibidos automáticamente.
+- **Ca/Ce/I:** calculados desde el grafo real de imports.
+- **A/D:** A usa módulos de contrato explícito como aproximación compatible con JavaScript; D = `|A + I - 1|`.
+- **SDP:** reporte de dependencias donde un paquete sustancialmente más estable depende de otro más inestable.
+- **SAP:** visible mediante A/I/D.
+- **CCP/CRP/REP:** no se falsifican como números instantáneos; se revisan con historial de cambio, reuso y superficie de release.
+
+Ver `npm run metrics:packages` y ADR 0005.
+
+## Tamaño y deuda
+
+Core nuevo (`domain/application/infrastructure`) tiene límite de 300 líneas. Presentación nueva tiene 500. Algunos componentes heredados poseen techos congelados explícitos en `scripts/source-quality.mjs`: no pueden crecer y deben salir de la lista al reducirse. `page-league-setup.jsx` ya salió de esa excepción después de delegar CSV/nombres al dominio.
+
+El objetivo final es eliminar todos los techos legacy y luego `legacy-bridge.js`. Hasta entonces el bridge es compatibilidad, no destino de nueva lógica.

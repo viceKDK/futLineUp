@@ -8,7 +8,6 @@ export const LEGACY_PRESENTATION_CEILINGS = Object.freeze({
   "src/features/lineup/presentation/page-editor.jsx": 900,
   "src/features/sharing/presentation/page-share.jsx": 900,
   "src/features/teams/presentation/page-home.jsx": 800,
-  "src/features/league/presentation/page-league-setup.jsx": 800,
   "src/features/league/presentation/league-participant-guard.jsx": 800,
   "src/promo-scenes.jsx": 1800,
 });
